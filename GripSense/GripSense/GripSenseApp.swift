@@ -25,6 +25,13 @@ struct ContentView: View {
                     Slider(value: $sensor.intensity, in: 0.2...1)
                 }
 
+                VStack(alignment: .leading) {
+                    Text("Sharpness \(Int(sensor.sharpness * 100))% (changes vibration frequency)").font(.subheadline)
+                    Slider(value: $sensor.sharpness, in: 0...1)
+                }
+
+                Toggle("Pulsed (ignores hand movement)", isOn: $sensor.pulsed)
+
                 Picker("Sensor", selection: $sensor.channel) {
                     ForEach(GripSensor.Channel.allCases) { Text($0.rawValue).tag($0) }
                 }
@@ -33,6 +40,7 @@ struct ContentView: View {
                 HStack {
                     reading("Accel RMS", sensor.accelRMS, "g")
                     reading("Gyro RMS", sensor.gyroRMS, "rad/s")
+                    reading("Signal", sensor.signalLevel, sensor.pulsed ? "pulsed" : "raw")
                 }
 
                 chart
@@ -52,7 +60,7 @@ struct ContentView: View {
                     Text(sensor.status).font(.callout).foregroundStyle(.secondary)
                 }
 
-                Text("How to test: turn on Vibrate, hold the phone lightly and watch the graph, then squeeze hard. If the line drops when you squeeze, it works. Calibrate both, then the meter shows how hard you're gripping.")
+                Text("How to test: turn on Vibrate, hold the phone lightly and watch the graph, then squeeze hard. If the line drops when you squeeze, it works. First check that the Signal number is clearly higher with Vibrate on than off; if not, move the Sharpness slider or switch sensors until it is. Calibrate both, then the meter shows how hard you're gripping.")
                     .font(.footnote).foregroundStyle(.secondary)
             }
             .padding()
