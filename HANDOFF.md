@@ -23,7 +23,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 | Gion Taxi | Driving game on an isometric map of Gion, Kyoto | `gion-drive/` | Yes: merged into `main` (PR #1) |
 | GripSense (iOS) | Estimates grip force from vibration damping, and now from ultrasonic sound | `GripSense/` | Build 2: branch `vibrate-grip` (`9a4e322`), PR #3 open. **Build 3 (sound mode) is on TestFlight but uncommitted** |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes: branch `vibrate-grip` (commit `9a4e322`); not in `main` yet |
-| Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (commit `9a1132d`); not in `main` yet |
+| Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (`9a1132d`), PR #4 open. Played on a real phone. **Corner calibration is uncommitted** |
 
 > **Branches:** every project is committed and pushed, each on its own branch: Gion Taxi in `main`, GripSense and
 > Grip Sense Web on `vibrate-grip`, Laptop Shooter on `laptop-shooter`, this doc on `handoff-doc`.
@@ -81,8 +81,39 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
     Harry hasn't asked to commit it yet. It isn't in PR #3, which has build 2 only.
 - **Next:** test build 3 (sound mode) and build 2 on the phone; commit build 3 when Harry says so.
 
+### Grip Sense Web (`web/index.html`)
+- A browser version of GripSense for phones: Start/Stop, sensor choice, live graph and grip meter.
+- **Vibration only works on Android** (`navigator.vibrate`). The trick of rapidly toggling an iOS switch
+  control to get haptic ticks does **not** work: Harry felt no vibration on his iPhone.
+- Served from Harry's Mac through a temporary ngrok URL (the link changes, so don't hand it out as permanent).
+- On branch `vibrate-grip` (commit `9a4e322`).
+
+### Laptop Shooter (`shooter/`)
+- "Your laptop is the target, your phone is the gun." Run `node shooter/server.js` (Node 18+, no install).
+  Laptop opens http://localhost:8080; phones on the same network open the `https://…:8443/gun` URL shown
+  (self-signed cert; HTTPS is needed for motion sensors). Tilt to aim, tap to fire, shake to reload. Several
+  phones can play at once; mouse works as a fallback. Full instructions in `shooter/README.md`.
+- **Gameplay:** 60 s rounds, 8-shot clip, combo multiplier up to x5. Targets are bugs, beach balls, popups and
+  stars; shooting the "unsaved_thesis.docx" file costs 50 points.
+- **Networking:** campus/hackathon Wi-Fi blocked phone-to-laptop traffic (probably client isolation). Fix:
+  connect the laptop to the phone's Personal Hotspot. The server now looks up the laptop's network address on
+  every request, so switching networks no longer leaves a stale link. `shooter/README.md` doesn't mention the
+  hotspot tip yet.
+- **Tested:** the phone-to-laptop relay was tested with a script (join, aim, fire, hit sent back to the phone,
+  leave), and both pages load in headless Chrome with no errors. The phone page loads on Harry's phone.
+  **Harry has played it on his real phone** (over his phone's hotspot).
+- **Aim calibration (new, uncommitted):** aim was a bit off at first, so there's now a two-corner calibration. The
+  phone asks you to aim at the laptop screen's top-left, then bottom-right corner, while the laptop shows a pulsing
+  marker in that corner. The phone also has a new *Calibrate* button. These changes (`shooter/public/gun.html`,
+  `shooter/public/screen.html`, `shooter/server.js`) sit uncommitted on top of `9a1132d`, so they aren't in
+  PR #4 yet. Harry hasn't tried the calibration on his phone yet.
+- Harry has a separate private setup & troubleshooting doc for sharing with friends (ask him for it; the link
+  isn't kept in the repo).
+- On branch `laptop-shooter` (commit `9a1132d`). The HTTPS certificate in `shooter/.cert/` is made locally
+  and is git-ignored, so a fresh clone generates its own.
+
 ## Open items
 1. GripSense: test build 3's sound mode (and build 2) on the phone; commit build 3; update to Xcode 27.
-2. Laptop Shooter: confirm full gameplay on a real phone; add the hotspot tip to `shooter/README.md`.
+2. Laptop Shooter: try the corner calibration on the phone, then commit it; add the hotspot tip to `shooter/README.md`.
 3. Merge PR #3 (GripSense build 2 + web) and then PR #4 (Laptop Shooter) into `main`, in that order.
 4. Try Gion Taxi on a phone.
