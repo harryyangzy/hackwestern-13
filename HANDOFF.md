@@ -21,9 +21,9 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
 | Gion Taxi | Driving game on an isometric map of Gion, Kyoto | `gion-drive/` | Yes: merged into `main` (PR #1) |
-| GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes: branch `vibrate-grip` (build 2, commit `9a4e322`); not in `main` yet |
+| GripSense (iOS) | Estimates grip force from vibration damping, and now from ultrasonic sound | `GripSense/` | Build 2: branch `vibrate-grip` (`9a4e322`), PR #3 open. **Builds 3–4 (sound mode, haptic feedback) are on TestFlight but uncommitted** |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes: branch `vibrate-grip` (commit `9a4e322`); not in `main` yet |
-| Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (commit `9a1132d`); not in `main` yet |
+| Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (`9a1132d`), PR #4 open. Played on a real phone. **Corner calibration is uncommitted** |
 
 > **Branches:** every project is committed and pushed, each on its own branch: Gion Taxi in `main`, GripSense and
 > Grip Sense Web on `vibrate-grip`, Laptop Shooter on `laptop-shooter`, this doc on `handoff-doc`.
@@ -51,7 +51,8 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 
 ### GripSense iOS app (`GripSense/`)
 - **Idea:** the phone vibrates; a tighter grip damps the vibration, so the accelerometer/gyro energy drops.
-  Calibrate "light" and "hard" grip, then a meter shows how hard you're squeezing.
+  Calibrate "light" and "hard" grip, then a meter shows how hard you're squeezing. Build 3 adds a second
+  method that uses sound instead (see below).
 - **On GitHub (branch `vibrate-grip`, commit `2a948ad`):** first version: continuous vibration, accel/gyro RMS,
   chart, calibration, grip meter.
 - **Build 2 (branch `vibrate-grip`, commit `9a4e322`; also on TestFlight):**
@@ -67,10 +68,23 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   can't deploy to it. Updating to Xcode 27 (App Store) fixes that and also clears Apple's SDK warning email
   (ITMS-90725). Until then, install through TestFlight.
 - **Project file is generated:** after editing `GripSense/project.yml`, run `xcodegen generate` in `GripSense/`.
-- **Likely cause of the weak signal:** the iPhone's motion sensors are capped at about 100 Hz. **Proposed next
-  step (waiting on Harry's go-ahead):** a ForcePhone-style audio mode that plays an inaudible ~18–20 kHz tone
-  from the speaker and listens with the mic. The published version of that approach works on iOS.
-- **Next:** check build 2 on the phone and decide on the audio mode.
+- **Likely cause of the weak signal:** the iPhone's motion sensors are capped at about 100 Hz, which is why
+  build 3 adds a sound-based mode.
+- **Build 3 (on TestFlight, uncommitted in git):** a ForcePhone-style *Sound* mode.
+  - The app now opens on a "Sound (new) / Vibration" switch.
+  - Sound mode plays 18, 19 and 20 kHz tones through the speaker or earpiece and measures each tone's amplitude
+    and phase at the microphone (48 kHz, lock-in demodulation). It calibrates "loose" and "squeeze", then
+    projects onto that direction to give a 0–100% grip. Needs microphone permission.
+  - New files: `GripSense/GripSense/AudioGripSensor.swift` and `SoundView.swift`; build number 3.
+- **Build 4 (on TestFlight, uncommitted in git):** Sound mode gets a *Haptic feedback* setting: Off /
+  Stronger when squeezing / Fades when squeezing. The vibration strength follows the calibrated grip. Recording
+  from the mic while playing haptics is allowed via `setAllowHapticsAndSystemSoundsDuringRecording`. New file:
+  `GripSense/GripSense/GripHaptics.swift`.
+- **Builds 3 and 4 are not tested on a device yet.**
+- **Where the code is:** a separate worktree, `~/Downloads/hw13-grip` (branch `vibrate-grip`), **not committed**.
+  PR #3 has build 2 only. Harry hasn't decided whether to commit builds 3–4 into PR #3 before merging it, or
+  merge PR #3 first and add them afterwards.
+- **Next:** test builds 3–4 on the phone; decide how to commit them.
 
 ### Grip Sense Web (`web/index.html`)
 - A browser version of GripSense for phones: Start/Stop, sensor choice, live graph and grip meter.
@@ -92,14 +106,19 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   hotspot tip yet.
 - **Tested:** the phone-to-laptop relay was tested with a script (join, aim, fire, hit sent back to the phone,
   leave), and both pages load in headless Chrome with no errors. The phone page loads on Harry's phone.
-  **Full gameplay on a real phone (gyro aiming, firing) isn't confirmed yet.**
+  **Harry has played it on his real phone** (over his phone's hotspot).
+- **Aim calibration (new, uncommitted):** aim was a bit off at first, so there's now a two-corner calibration. The
+  phone asks you to aim at the laptop screen's top-left, then bottom-right corner, while the laptop shows a pulsing
+  marker in that corner. The phone also has a new *Calibrate* button. These changes (`shooter/public/gun.html`,
+  `shooter/public/screen.html`, `shooter/server.js`) sit uncommitted on top of `9a1132d`, so they aren't in
+  PR #4 yet. Harry hasn't tried the calibration on his phone yet.
 - Harry has a separate private setup & troubleshooting doc for sharing with friends (ask him for it; the link
   isn't kept in the repo).
 - On branch `laptop-shooter` (commit `9a1132d`). The HTTPS certificate in `shooter/.cert/` is made locally
   and is git-ignored, so a fresh clone generates its own.
 
 ## Open items
-1. GripSense: check build 2 on the phone; decide whether to build the ultrasonic audio mode; update to Xcode 27.
-2. Laptop Shooter: confirm full gameplay on a real phone; add the hotspot tip to `shooter/README.md`.
-3. Decide which branches to merge into `main` (`vibrate-grip`, `laptop-shooter`, `handoff-doc`).
+1. GripSense: test builds 3–4 (sound mode, haptic feedback) on the phone; decide whether builds 3–4 go into PR #3; update to Xcode 27.
+2. Laptop Shooter: try the corner calibration on the phone, then commit it; add the hotspot tip to `shooter/README.md`.
+3. Merge PR #3 (GripSense build 2 + web) and then PR #4 (Laptop Shooter) into `main`, in that order.
 4. Try Gion Taxi on a phone.
