@@ -21,7 +21,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
 | Gion Taxi | Driving game on an isometric map of Gion, Kyoto | `gion-drive/` | Yes: merged into `main` (PR #1) |
-| GripSense (iOS) | Estimates grip force from vibration damping, and now from ultrasonic sound | `GripSense/` | Build 2: branch `vibrate-grip` (`9a4e322`), PR #3 open. **Build 3 (sound mode) is on TestFlight but uncommitted** |
+| GripSense (iOS) | Estimates grip force from vibration damping, and now from ultrasonic sound | `GripSense/` | Build 2: branch `vibrate-grip` (`9a4e322`), PR #3 open. **Builds 3–4 (sound mode, haptic feedback) are on TestFlight but uncommitted** |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes: branch `vibrate-grip` (commit `9a4e322`); not in `main` yet |
 | Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (`9a1132d`), PR #4 open. Played on a real phone. **Corner calibration is uncommitted** |
 
@@ -76,10 +76,15 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
     and phase at the microphone (48 kHz, lock-in demodulation). It calibrates "loose" and "squeeze", then
     projects onto that direction to give a 0–100% grip. Needs microphone permission.
   - New files: `GripSense/GripSense/AudioGripSensor.swift` and `SoundView.swift`; build number 3.
-  - **Not tested on a device yet.**
-  - The code is in a separate worktree, `~/Downloads/hw13-grip` (branch `vibrate-grip`), **not committed**:
-    Harry hasn't asked to commit it yet. It isn't in PR #3, which has build 2 only.
-- **Next:** test build 3 (sound mode) and build 2 on the phone; commit build 3 when Harry says so.
+- **Build 4 (on TestFlight, uncommitted in git):** Sound mode gets a *Haptic feedback* setting: Off /
+  Stronger when squeezing / Fades when squeezing. The vibration strength follows the calibrated grip. Recording
+  from the mic while playing haptics is allowed via `setAllowHapticsAndSystemSoundsDuringRecording`. New file:
+  `GripSense/GripSense/GripHaptics.swift`.
+- **Builds 3 and 4 are not tested on a device yet.**
+- **Where the code is:** a separate worktree, `~/Downloads/hw13-grip` (branch `vibrate-grip`), **not committed**.
+  PR #3 has build 2 only. Harry hasn't decided whether to commit builds 3–4 into PR #3 before merging it, or
+  merge PR #3 first and add them afterwards.
+- **Next:** test builds 3–4 on the phone; decide how to commit them.
 
 ### Grip Sense Web (`web/index.html`)
 - A browser version of GripSense for phones: Start/Stop, sensor choice, live graph and grip meter.
@@ -113,7 +118,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   and is git-ignored, so a fresh clone generates its own.
 
 ## Open items
-1. GripSense: test build 3's sound mode (and build 2) on the phone; commit build 3; update to Xcode 27.
+1. GripSense: test builds 3–4 (sound mode, haptic feedback) on the phone; decide whether builds 3–4 go into PR #3; update to Xcode 27.
 2. Laptop Shooter: try the corner calibration on the phone, then commit it; add the hotspot tip to `shooter/README.md`.
 3. Merge PR #3 (GripSense build 2 + web) and then PR #4 (Laptop Shooter) into `main`, in that order.
 4. Try Gion Taxi on a phone.
