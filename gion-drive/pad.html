@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#f6f3e9"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<title>Gion Taxi · Crew</title>
+<style>
+/* Gion Taxi phone controller. One page, four instruments (wheel, pedals, navigator's map, doors & camera), laid out
+   for whichever roles the laptop gives this phone. Same paper, inks and type as the game. */
+:root{--ink:#263c35;--paper:#f6f3e9;--panel:#fffcf3;--muted:#626c60;--rule:#cfcfc0;--rust:#ac4931;--green:#36594b;--gold:#c9932c;--card:#fffcf3ee;--line:#afb5a5;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--me:#c8513a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:15px/1.35 var(--sans);overscroll-behavior:none}
+body{background:radial-gradient(120% 90% at 50% 0%,#fbf8ef 0,var(--paper) 60%,#eee8d8 100%);overflow:hidden;position:fixed;inset:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+[hidden]{display:none!important}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px #263c3522}
+small,.cap{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+h1,h2{font-family:var(--serif);font-weight:600;margin:0}
+section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
+.pill{background:var(--rust);color:#fff;border-radius:999px;padding:11px 28px;font-weight:600;font-size:16px}
+.pill:disabled{background:var(--rule)}
+/* rotate prompt */
+#rotate{position:fixed;inset:0;z-index:50;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--paper);text-align:center;padding:30px}
+#rotate svg{width:86px;height:86px;animation:turn 2.4s ease-in-out infinite}
+@keyframes turn{0%,20%{transform:rotate(0)}55%,100%{transform:rotate(-90deg)}}
+#rotate p{font:italic 18px var(--serif);margin:0;color:var(--muted)}
+@media (orientation:portrait){body.land #rotate{display:flex}}
+/* join + waiting */
+#join,#wait{display:flex;align-items:center;justify-content:center}
+.joincard{padding:20px 24px;text-align:center;width:min(420px,100%)}
+.joincard h1{font-size:28px;margin-bottom:2px}
+.joincard p{color:var(--muted);margin:6px 0 12px}
+#code{font:600 30px var(--serif);letter-spacing:.3em;text-transform:uppercase;text-align:center;width:7.2em;padding:6px 0 6px .3em;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--rust);-webkit-user-select:text;user-select:text}
+#joinErr{color:var(--rust);font:italic 15px var(--serif);min-height:1.3em}
+.spinner{width:22px;height:22px;border:2px solid var(--rule);border-top-color:var(--rust);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* lobby */
+#lobby{display:grid;grid-template-columns:1.25fr 1fr;gap:12px}
+.you{padding:14px 18px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+.you header{display:flex;align-items:center;gap:10px}
+.seatdot{width:16px;height:16px;border-radius:50%;background:var(--me);box-shadow:0 0 0 2px var(--panel),0 0 0 3.5px var(--me);flex:none}
+.you h1{font-size:24px}
+.roles{display:flex;flex-direction:column;gap:7px;margin:0;padding:0;list-style:none}
+.roles li{display:flex;gap:10px;align-items:flex-start}
+.roles svg{width:30px;height:30px;flex:none;margin-top:1px}
+.roles b{font:600 17px var(--serif);display:block}
+.roles span{color:var(--muted);font-size:13px}
+.goal{margin:auto 0 0;padding-top:10px;border-top:1px solid var(--rule);font:italic 14px var(--serif);color:var(--muted)}
+.goal b{font-style:normal;color:var(--ink)}
+.side{display:flex;flex-direction:column;gap:10px;min-height:0}
+.readybox{padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;flex:1;justify-content:center}
+#ready{width:min(132px,30vh);height:min(132px,30vh);border-radius:50%;border:2px solid var(--rust);color:var(--rust);font:600 20px var(--serif);background:#fff9;box-shadow:inset 0 -4px 0 #ac493122;transition:background .2s,color .2s,border-color .2s}
+#ready.on{background:var(--green);border-color:var(--green);color:#fff;box-shadow:inset 0 -4px 0 #0003}
+#lobbyMsg{font:italic 15px var(--serif);color:var(--muted);text-align:center;margin:0}
+.mates{padding:8px 12px;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.mates div{display:flex;align-items:center;gap:7px}
+.mates i{width:8px;height:8px;border-radius:50%}
+.mates .ok{margin-left:auto;color:var(--green);font-weight:600}
+.mates .no{margin-left:auto;color:var(--muted);font-style:italic}
+#result:empty{display:none}
+.res{padding:10px 14px;text-align:center}
+.res b.t{font:600 18px var(--serif)}
+.res .row{display:flex;justify-content:center;gap:18px;margin-top:4px}
+.res .row div{display:flex;flex-direction:column;align-items:center}
+.res .row b{font:600 20px var(--serif);font-variant-numeric:tabular-nums}
+.stars{color:var(--gold);letter-spacing:.1em;margin-left:6px}
+/* drive */
+#drive{display:flex;flex-direction:column;gap:8px}
+.bar{display:flex;align-items:center;gap:12px;padding:5px 12px;flex:none}
+.bar .who{display:flex;align-items:center;gap:8px;min-width:0}
+.bar .who b{font:600 16px var(--serif);white-space:nowrap}
+.bar .who span{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .stats{margin-left:auto;display:flex;gap:16px;align-items:baseline}
+.bar .stats div{display:flex;align-items:baseline;gap:5px}
+.bar .stats b{font:600 19px var(--serif);font-variant-numeric:tabular-nums}
+.bar .stats b.low{color:var(--rust)}
+.conn{width:9px;height:9px;border-radius:50%;background:var(--green);flex:none}
+.conn.bad{background:var(--rust);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.3}}
+#task{font:italic 14px var(--serif);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+#panels{flex:1;display:flex;gap:8px;min-height:0}
+.comp{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;touch-action:none}
+.comp>.cap{position:absolute;top:8px;left:12px}
+.hint{font:italic 13px var(--serif);color:var(--muted);text-align:center;margin:4px 0 0;padding:0 6px}
+/* wheel */
+#c-wheel{flex:1.35}
+.wheelbox{position:relative;width:min(100%,calc(100% - 4px));flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+#wheel{height:100%;max-height:100%;max-width:100%;aspect-ratio:1;touch-action:none;filter:drop-shadow(0 6px 10px #263c3533)}
+.steerbar{width:min(70%,260px);height:18px;position:relative;margin-top:4px;flex:none}
+.steerbar::before{content:'';position:absolute;left:0;right:0;top:8px;height:2px;background:var(--rule);border-radius:2px}
+.steerbar i{position:absolute;top:2px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--rust);left:50%;box-shadow:0 0 0 2px var(--panel)}
+.steerbar span{position:absolute;top:-2px;font:11px var(--sans);color:var(--muted)}
+/* pedals */
+.pedal{flex:0 0 min(23vw,150px)}
+.track{position:relative;width:100%;flex:1;border-radius:16px;border:1px solid var(--line);background:#fff9;overflow:hidden;touch-action:none;box-shadow:inset 0 2px 8px #263c3514}
+.track .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:linear-gradient(#0000,var(--pc) 220%);opacity:.35}
+.plate{position:absolute;left:12%;right:12%;top:14%;bottom:14%;border-radius:12px;background:var(--pc);box-shadow:0 6px 0 #0004,inset 0 1px 0 #fff4;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10%;
+  background-image:repeating-linear-gradient(0deg,#0000 0 9px,#0002 9px 11px),linear-gradient(var(--pc),var(--pc));transition:transform .05s}
+.plate span{font:600 17px var(--serif);color:#fff;text-shadow:0 1px 0 #0004;background:var(--pc);padding:1px 8px;border-radius:6px}
+.pedal.brake{--pc:var(--rust)} .pedal.gas{--pc:var(--green)}
+.pedal .hint{min-height:2.6em}
+/* speedo */
+#c-speedo{flex:1}
+#speedo{width:100%;max-width:300px;height:auto;flex:none}
+/* map */
+#c-map{flex:1.7;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#efe7d4;justify-content:flex-start}
+#map{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+.mapinfo{position:absolute;left:8px;top:8px;padding:5px 10px;display:flex;flex-direction:column;pointer-events:none}
+.mapinfo b{font:600 16px var(--serif)}
+.mapinfo span{font:13px var(--sans);color:var(--muted)}
+#mapMode{position:absolute;right:8px;top:8px;padding:6px 10px;font-size:13px;font-weight:600}
+.calls{position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:8px;pointer-events:none}
+.calls button{pointer-events:auto;width:50px;height:50px;border-radius:50%;background:var(--card);border:1px solid var(--line);box-shadow:0 4px 12px #263c3522;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:17px;line-height:1}
+.calls button small{font-size:8.5px;margin-top:2px;letter-spacing:.04em}
+.calls button.flash{background:var(--ink);color:var(--panel)}
+.calls button.flash small{color:#fffcf3aa}
+.maptip{position:absolute;right:10px;bottom:66px;font:italic 12px var(--serif);color:var(--muted);pointer-events:none;text-shadow:0 0 4px #efe7d4}
+/* operations */
+#c-ops{flex:1;gap:10px;padding:6px 4px}
+#c-ops>.cap{position:static;margin-bottom:-4px}
+.meter{display:flex;align-items:stretch;gap:0;border-radius:10px;overflow:hidden;border:1px solid #1d2b26;background:#1f2e29;color:#f3ead2;width:min(100%,270px);box-shadow:0 6px 14px #263c3533}
+.flag{background:var(--rust);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 12px;min-width:86px;transition:background .3s}
+.flag span{font:700 22px "Hiragino Mincho ProN","Yu Mincho",var(--serif);letter-spacing:.08em}
+.flag small{color:#fffd;font-size:9.5px}
+.flag.hired{background:var(--green)}
+.meterYen{flex:1;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding:6px 12px}
+.meterYen small{color:#f3ead299}
+.meterYen b{font:600 24px var(--mono);font-variant-numeric:tabular-nums;color:#ffd98a}
+#door{width:min(150px,34vh);height:min(150px,34vh);border-radius:50%;background:radial-gradient(circle at 50% 35%,#fffcf3,#eadfc6);border:2px solid var(--ink);box-shadow:0 6px 0 #263c3555,inset 0 -6px 12px #263c3518;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:600 17px var(--serif);flex:none}
+#door svg{width:40%;height:auto}
+#door:active,#door.press{transform:translateY(4px);box-shadow:0 2px 0 #263c3555}
+#door.call{border-color:var(--gold);animation:doorcall .8s ease-in-out infinite}
+@keyframes doorcall{50%{box-shadow:0 6px 0 #263c3555,0 0 0 12px #c9932c55}}
+#door:disabled{opacity:.45}
+.seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff9;flex:none}
+.seg button{padding:8px 16px;font-size:14px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--ink);color:var(--panel)}
+/* countdown + banner */
+#count{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:600 34vh var(--serif);color:var(--ink);text-shadow:0 0 30px #fffcf3;z-index:40;pointer-events:none}
+#count.pop{animation:pop .9s ease-out}
+@keyframes pop{0%{opacity:0;transform:scale(1.4)}25%{opacity:1;transform:scale(1)}100%{opacity:.1}}
+#banner{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:45;padding:7px 16px;font:italic 15px var(--serif);color:var(--rust);white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:44;font:600 16px var(--serif);color:var(--rust);text-shadow:0 0 6px #fffcf3,0 0 3px #fffcf3;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+#toast.good{color:var(--green)}#toast.show{opacity:1}
+@media (max-height:340px){.hint{display:none}.bar{padding:3px 10px}#ready{width:96px;height:96px}.calls button{width:42px;height:42px}}
+</style></head>
+<body>
+<div id="rotate"><svg viewBox="0 0 64 64" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="6" width="24" height="44" rx="4" fill="#fffcf3"/><path d="M28 44h8" /><path d="M50 52a22 22 0 0 1-14 8" stroke="#ac4931"/><path d="m34 57 2 3-3 2" stroke="#ac4931"/></svg><h2>Turn your phone sideways</h2><p>The taxi’s controls are made for landscape.</p></div>
+
+<section id="join" hidden><form class="card joincard" id="joinForm" autocomplete="off">
+  <h1>Gion Taxi</h1><p>Enter the room code shown on the laptop.</p>
+  <input id="code" maxlength="4" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="ABCD" aria-label="Room code">
+  <p id="joinErr" role="alert"></p>
+  <button class="pill" type="submit">Join the crew</button>
+</form></section>
+
+<section id="wait"><div class="card joincard"><div class="spinner"></div><h2 id="waitTitle">Joining the crew…</h2><p id="waitMsg">Connecting to the laptop.</p></div></section>
+
+<section id="lobby" hidden>
+  <div class="card you">
+    <header><i class="seatdot"></i><div><small id="youRoom">Room</small><h1 id="youName">Player</h1></div></header>
+    <div id="result"></div>
+    <ul class="roles" id="roleList"></ul>
+    <p class="goal"><b>The shift:</b> 90 seconds, one taxi, the whole crew. Pick up at the orange lantern, drop off at the gold one. Every fare pays yen and adds time; bumps cost both.</p>
+  </div>
+  <div class="side">
+    <div class="card readybox"><button id="ready" aria-pressed="false">Ready</button><p id="lobbyMsg">Tap when you’re ready to drive.</p></div>
+    <div class="card mates" id="mates"></div>
+  </div>
+</section>
+
+<section id="drive" hidden>
+  <div class="card bar">
+    <div class="who"><i class="seatdot"></i><b id="barName">Player</b><span id="barRoles"></span></div>
+    <span id="task"></span>
+    <div class="stats"><div><small>Time</small><b id="clock">90</b></div><div><small>Yen</small><b id="yen">¥0</b></div><div><small>Fares</small><b id="fares">0</b></div></div>
+    <i class="conn" id="conn" title="Connection"></i>
+  </div>
+  <div id="panels"></div>
+</section>
+
+<div id="parts" hidden>
+  <div class="comp" id="c-wheel"><span class="cap">Wheel</span>
+    <div class="wheelbox"><svg id="wheel" viewBox="-100 -100 200 200" aria-label="Steering wheel">
+      <g id="wheelRot">
+        <circle r="86" fill="none" stroke="#263c35" stroke-width="17"/>
+        <circle r="86" fill="none" stroke="#3d5a50" stroke-width="17" stroke-dasharray="3 9" opacity=".55"/>
+        <circle r="78" fill="none" stroke="#fffcf3" stroke-width="1.2" opacity=".5"/>
+        <path d="M-78 4h46M32 4h46M-8 30l-6 50h28l-6-50" stroke="#263c35" stroke-width="13" stroke-linecap="round" fill="none"/>
+        <circle r="32" fill="#fffcf3" stroke="#263c35" stroke-width="5"/>
+        <circle r="25" fill="none" stroke="#ac4931" stroke-width="1.5"/>
+        <rect x="-5" y="-98" width="10" height="20" rx="3" fill="#ac4931"/>
+      </g>
+      <text id="hubKmh" y="4" text-anchor="middle" font-family="Iowan Old Style,Palatino,Georgia,serif" font-weight="600" font-size="20" fill="#263c35">0</text>
+      <text y="17" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-size="6.5" letter-spacing=".8" fill="#626c60">KM/H</text>
+    </svg></div>
+    <div class="steerbar"><span style="left:0">◀</span><span style="right:0">▶</span><i id="steerDot"></i></div>
+    <p class="hint">Drag the rim round · let go to straighten</p>
+  </div>
+  <div class="comp pedal brake" id="c-brake"><span class="cap" style="left:auto;position:relative;top:0;margin-bottom:6px">Brake</span><div class="track" id="brakeTrack"><div class="fill"></div><div class="plate"><span>Brake</span></div></div><p class="hint">Hold to brake · keep holding to reverse</p></div>
+  <div class="comp pedal gas" id="c-gas"><span class="cap" style="left:auto;position:relative;top:0;margin-bottom:6px">Gas</span><div class="track" id="gasTrack"><div class="fill"></div><div class="plate"><span>Gas</span></div></div><p class="hint">Hold · slide down to press harder</p></div>
+  <div class="comp" id="c-speedo"><svg id="speedo" viewBox="-100 -78 200 130" aria-label="Speedometer">
+      <path d="M-74.5 43A86 86 0 1 1 74.5 43" fill="none" stroke="#cfcfc0" stroke-width="6" stroke-linecap="round"/>
+      <path id="spArc" d="M-74.5 43A86 86 0 1 1 74.5 43" fill="none" stroke="#36594b" stroke-width="6" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
+      <g id="spTicks" font-family="Iowan Old Style,Palatino,Georgia,serif" font-size="11" fill="#626c60" text-anchor="middle"></g>
+      <g id="spNeedle"><path d="M0-70 4 0-4 0Z" fill="#ac4931"/><circle r="7" fill="#263c35"/></g>
+      <text id="spVal" y="34" text-anchor="middle" font-family="Iowan Old Style,Palatino,Georgia,serif" font-weight="600" font-size="26" fill="#263c35">0</text>
+      <text y="47" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-size="8" letter-spacing="1" fill="#626c60">KM/H</text>
+    </svg><p class="hint" id="spHint">Stop gently at the lanterns, under 9 km/h</p></div>
+  <div class="comp" id="c-map">
+    <svg id="map" viewBox="-45 -60 90 90" preserveAspectRatio="xMidYMid slice" aria-label="Map of Gion">
+      <g id="mw"><g id="mbase"></g>
+        <polyline id="mroute" fill="none" stroke="#263c35" stroke-width="2.6" stroke-dasharray="1 6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+        <g id="mping" visibility="hidden"><circle r="3.4" fill="none" stroke-width="2" vector-effect="non-scaling-stroke"/><circle r="1.2"/></g>
+        <g id="mtarget"><circle r="4.2" fill="#f26a2e" fill-opacity=".25"/><circle r="2.4" fill="#f26a2e" stroke="#263c35" stroke-width="1.2" vector-effect="non-scaling-stroke"/></g>
+        <path id="mtaxi" d="M4.5 0-3 3-1.5 0-3-3Z" fill="#c8513a" stroke="#263c35" stroke-width="1.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+      </g>
+    </svg>
+    <div class="card mapinfo"><b id="navTarget">Pick-up</b><span id="navDist">–</span></div>
+    <button class="card" id="mapMode">Whole map</button>
+    <p class="maptip">Tap the map to mark a spot on the laptop</p>
+    <div class="calls" id="calls">
+      <button data-d="left">◀<small>LEFT</small></button><button data-d="straight">▲<small>AHEAD</small></button><button data-d="right">▶<small>RIGHT</small></button><button data-d="uturn">↶<small>TURN</small></button><button data-d="stop">■<small>STOP</small></button>
+    </div>
+  </div>
+  <div class="comp" id="c-ops"><span class="cap">Doors &amp; camera</span>
+    <div class="meter"><div class="flag" id="flag"><span lang="ja">空車</span><small>For hire</small></div><div class="meterYen"><small>This fare</small><b id="fareYen">—</b></div></div>
+    <button id="door" disabled><svg viewBox="0 0 40 40" fill="none" stroke="#263c35" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M8 34V9l14-4v29Z" fill="#c9932c55"/><path d="M22 5h9v29h-9M18 20v3"/></svg><span id="doorLabel">Door</span></button>
+    <div class="seg" id="cam"><button data-chase="1" class="on">Chase</button><button data-chase="0">Overhead</button></div>
+    <p class="hint" id="opsHint">Open the door when the taxi stops at a lantern</p>
+  </div>
+</div>
+<div id="count" hidden></div>
+<div id="banner" class="card" hidden></div>
+<div id="toast"></div>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const ROLE_INFO = {
+  steer: ['Wheel', 'Steer the taxi through the lanes. Drag the wheel round; let go and it straightens.', '<circle cx="15" cy="15" r="11" stroke-width="3"/><path d="M4 16h7m8 0h7M15 19v7" stroke-width="3"/><circle cx="15" cy="15" r="3.5"/>'],
+  pedals: ['Pedals', 'Gas and brake. Keep holding brake to reverse. Stop gently at the lanterns.', '<rect x="4" y="6" width="9" height="19" rx="2.5"/><rect x="17" y="10" width="9" height="15" rx="2.5"/><path d="M6 11h5M6 15h5M6 19h5M19 15h5M19 19h5"/>'],
+  nav: ['Navigator', 'Read the map, call the turns, tap the map to mark a spot on the laptop.', '<path d="m3 8 8-3 8 3 8-3v17l-8 3-8-3-8 3Z"/><path d="M11 5v17M19 8v17"/><circle cx="15" cy="13" r="2.4" fill="#ac4931" stroke="none"/>'],
+  ops: ['Doors & camera', 'Open the door when the taxi stops at a lantern, so passengers can get in and out. Switch the laptop’s camera.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
+};
+const CALL_TEXT = { left: 'Turn left', right: 'Turn right', straight: 'Straight on', uturn: 'Turn around', stop: 'Stop here' };
+const params = new URLSearchParams(location.search);
+let room = (params.get('r') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+let pid; try { pid = localStorage.getItem('gtPid') } catch {}
+if (!pid || !/^[a-z0-9]{8,32}$/.test(pid)) { pid = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join(''); try { localStorage.setItem('gtPid', pid) } catch {} }
+
+/* ---------- screens ---------- */
+let screen = 'wait';
+function show(name) {
+  screen = name;
+  for (const s of ['join', 'wait', 'lobby', 'drive']) $(s).hidden = s !== name;
+  document.body.classList.toggle('land', name === 'lobby' || name === 'drive');
+  if (name !== 'drive') $('toast').classList.remove('show');
+}
+function joinForm(msg) {
+  show('join'); $('joinErr').textContent = msg || ''; $('code').value = room || '';
+  if (!msg) setTimeout(() => $('code').focus(), 50);
+}
+$('joinForm').onsubmit = e => {
+  e.preventDefault();
+  const c = $('code').value.toUpperCase().replace(/[^A-Z]/g, '');
+  if (c.length !== 4) { $('joinErr').textContent = 'Room codes are four letters.'; return }
+  room = c; history.replaceState(null, '', '?r=' + c); fatal = false; show('wait'); connect();
+};
+function waitMsg(title, msg) { $('waitTitle').textContent = title; $('waitMsg').textContent = msg }
+let toastT = 0;
+function toast(msg, good) { const t = $('toast'); t.textContent = msg; t.className = good ? 'good show' : 'show'; clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800) }
+const buzz = p => { try { navigator.vibrate && navigator.vibrate(p) } catch {} };
+
+/* ---------- connection ---------- */
+let ws = null, fatal = false, retry = 0, joined = false, hostOn = true;
+const ERR = { room: 'There’s no room with that code. Check the laptop.', full: 'This taxi already has a crew of four.', kicked: 'The host removed this phone from the crew.',
+  closed: 'The host closed the room.', bad: 'That code doesn’t look right.', replaced: 'This controller was opened somewhere else.' };
+function send(o) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(o)) }
+function connect() {
+  if (!room) return joinForm();
+  const s = ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+  s.onopen = () => { retry = 0; send({ t: 'join', room, pid }) };
+  s.onmessage = e => { let m; try { m = JSON.parse(e.data) } catch { return } onMsg(m) };
+  s.onclose = () => {
+    if (ws !== s) return; ws = null; joined = false; setConn();
+    if (fatal) return;
+    if (screen === 'wait') waitMsg('Can’t reach the laptop', 'Trying again… Make sure this phone is on the same Wi-Fi or hotspot as the laptop.');
+    setTimeout(connect, Math.min(3000, 400 * 2 ** retry++));
+  };
+}
+setInterval(() => send({ t: 'hb' }), 2000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !ws && !fatal) connect() });
+function setConn() {
+  const bad = !joined || !hostOn;
+  $('conn').classList.toggle('bad', bad);
+  $('banner').hidden = !bad || screen === 'wait' || screen === 'join';
+  $('banner').textContent = !joined ? 'Reconnecting to the laptop…' : 'The laptop dropped out. Waiting for it to come back…';
+}
+function onMsg(m) {
+  switch (m.t) {
+    case 'joined': joined = true; hostOn = m.host; setConn(); send({ t: 'hello' }); if (!lobby) waitMsg('Joined room ' + m.room, m.host ? 'Waiting for the laptop…' : 'Waiting for the laptop to come back…'); break;
+    case 'err': fatal = true; joined = false; if (ws) ws.close(); release(); joinForm(ERR[m.code] || 'Couldn’t join.'); break;
+    case 'host': hostOn = m.on; setConn(); if (m.on) send({ t: 'hello' }); else release(); break;
+    case 'lobby': onLobby(m); break;
+    case 'map': buildMap(m); break;
+    case 's': onState(m); break;
+    case 'route': route = m; drawRoute(); break;
+    case 'count': countdown(m.n); break;
+    case 'ev': onEvent(m); break;
+  }
+}
+
+/* ---------- lobby ---------- */
+let lobby = null, me = null, myRoles = [], phase = 'lobby', ready = false;
+function onLobby(m) {
+  lobby = m; phase = m.phase;
+  me = m.seats.find(s => s.pid === pid) || null;
+  const roles = me ? me.roles : [];
+  if (roles.join() !== myRoles.join()) { myRoles = roles; layout(); release() }
+  if (me) document.documentElement.style.setProperty('--me', me.color);
+  ready = !!(me && me.ready);
+  $('youRoom').textContent = 'Room ' + m.room; $('youName').textContent = me ? me.name : 'Waiting for a seat';
+  $('barName').textContent = me ? me.name : ''; $('barRoles').textContent = roles.map(r => ROLE_INFO[r][0]).join(' · ');
+  $('roleList').innerHTML = roles.map(r => `<li><svg viewBox="0 0 30 30" fill="none" stroke="#263c35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ROLE_INFO[r][2]}</svg><div><b>${ROLE_INFO[r][0]}</b><span>${ROLE_INFO[r][1]}</span></div></li>`).join('');
+  $('ready').classList.toggle('on', ready); $('ready').setAttribute('aria-pressed', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
+  const waiting = m.seats.filter(s => !s.ready || !s.on).length;
+  $('lobbyMsg').textContent = !me ? 'The laptop is finding you a seat…' : !ready ? (m.result ? 'Ready for another shift?' : 'Tap when you’re ready to drive.')
+    : waiting ? `Waiting for ${waiting} more…` : 'Everyone’s ready. The host starts the shift.';
+  $('mates').innerHTML = m.seats.map(s => `<div><i style="background:${s.color}"></i><span>${s.pid === pid ? 'You' : s.name} · ${s.roles.map(r => ROLE_INFO[r][0]).join(', ')}</span><span class="${s.on && s.ready ? 'ok' : 'no'}">${!s.on ? 'offline' : s.ready ? 'ready' : 'not ready'}</span></div>`).join('');
+  $('result').innerHTML = m.result && (phase === 'results' || phase === 'lobby') ? resultHTML(m.result) : '';
+  if (phase === 'driving' || phase === 'count') { if (screen !== 'drive') show('drive') }
+  else if (screen !== 'lobby') { show('lobby'); release() }
+  setConn();
+}
+function resultHTML(r) {
+  const n = r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0;
+  return `<div class="card res"><b class="t">Shift over</b><span class="stars">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span><div class="row"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div><div><small>Bumps</small><b>${r.bumps}</b></div></div></div>`;
+}
+$('ready').onclick = () => {
+  if (!me) return;
+  ready = !ready; send({ t: 'ready', v: ready }); buzz(15);
+  $('ready').classList.toggle('on', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
+  // Android: go full screen and hold landscape (iOS Safari ignores both)
+  if (ready && document.documentElement.requestFullscreen && !document.fullscreenElement)
+    document.documentElement.requestFullscreen().then(() => window.screen.orientation && window.screen.orientation.lock && window.screen.orientation.lock('landscape')).catch(() => {});
+};
+function countdown(n) {
+  const c = $('count'); c.textContent = n; c.hidden = false; c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); buzz(25);
+  if (screen !== 'drive') show('drive');
+  clearTimeout(countdown.t); countdown.t = setTimeout(() => { c.hidden = true }, 950);
+}
+
+/* ---------- layout: the instruments for this phone's roles, ergonomic for two thumbs ---------- */
+const comp = id => $('c-' + id);
+function layout() {
+  const has = r => myRoles.includes(r), order = [];
+  if (has('pedals') && has('steer')) order.push('wheel', ...(has('ops') ? ['ops'] : []), 'brake', 'gas');   // one phone does it all
+  else if (has('pedals')) { order.push('brake'); if (has('nav')) order.push('map'); if (has('ops')) order.push('ops'); if (!has('nav') && !has('ops')) order.push('speedo'); order.push('gas') }
+  else { if (has('steer')) order.push('wheel'); if (has('nav')) order.push('map'); if (has('ops')) order.push('ops') }
+  const P = $('panels'), parts = $('parts');
+  for (const c of [...P.children]) parts.appendChild(c);
+  for (const id of order) P.appendChild(comp(id));
+  requestAnimationFrame(sizeMap);
+}
+
+/* ---------- controls ---------- */
+const ctl = { turn: 0, gas: 0, brake: 0 };
+let wheelA = 0, wheelHeld = null, wheelLast = 0, wheelCenter = null;
+const WHEEL_MAX = 120;   // degrees of wheel rotation for full lock
+const wheelEl = $('wheel');
+const angleAt = e => Math.atan2(e.clientY - wheelCenter[1], e.clientX - wheelCenter[0]) * 180 / Math.PI;
+wheelEl.addEventListener('pointerdown', e => {
+  e.preventDefault(); if (wheelHeld != null) return;
+  const r = wheelEl.getBoundingClientRect(); wheelCenter = [r.left + r.width / 2, r.top + r.height / 2];
+  wheelHeld = e.pointerId; wheelEl.setPointerCapture(e.pointerId); wheelLast = angleAt(e);
+});
+wheelEl.addEventListener('pointermove', e => {
+  if (e.pointerId !== wheelHeld) return;
+  if (Math.hypot(e.clientX - wheelCenter[0], e.clientY - wheelCenter[1]) < 14) return;   // too near the hub to read an angle
+  const a = angleAt(e); let d = a - wheelLast; d = ((d + 540) % 360) - 180; wheelLast = a;
+  wheelA = Math.max(-WHEEL_MAX, Math.min(WHEEL_MAX, wheelA + d));
+});
+const wheelUp = e => { if (e.pointerId === wheelHeld) wheelHeld = null };
+for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) wheelEl.addEventListener(ev, wheelUp);
+
+function pedal(trackId, key) {
+  const el = $(trackId); let held = null, y0 = 0;
+  const set = v => { ctl[key] = v; el.querySelector('.fill').style.height = (v * 100) + '%'; el.querySelector('.plate').style.transform = `translateY(${v * 10}px) scaleY(${1 - v * .05})` };
+  el.addEventListener('pointerdown', e => { e.preventDefault(); if (held != null) return; held = e.pointerId; el.setPointerCapture(e.pointerId); y0 = e.clientY; set(.8); buzz(8) });
+  el.addEventListener('pointermove', e => { if (e.pointerId !== held) return; const h = el.getBoundingClientRect().height; set(Math.max(.25, Math.min(1, .8 + (e.clientY - y0) / (h * .45)))) });
+  const up = e => { if (e.pointerId === held) { held = null; set(0) } };
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, up);
+  return () => { held = null; set(0) };
+}
+const releaseBrake = pedal('brakeTrack', 'brake'), releaseGas = pedal('gasTrack', 'gas');
+// let go of everything: on role change, disconnect, the end of a shift, or when the phone is put away
+function release() { wheelHeld = null; wheelA = 0; releaseBrake(); releaseGas(); ctl.turn = 0; sendNow() }
+document.addEventListener('visibilitychange', () => { if (document.hidden) release() });
+addEventListener('blur', release);
+for (const t of ['gesturestart', 'gesturechange', 'contextmenu']) document.addEventListener(t, e => e.preventDefault(), { passive: false });
+document.addEventListener('touchmove', e => { if (e.target.closest('.comp,#parts')) e.preventDefault() }, { passive: false });
+
+let sent = '', sentAt = 0;
+function message() {
+  const m = { t: 'in' };
+  if (myRoles.includes('steer')) m.turn = +ctl.turn.toFixed(3);
+  if (myRoles.includes('pedals')) { m.gas = +ctl.gas.toFixed(2); m.brake = +ctl.brake.toFixed(2) }
+  return m;
+}
+function sendNow() { if (!myRoles.includes('steer') && !myRoles.includes('pedals')) return; const m = message(), s = JSON.stringify(m); send(m); sent = s; sentAt = performance.now() }
+function pump(now) {   // up to 30 Hz when something changes; a heartbeat every 150 ms while a control is held
+  if (phase !== 'driving' || (!myRoles.includes('steer') && !myRoles.includes('pedals'))) return;
+  const m = message(), s = JSON.stringify(m), active = ctl.turn || ctl.gas || ctl.brake;
+  if ((s !== sent && now - sentAt > 33) || (active && now - sentAt > 150)) { send(m); sent = s; sentAt = now }
+}
+
+/* ---------- the picture of the shift from the laptop ---------- */
+let st = null, view = { x: 0, y: 0, h: 0, v: 0 }, route = null;
+function onState(m) {
+  const first = !st; st = m;
+  if (first) Object.assign(view, { x: m.x, y: m.y, h: m.h, v: m.v });
+  $('clock').textContent = Math.ceil(m.clock); $('clock').classList.toggle('low', m.clock < 15);
+  $('yen').textContent = '¥' + m.yen.toLocaleString(); $('fares').textContent = m.fares;
+  $('task').textContent = m.atDoor ? (m.doorNeeded ? 'At the lantern: open the door' : 'At the lantern') : m.mode === 'pickup' ? 'Pick up at the orange lantern' : 'Drop off at the gold lantern';
+  // navigator
+  const pick = m.mode === 'pickup', col = pick ? '#f26a2e' : '#f2c94c';
+  $('navTarget').textContent = pick ? 'Pick-up · orange lantern' : 'Drop-off · gold lantern';
+  $('navDist').textContent = m.dist != null ? `${m.dist} m by road` : '–';
+  const t = $('mtarget'); t.setAttribute('transform', `translate(${m.tx} ${-m.ty})`); t.children[0].setAttribute('fill', col); t.children[1].setAttribute('fill', col);
+  // operations
+  $('flag').classList.toggle('hired', !pick);
+  $('flag').innerHTML = pick ? '<span lang="ja">空車</span><small>For hire</small>' : '<span lang="ja">賃走</span><small>Hired</small>';
+  $('fareYen').textContent = pick ? '—' : '¥' + m.fareEst.toLocaleString();
+  const door = $('door'); door.disabled = !m.doorNeeded; door.classList.toggle('call', !!m.atDoor && m.doorNeeded);
+  $('doorLabel').textContent = m.atDoor ? (pick ? 'Let them in' : 'Let them out') : 'Door';
+  $('opsHint').textContent = m.atDoor ? 'They’re waiting: open the door!' : pick ? 'Open the door when the taxi stops at the orange lantern' : 'Open the door at the gold lantern';
+  for (const b of $('cam').children) b.classList.toggle('on', (b.dataset.chase === '1') === m.chase);
+  if (m.atDoor && !atDoorBefore && myRoles.includes('ops')) buzz([40, 60, 40]);
+  atDoorBefore = m.atDoor;
+}
+let atDoorBefore = false;
+function onEvent(m) {
+  if (m.k === 'bump') { toast(m.kind === 'ped' ? 'Watch the pedestrians! −¥' + m.cost : m.kind === 'bike' ? 'Clipped a bike! −¥' + m.cost : 'Fender bender! −¥' + m.cost); if (myRoles.includes('steer') || myRoles.includes('pedals')) buzz(120) }
+  else if (m.k === 'scrape') { if (myRoles.includes('steer')) buzz(50) }
+  else if (m.k === 'pickup') { toast('Passenger aboard!', true); buzz(30) }
+  else if (m.k === 'dropoff') { toast('Fare paid ¥' + m.pay + ' · +' + m.bonus + ' s', true); buzz([30, 50, 30]) }
+  else if (m.k === 'call' && !myRoles.includes('nav')) toast('Navigator: ' + (CALL_TEXT[m.d] || ''), true);
+  else if (m.k === 'ping') { const g = $('mping'); g.setAttribute('transform', `translate(${m.x} ${-m.y})`); g.setAttribute('visibility', 'visible'); clearTimeout(onEvent.p); onEvent.p = setTimeout(() => g.setAttribute('visibility', 'hidden'), 6000) }
+}
+
+/* ---------- navigator: the map, heading-up around the taxi or the whole plot north-up ---------- */
+let mapHalf = 100, whole = false;
+function buildMap(m) {
+  mapHalf = m.half;
+  $('mbase').innerHTML = `<rect x="${-m.half}" y="${-m.half}" width="${2 * m.half}" height="${2 * m.half}" fill="#efe7d4"/>
+    <path d="${m.water}" fill="#9cc3c4" fill-rule="evenodd"/><path d="${m.roads}" fill="#cbbab3" fill-rule="evenodd"/>
+    <path d="${m.bldg}" fill="#d9c7a8" stroke="#a89a85" stroke-width=".6" vector-effect="non-scaling-stroke"/>`;
+  $('mbase').setAttribute('transform', 'scale(1,-1)');
+}
+function drawRoute() { $('mroute').setAttribute('points', route ? route.pts.map(p => p[0] + ',' + -p[1]).join(' ') : '') }
+const flipY = 'scale(1,-1)';
+function sizeMap() {
+  const svg = $('map'), r = svg.getBoundingClientRect(); if (!r.width) return;
+  if (whole) { const h = mapHalf * 1.04; svg.setAttribute('viewBox', `${-h} ${-h} ${2 * h} ${2 * h}`); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet') }
+  else { const R = 46, ar = r.width / r.height, w = ar > 1 ? 2 * R * ar : 2 * R, hh = ar > 1 ? 2 * R : 2 * R / ar; svg.setAttribute('viewBox', `${-w / 2} ${-hh * .6} ${w} ${hh}`); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet') }
+}
+addEventListener('resize', () => requestAnimationFrame(sizeMap));
+new ResizeObserver(() => sizeMap()).observe($('map'));   // also sizes it the moment the drive screen first shows
+$('mapMode').onclick = () => { whole = !whole; $('mapMode').textContent = whole ? 'Follow taxi' : 'Whole map'; sizeMap() };
+// world positions are y-up; everything inside #mw is drawn with y flipped, so a point (x, y) sits at (x, −y)
+function placeMap() {
+  const mw = $('mw'), hd = view.h * 180 / Math.PI;
+  mw.setAttribute('transform', whole ? '' : `rotate(${hd - 90}) translate(${-view.x} ${view.y})`);
+  $('mtaxi').setAttribute('transform', `translate(${view.x} ${-view.y}) rotate(${-hd})`);
+  if (st) $('mtarget').setAttribute('transform', `translate(${st.tx} ${-st.ty})`);
+}
+let tapStart = null;
+$('map').addEventListener('pointerdown', e => { tapStart = [e.clientX, e.clientY, performance.now()] });
+$('map').addEventListener('pointerup', e => {
+  if (!tapStart || Math.hypot(e.clientX - tapStart[0], e.clientY - tapStart[1]) > 12 || performance.now() - tapStart[2] > 600 || phase !== 'driving') return;
+  const svg = $('map'), p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY;
+  const q = p.matrixTransform($('mw').getScreenCTM().inverse()), x = +q.x.toFixed(1), y = +(-q.y).toFixed(1);
+  if (Math.abs(x) > mapHalf || Math.abs(y) > mapHalf) return;
+  send({ t: 'ping', x, y }); buzz(15);
+  const g = $('mping'); g.setAttribute('transform', `translate(${x} ${-y})`); g.setAttribute('visibility', 'visible');
+  g.children[0].setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--me')); g.children[1].setAttribute('fill', getComputedStyle(document.documentElement).getPropertyValue('--me'));
+  toast('Marked on the laptop', true);
+});
+$('calls').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || phase !== 'driving') return;
+  send({ t: 'call', d: b.dataset.d }); buzz(12);
+  b.classList.add('flash'); setTimeout(() => b.classList.remove('flash'), 300);
+});
+/* ---------- doors & camera ---------- */
+$('door').addEventListener('click', () => { if (phase !== 'driving') return; send({ t: 'door' }); buzz(20); $('door').classList.add('press'); setTimeout(() => $('door').classList.remove('press'), 150) });
+$('cam').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || phase !== 'driving') return; send({ t: 'cam', chase: b.dataset.chase === '1' }); buzz(10) });
+
+/* ---------- speedometer ticks ---------- */
+const spA = v => -120 + Math.min(1, Math.max(0, v / 40)) * 240;
+$('spTicks').innerHTML = [0, 10, 20, 30, 40].map(v => { const a = (spA(v) - 90) * Math.PI / 180; return `<text x="${(Math.cos(a) * 66).toFixed(1)}" y="${(Math.sin(a) * 66 + 4).toFixed(1)}">${v}</text>` }).join('');
+
+/* ---------- the frame loop: wheel spring, smoothing, feedback, sending ---------- */
+let last = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+  if (wheelHeld == null && wheelA) { wheelA *= Math.exp(-dt * 9); if (Math.abs(wheelA) < .5) wheelA = 0 }   // springs back to centre
+  ctl.turn = Math.abs(wheelA) < 2 ? 0 : -wheelA / WHEEL_MAX;   // clockwise on screen = right = negative turn
+  $('wheelRot').setAttribute('transform', `rotate(${wheelA})`);
+  $('steerDot').style.left = (50 - ctl.turn * 50) + '%';
+  if (st) {
+    const k = Math.min(1, dt * 10);
+    view.x += (st.x - view.x) * k; view.y += (st.y - view.y) * k; view.v += (st.v - view.v) * k;
+    let dh = st.h - view.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); view.h += dh * k;
+    const kmh = Math.abs(view.v) * 3.6, shown = Math.round(kmh);
+    $('hubKmh').textContent = view.v < -.3 ? 'R' : shown;
+    $('spVal').textContent = view.v < -.3 ? 'R ' + shown : shown;
+    $('spNeedle').setAttribute('transform', `rotate(${spA(kmh)})`);
+    $('spArc').setAttribute('stroke-dasharray', `${(Math.min(1, kmh / 40) * 100).toFixed(1)} 100`);
+    $('spHint').textContent = st.atDoor ? 'Stopped at the lantern' : kmh < 9 && Math.abs(st.tx - st.x) + Math.abs(st.ty - st.y) < 12 ? 'Slow enough to stop here' : 'Stop gently at the lanterns, under 9 km/h';
+    if (!$('c-map').parentElement.isSameNode($('parts'))) placeMap();
+  }
+  pump(now);
+}
+requestAnimationFrame(frame);
+show('wait'); connect();
+window.GionPad = { get ctl() { return ctl }, get roles() { return myRoles }, get phase() { return phase }, get screen() { return screen }, pid };
+})();
+</script>
+</body></html>

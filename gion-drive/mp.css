@@ -1,0 +1,67 @@
+/* Gion Taxi crew play: the lobby card, the countdown, the navigator's callout and the crew strip.
+   Same cards, inks and type as drive.css (Pocket City's :root tokens), nothing new in the palette. */
+.gt-ghost{margin:8px 0 0 8px;background:transparent;color:var(--ink);border:1px solid var(--rust);border-radius:999px;padding:9px 20px;font-weight:600;font-size:15px}
+.gt-ghost:hover{background:#ac49310f}
+#gt-menu .gt-mpnote{margin:10px 0 0;font-size:12px}
+#gt-menu .gt-mpnote kbd{font-size:11px}
+#gt-lobby[hidden],#gt-count[hidden],#gt-call[hidden],#gt-crew[hidden]{display:none}
+#gt-lobby{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(700px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:auto;padding:20px 26px 16px;z-index:6}
+#gt-lobby h2{font:600 28px var(--serif);margin:0 0 2px;text-align:center}
+#gt-lobby h2 span{font:italic 400 19px var(--serif);color:var(--muted);margin-left:4px}
+.gt-lsub{margin:0 0 12px;text-align:center;color:var(--muted)}
+.gt-lgrid{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:start}
+.gt-qr{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+#gt-qr{width:188px;height:188px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:#fffcf3;display:flex;align-items:center;justify-content:center}
+#gt-qr svg{width:100%;height:100%;display:block}
+.gt-qrmsg{font:italic 14px var(--serif);color:var(--muted);padding:14px;text-align:center;margin:0}
+.gt-qr figcaption{display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.gt-qr small,.gt-res small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+#gt-room{font:600 32px var(--serif);letter-spacing:.14em;color:var(--rust)}
+#gt-url{font:12px var(--mono);color:var(--ink);margin-top:2px}
+#gt-net{font:italic 12px var(--serif);color:var(--muted);margin-top:2px;text-align:center;max-width:200px}
+#gt-url{word-break:break-all;text-align:center;max-width:200px}
+#gt-lobby.public .gt-lanhelp{display:none}
+#gt-ip{font-size:12px;color:var(--muted);text-decoration:underline;margin-top:4px}
+#gt-seats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+#gt-seats li{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--rule);border-radius:10px;background:#fff9;--c:#afb5a5}
+#gt-seats li.empty{border-style:dashed;background:transparent;opacity:.75}
+#gt-seats li.off{opacity:.6}
+#gt-seats li>i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px #fffcf3,0 0 0 3px var(--c)}
+#gt-seats li.empty>i{background:transparent;box-shadow:0 0 0 1px var(--rule)}
+#gt-seats li>div{flex:1;min-width:0;display:flex;flex-direction:column}
+#gt-seats b{font:600 16px var(--serif)}
+#gt-seats small{color:var(--muted);font-size:12px}
+#gt-seats .st{font:italic 14px var(--serif);color:var(--muted);white-space:nowrap}
+#gt-seats li.ready .st{color:var(--green);font-style:normal;font-weight:600}
+#gt-seats li.ready .st::before{content:'✓ '}
+#gt-seats li button{width:28px;height:28px;border-radius:50%;color:var(--muted);font-size:16px;flex:none}
+#gt-seats li button:hover{background:#263c350d;color:var(--ink)}
+.gt-lnote{margin:10px 0 0;font:italic 14px var(--serif);color:var(--muted)}
+#gt-lstart{display:block;margin:14px auto 0;background:var(--rust);color:#fff;border-radius:999px;padding:10px 30px;font-weight:600;font-size:15px}
+#gt-lstart:disabled{background:#cfcfc0;color:#fffcf3;cursor:default}
+#gt-lstart:not(:disabled):hover{filter:brightness(1.08)}
+#gt-lobby .gt-lhelp{margin:10px 0 0;font-size:12px;color:var(--muted);text-align:center}
+#gt-lresult:empty{display:none}
+.gt-res{border:1px solid var(--rule);border-radius:10px;padding:10px 14px;margin:0 0 14px;background:#fff9;text-align:center}
+.gt-res>b{font:600 18px var(--serif)}
+.gt-stars{color:#c9932c;margin-left:8px;letter-spacing:.1em}
+.gt-resrow{display:flex;justify-content:center;gap:22px;margin:6px 0 4px}
+.gt-resrow div{display:flex;flex-direction:column;align-items:center}
+.gt-resrow b{font:600 21px var(--serif);font-variant-numeric:tabular-nums}
+.gt-res p{margin:2px 0 0;font:italic 14px var(--serif);color:var(--muted)}
+#gt-count{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font:600 120px var(--serif);color:var(--ink);text-shadow:0 0 18px #fffcf3,0 0 6px #fffcf3;z-index:6;pointer-events:none}
+#gt-count.pop{animation:gt-pop .9s ease-out}
+@keyframes gt-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(1.35)}25%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:.15}}
+#gt-call{position:absolute;top:124px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;font:600 17px var(--serif);white-space:nowrap}
+#gt-call i{width:10px;height:10px;border-radius:50%}
+#gt-call .gt-callicon{font-size:15px;color:var(--rust)}
+#gt-call.pop{animation:gt-callin .35s ease-out}
+@keyframes gt-callin{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
+#gt-crew{position:absolute;left:14px;bottom:14px;display:flex;flex-direction:column;gap:3px;padding:7px 12px;font-size:12px}
+#gt-crew span{display:flex;align-items:center;gap:7px;color:var(--ink)}
+#gt-crew span.off{color:var(--muted);text-decoration:line-through}
+#gt-crew i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+#gt-lobby.has-result .gt-lsub{display:none}
+#gt-lobby.has-result #gt-qr{width:150px;height:150px}
+#gt-lobby.has-result .gt-res{margin-bottom:10px}
+@media (max-width:620px){.gt-lgrid{grid-template-columns:1fr;justify-items:center}#gt-seats{width:100%}}
