@@ -1,6 +1,6 @@
 # Handoff: Harry's work on Hack Western 13
 
-Last updated: 2026-11-21 (night; Gion Taxi crew play added on branch `gion-multiplayer`). Repo: https://github.com/harryyangzy/hackwestern-13
+Last updated: 2026-11-21 (late night; everything merged into `main`: crew play via PR #6, Laptop Shooter + GripSense build 2 + Grip Sense Web via PR #4). Repo: https://github.com/harryyangzy/hackwestern-13
 
 This file is the single source of truth on what Harry is working on. It is written so that any Claude Code
 session (or teammate) can read it and brief the team. **When you update the team, use only what is in this
@@ -20,17 +20,14 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
-| Gion Taxi | Driving game on an isometric map of Gion, Kyoto; solo or a crew of 1–4 phones sharing one taxi | `gion-drive/` | Solo: merged into `main` (PR #1). Crew play: branch `gion-multiplayer`, not in `main` yet |
-| GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes: branch `vibrate-grip` (build 2, commit `9a4e322`); not in `main` yet |
-| Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes: branch `vibrate-grip` (commit `9a4e322`); not in `main` yet |
-| Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (commit `9a1132d`); not in `main` yet |
+| Gion Taxi | Driving game on an isometric map of Gion, Kyoto; solo or a crew of 1–4 phones sharing one taxi | `gion-drive/` | Yes, in `main` (solo PR #1, crew play PR #6) |
+| GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes, in `main` (build 2, via PR #4) |
+| Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes, in `main` (via PR #4) |
+| Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes, in `main` (PR #4, with two-corner calibration) |
 
-> **Branches:** every project is committed and pushed, each on its own branch: Gion Taxi in `main` (crew play on `gion-multiplayer`), GripSense and
-> Grip Sense Web on `vibrate-grip`, Laptop Shooter on `laptop-shooter`, this doc on `handoff-doc`.
-> `laptop-shooter` was branched from `vibrate-grip`'s first commit, so it also contains GripSense v1 (not build 2).
-> Harry's working folder is checked out on `laptop-shooter`, so GripSense files show as modified and `web/`
-> as untracked there. That's expected: their latest versions are committed on `vibrate-grip`. Switch to
-> `vibrate-grip` before working on GripSense.
+> **Branches:** all four projects are in `main`. Laptop Shooter, GripSense build 2 and Grip Sense Web went in
+> together through PR #4 (`laptop-shooter`); its GripSense and `web/` files are identical to `vibrate-grip`, so that
+> branch has nothing left to merge. Work from `main` (or a new branch off it).
 
 ## Projects
 
@@ -47,8 +44,8 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   `~/Downloads/pocket-city`, or pass `--skill PATH`).
 - **Tested:** in headless Chrome: driving, steering, pickup, drop-off, payment, season switching, ending a shift;
   no page errors. **Not tested on a real phone yet.**
-- **Status:** solo game merged into `main` via PR #1 (https://github.com/harryyangzy/hackwestern-13/pull/1).
-- **Crew play (branch `gion-multiplayer`):** `node gion-drive/server.js` (Node 18+, no install), open
+- **Status:** solo game merged via PR #1, crew play via PR #6; both in `main`.
+- **Crew play:** `node gion-drive/server.js` (Node 18+, no install), open
   http://localhost:8090, press *Play with phones*. Phones scan the QR code (plain HTTP, no certificate) and get roles
   by crew size: wheel, pedals, navigator (map with route, turn calls, pings shown on the laptop), and doors & camera
   (passengers wait at the lantern until the door is opened). The lobby has ready-up, a 3-2-1 start, a results card,
@@ -89,7 +86,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 - **Vibration only works on Android** (`navigator.vibrate`). The trick of rapidly toggling an iOS switch
   control to get haptic ticks does **not** work: Harry felt no vibration on his iPhone.
 - Served from Harry's Mac through a temporary ngrok URL (the link changes, so don't hand it out as permanent).
-- On branch `vibrate-grip` (commit `9a4e322`).
+- In `main` (via PR #4).
 
 ### Laptop Shooter (`shooter/`)
 - "Your laptop is the target, your phone is the gun." Run `node shooter/server.js` (Node 18+, no install).
@@ -107,11 +104,14 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   **Full gameplay on a real phone (gyro aiming, firing) isn't confirmed yet.**
 - Harry has a separate private setup & troubleshooting doc for sharing with friends (ask him for it; the link
   isn't kept in the repo).
-- On branch `laptop-shooter` (commit `9a1132d`). The HTTPS certificate in `shooter/.cert/` is made locally
+- **Aim calibration:** each phone aims at the laptop screen's top-left, then bottom-right corner and taps FIRE; the
+  screen shows a pulsing marker at the corner being calibrated. This sets the aim range and fixes inverted axes.
+  A *Calibrate* button on the phone redoes it; *Recenter* still works.
+- In `main` (PR #4). The HTTPS certificate in `shooter/.cert/` is made locally
   and is git-ignored, so a fresh clone generates its own.
 
 ## Open items
 1. GripSense: check build 2 on the phone; decide whether to build the ultrasonic audio mode; update to Xcode 27.
 2. Laptop Shooter: confirm full gameplay on a real phone; add the hotspot tip to `shooter/README.md`.
-3. Decide which branches to merge into `main` (`vibrate-grip`, `laptop-shooter`, `handoff-doc`).
-4. Try Gion Taxi on a phone, and try crew play with real phones (branch `gion-multiplayer`), then merge it into `main`.
+3. Try Gion Taxi on a phone, and try crew play with real phones.
+4. Laptop Shooter: check the corner calibration on a real phone.
