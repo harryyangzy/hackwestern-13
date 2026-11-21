@@ -136,7 +136,7 @@ function onMessage(client, text) {
     if (msg.role === 'screen') {
       client.role = 'screen';
       client.send({ t: 'info', gunUrl: gunUrl() });
-      for (const g of guns()) client.send({ t: 'join', id: g.id, name: g.name, color: g.color });
+      for (const g of guns()) client.send({ t: 'join', id: g.id, name: g.name, color: g.color, calib: g.calib });
     } else if (msg.role === 'gun') {
       client.role = 'gun';
       client.name = String(msg.name || 'Player').slice(0, 14);
@@ -150,7 +150,9 @@ function onMessage(client, text) {
   }
 
   if (client.role === 'gun') {
-    // aim / fire / reload — forward to every screen, tagged with the shooter
+    // aim / fire / reload / calib — forward to every screen, tagged with the shooter.
+    // Remember the calibration step so a screen that (re)connects later can show it.
+    if (msg.t === 'calib') client.calib = msg.step;
     toScreens({ ...msg, id: client.id });
   } else if (client.role === 'screen' && msg.to != null) {
     const target = guns().find(g => g.id === msg.to);

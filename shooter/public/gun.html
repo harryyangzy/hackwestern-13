@@ -23,7 +23,7 @@
   .bullet.empty { background: #2a2a33; }
   #msg { text-align: center; color: #ffcc4d; font-weight: 700; min-height: 26px; font-size: 18px; }
   #row { display: flex; gap: 10px; padding: 10px 0; }
-  #row button { flex: 1; font-size: 17px; font-weight: 600; padding: 16px 0; border-radius: 12px; border: 1px solid #333; background: #1b1b24; color: #ddd; }
+  #row button { flex: 1; font-size: 15px; font-weight: 600; padding: 16px 0; border-radius: 12px; border: 1px solid #333; background: #1b1b24; color: #ddd; }
   #fire { flex: 1; margin: 6px 0 14px; border-radius: 28px; border: 0; background: radial-gradient(circle at 50% 40%, #ff5a5a, #b80f0f); color: #fff; font-size: 44px; font-weight: 900; letter-spacing: 4px; box-shadow: 0 8px 0 #6d0000; }
   #fire.down { transform: translateY(6px); box-shadow: 0 2px 0 #6d0000; background: radial-gradient(circle at 50% 40%, #ff8a5a, #d01f0f); }
   #flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s; }
@@ -32,7 +32,7 @@
 <body>
 <div id="arm">
   <h1>🔫 LAPTOP SHOOTER</h1>
-  <p>Hold your phone like a remote — screen up, top edge pointing at the laptop.</p>
+  <p>Hold your phone like a remote — screen up, top edge pointing at the laptop. You’ll aim at two corners of the laptop screen to calibrate.</p>
   <input id="nameInput" maxlength="14" placeholder="Your name">
   <button id="armBtn">ARM</button>
   <p id="armErr" style="color:#ff6b6b"></p>
@@ -45,6 +45,7 @@
   <div id="msg"></div>
   <div id="row">
     <button id="center">🎯 Recenter</button>
+    <button id="calib">📐 Calibrate</button>
     <button id="reload">🔄 Reload</button>
   </div>
   <button id="fire">FIRE</button>
@@ -61,9 +62,14 @@ let audio;
 // track the direction a point 45° between "top edge" and "back camera" faces.
 // That works whether the phone is held flat like a remote or upright like a camera.
 const D2R = Math.PI / 180;
-let yaw = 0, pitch = 0, yaw0 = null, pitch0 = 0, haveOrientation = false;
-const YAW_RANGE = 22, PITCH_RANGE = 14; // degrees from center to screen edge
+let yaw = 0, pitch = 0, yaw0 = 0, pitch0 = 0, haveOrientation = false;
+// Degrees from screen center to screen edge. Signed, so calibration also fixes
+// an inverted axis. Set by aiming at two opposite corners of the laptop screen.
+let yawRange = 22, pitchRange = 14;
 let aimX = 0, aimY = 0;
+let calibStep = 0;        // 0 = aim at top-left, 1 = aim at bottom-right, 2 = done
+let cornerTL = null;
+const wrap = d => ((d + 540) % 360) - 180;
 
 function onOrientation(e) {
   if (e.alpha == null) return;
@@ -77,20 +83,51 @@ function onOrientation(e) {
   yaw = Math.atan2(fx, fy) / D2R;
   pitch = Math.asin(Math.max(-1, Math.min(1, fz))) / D2R;
   haveOrientation = true;
-  if (yaw0 === null) recenter();
-  let dy = yaw - yaw0;
-  dy = ((dy + 540) % 360) - 180;
-  const tx = Math.max(-1, Math.min(1, dy / YAW_RANGE));
-  const ty = Math.max(-1, Math.min(1, -(pitch - pitch0) / PITCH_RANGE));
+  const tx = Math.max(-1, Math.min(1, wrap(yaw - yaw0) / yawRange));
+  const ty = Math.max(-1, Math.min(1, -(pitch - pitch0) / pitchRange));
   aimX += (tx - aimX) * 0.6; // light smoothing
   aimY += (ty - aimY) * 0.6;
 }
 
-function recenter() { yaw0 = yaw; pitch0 = pitch; }
+function recenter() { yaw0 = yaw; pitch0 = pitch; aimX = aimY = 0; }
+
+function startCalibration() {
+  calibStep = 0; cornerTL = null;
+  send({ t: 'calib', step: 0 });
+  showMsg('Aim at the TOP-LEFT corner of the laptop, then tap FIRE', 60000);
+}
+
+// Called instead of shooting while calibrating.
+function captureCorner() {
+  if (!haveOrientation) return showMsg('No motion data yet — hold on…');
+  if (calibStep === 0) {
+    cornerTL = { yaw, pitch };
+    calibStep = 1;
+    send({ t: 'calib', step: 1 });
+    showMsg('Now the BOTTOM-RIGHT corner, then tap FIRE', 60000);
+    buzz(30);
+    return;
+  }
+  const dYaw = wrap(yaw - cornerTL.yaw);       // left → right
+  const dPitch = cornerTL.pitch - pitch;        // top → bottom
+  if (Math.abs(dYaw) < 4 || Math.abs(dPitch) < 2) {
+    showMsg('Corners too close together — let’s try again', 2500);
+    return setTimeout(startCalibration, 1200);
+  }
+  yawRange = dYaw / 2;
+  pitchRange = dPitch / 2;
+  yaw0 = cornerTL.yaw + dYaw / 2;
+  pitch0 = cornerTL.pitch - dPitch / 2;
+  aimX = aimY = 0;
+  calibStep = 2;
+  send({ t: 'calib', step: 2 });
+  showMsg('Calibrated! Pull the trigger to play');
+  buzz([30, 40, 30]);
+}
 
 let lastSent = 0;
 function sendLoop(t) {
-  if (haveOrientation && t - lastSent > 15) {
+  if (haveOrientation && calibStep === 2 && t - lastSent > 15) {
     lastSent = t;
     send({ t: 'aim', x: +aimX.toFixed(4), y: +aimY.toFixed(4) });
   }
@@ -105,6 +142,7 @@ function connect() {
   ws.onopen = () => {
     $('status').textContent = 'connected';
     send({ t: 'hello', role: 'gun', name: $('nameInput').value.trim() || 'Player' });
+    if (calibStep < 2) send({ t: 'calib', step: calibStep });
   };
   ws.onclose = () => { $('status').textContent = 'reconnecting…'; setTimeout(connect, 1000); };
   ws.onmessage = ev => {
@@ -140,7 +178,7 @@ function renderAmmo() {
   }
 }
 let msgTimer;
-function showMsg(t) { $('msg').textContent = t; clearTimeout(msgTimer); msgTimer = setTimeout(() => $('msg').textContent = '', 1500); }
+function showMsg(t, ms = 1500) { $('msg').textContent = t; clearTimeout(msgTimer); msgTimer = setTimeout(() => $('msg').textContent = '', ms); }
 function flash(c) { const f = $('flash'); f.style.background = c; f.style.transition = 'none'; f.style.opacity = .35; requestAnimationFrame(() => { f.style.transition = 'opacity .3s'; f.style.opacity = 0; }); }
 function buzz(p) { if (navigator.vibrate) navigator.vibrate(p); }
 
@@ -160,6 +198,7 @@ function bang() {
 function fire(e) {
   e.preventDefault();
   $('fire').classList.add('down');
+  if (calibStep < 2) return captureCorner();
   send({ t: 'fire' });
   if (ammo > 0) { bang(); buzz(25); }
 }
@@ -168,7 +207,8 @@ $('fire').addEventListener('mousedown', fire);
 const up = () => $('fire').classList.remove('down');
 $('fire').addEventListener('touchend', up);
 $('fire').addEventListener('mouseup', up);
-$('center').onclick = () => { recenter(); showMsg('Centered'); };
+$('center').onclick = () => { if (calibStep === 2) { recenter(); showMsg('Centered'); } };
+$('calib').onclick = startCalibration;
 $('reload').onclick = () => send({ t: 'reload' });
 
 // shake / flick to reload
@@ -209,6 +249,7 @@ $('armBtn').onclick = async () => {
   $('arm').style.display = 'none';
   renderAmmo();
   connect();
+  startCalibration();
   requestAnimationFrame(sendLoop);
 };
 </script>
