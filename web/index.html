@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Grip Sense Web</title>
+<style>
+  :root { --bg:#fff; --fg:#111; --muted:#666; --card:#f2f2f5; --accent:#ff9500; --ok:#2a9d4b; --bad:#d33; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111; --fg:#eee; --muted:#999; --card:#1e1e22; } }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:16px; font:16px -apple-system, system-ui, sans-serif; background:var(--bg); color:var(--fg); -webkit-user-select:none; user-select:none; }
+  h1 { margin:0 0 4px; font-size:28px; }
+  .muted { color:var(--muted); font-size:13px; }
+  button { font:inherit; font-weight:600; padding:12px 14px; border:0; border-radius:12px; background:var(--accent); color:#000; flex:1; }
+  button.secondary { background:var(--card); color:var(--fg); }
+  button:disabled { opacity:.4; }
+  .row { display:flex; gap:10px; margin:12px 0; }
+  .card { background:var(--card); border-radius:14px; padding:12px; margin:12px 0; }
+  .num { font-size:22px; font-variant-numeric:tabular-nums; }
+  canvas { width:100%; height:170px; display:block; }
+  .meter { height:24px; border-radius:12px; background:var(--bg); overflow:hidden; }
+  .meter > div { height:100%; width:0; background:var(--accent); transition:width .1s linear; }
+  select { font:inherit; padding:8px; border-radius:10px; }
+  #haptic { position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<h1>Grip Sense</h1>
+<div class="muted" id="mode">Tap Start, hold the phone lightly, then squeeze hard. If the graph drops when you squeeze, it works.</div>
+
+<!-- iOS 18+ gives a haptic tick when a switch toggles; we toggle it rapidly to make a buzz -->
+<input type="checkbox" switch id="haptic"><label for="haptic" id="hapticLabel"></label>
+
+<div class="row">
+  <button id="start">Start</button>
+  <button id="stop" class="secondary" disabled>Stop</button>
+</div>
+
+<div class="row">
+  <label class="muted" style="flex:1">Sensor
+    <select id="channel"><option value="accel">Accel</option><option value="gyro">Gyro</option></select>
+  </label>
+  <div style="flex:1"><div class="muted">Accel RMS</div><div class="num" id="accel">–</div></div>
+  <div style="flex:1"><div class="muted">Gyro RMS</div><div class="num" id="gyro">–</div></div>
+</div>
+<div class="muted" id="rate">Sensor rate: –</div>
+
+<div class="card"><canvas id="chart"></canvas></div>
+
+<div class="card">
+  <div class="num" id="gripText">Grip: calibrate first</div>
+  <div class="meter"><div id="gripBar"></div></div>
+</div>
+
+<div class="row">
+  <button id="calLoose" class="secondary" disabled>Calibrate loose</button>
+  <button id="calSqueeze" class="secondary" disabled>Calibrate squeeze</button>
+</div>
+<div class="muted" id="status"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const WINDOW_MS = 400, HISTORY = 300;
+const canVibrate = typeof navigator.vibrate === 'function';
+$('mode').textContent = canVibrate
+  ? 'Android mode: continuous vibration. Tap Start, hold lightly, then squeeze hard.'
+  : 'iPhone mode (experimental): rapid haptic ticks. Tap Start, hold lightly, then squeeze hard.';
+
+let running = false, buzzTimer = null, tickTimer = null;
+let channel = 'accel', history = [], loose = null, squeeze = null, calSamples = null;
+const st = { accel:{ mean:[0,0,0], e:[] }, gyro:{ mean:[0,0,0], e:[] } };
+let evCount = 0, rateT0 = performance.now();
+
+// ---- Vibration ----
+function startBuzz() {
+  if (canVibrate) {
+    navigator.vibrate(10000);
+    buzzTimer = setInterval(() => navigator.vibrate(10000), 9000);
+  } else {
+    const label = $('hapticLabel');
+    tickTimer = setInterval(() => label.click(), 35);
+  }
+}
+function stopBuzz() {
+  clearInterval(buzzTimer); clearInterval(tickTimer);
+  if (canVibrate) navigator.vibrate(0);
+}
+
+// ---- Sensors ----
+function ingest(kind, v, t) {
+  const s = st[kind];
+  let e = 0;
+  for (let i = 0; i < 3; i++) {
+    s.mean[i] += (v[i] - s.mean[i]) * 0.05;        // slow mean = gravity + hand drift
+    const d = v[i] - s.mean[i]; e += d * d;         // what's left = vibration
+  }
+  s.e.push([t, e]);
+  while (s.e.length && t - s.e[0][0] > WINDOW_MS) s.e.shift();
+  const rms = Math.sqrt(s.e.reduce((a, x) => a + x[1], 0) / s.e.length);
+  $(kind).textContent = rms.toFixed(4);
+  if (kind !== channel) return;
+  history.push(rms); if (history.length > HISTORY) history.shift();
+  if (calSamples) calSamples.push(rms);
+  if (loose != null && squeeze != null && loose > squeeze) {
+    const g = Math.min(Math.max((loose - rms) / (loose - squeeze), 0), 1);
+    $('gripText').textContent = `Grip: ${Math.round(g * 100)}%`;
+    $('gripBar').style.width = `${g * 100}%`;
+  }
+}
+function onMotion(ev) {
+  const t = performance.now();
+  const a = ev.acceleration?.x != null ? ev.acceleration : ev.accelerationIncludingGravity;
+  if (a?.x != null) ingest('accel', [a.x, a.y, a.z], t);
+  const r = ev.rotationRate;
+  if (r?.alpha != null) ingest('gyro', [r.alpha, r.beta, r.gamma], t);
+  evCount++;
+  if (t - rateT0 > 1000) { $('rate').textContent = `Sensor rate: ${Math.round(evCount * 1000 / (t - rateT0))} Hz`; evCount = 0; rateT0 = t; }
+}
+
+// ---- Chart ----
+function draw() {
+  const c = $('chart'), dpr = devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  if (c.width !== w * dpr) { c.width = w * dpr; c.height = h * dpr; }
+  const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const vals = history.concat([loose, squeeze].filter(x => x != null));
+  const max = Math.max(...vals, 1e-6) * 1.1;
+  const y = v => h - (v / max) * h;
+  const line = (v, color) => { g.strokeStyle = color; g.setLineDash([5, 5]); g.beginPath(); g.moveTo(0, y(v)); g.lineTo(w, y(v)); g.stroke(); g.setLineDash([]); };
+  if (loose != null) line(loose, getComputedStyle(document.body).getPropertyValue('--ok'));
+  if (squeeze != null) line(squeeze, getComputedStyle(document.body).getPropertyValue('--bad'));
+  g.strokeStyle = getComputedStyle(document.body).getPropertyValue('--accent'); g.lineWidth = 2; g.beginPath();
+  history.forEach((v, i) => { const x = i / (HISTORY - 1) * w; i ? g.lineTo(x, y(v)) : g.moveTo(x, y(v)); });
+  g.stroke();
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+// ---- Controls ----
+$('start').onclick = async () => {
+  if (typeof DeviceMotionEvent?.requestPermission === 'function') {
+    try {
+      if (await DeviceMotionEvent.requestPermission() !== 'granted') { $('status').textContent = 'Motion permission denied. Reload and allow it.'; return; }
+    } catch (e) { $('status').textContent = 'Motion permission error: ' + e.message; return; }
+  }
+  window.addEventListener('devicemotion', onMotion);
+  startBuzz(); running = true;
+  $('start').disabled = true; $('stop').disabled = false;
+  $('calLoose').disabled = $('calSqueeze').disabled = false;
+  setTimeout(() => { if (!evCount && running) $('status').textContent = 'No sensor data. This page must be opened over https on a phone.'; }, 1500);
+};
+$('stop').onclick = () => {
+  stopBuzz(); running = false;
+  window.removeEventListener('devicemotion', onMotion);
+  $('start').disabled = false; $('stop').disabled = true;
+  $('calLoose').disabled = $('calSqueeze').disabled = true;
+};
+$('channel').onchange = e => { channel = e.target.value; history = []; resetCal(); };
+function resetCal() { loose = squeeze = null; $('gripText').textContent = 'Grip: calibrate first'; $('gripBar').style.width = 0; }
+function calibrate(which) {
+  calSamples = [];
+  $('status').textContent = which === 'loose' ? 'Hold the phone lightly…' : 'Squeeze as hard as you can…';
+  $('calLoose').disabled = $('calSqueeze').disabled = true;
+  setTimeout(() => {
+    const s = calSamples.slice(Math.floor(calSamples.length / 5)).sort((a, b) => a - b);
+    calSamples = null;
+    const med = s.length ? s[s.length >> 1] : null;
+    if (which === 'loose') loose = med; else squeeze = med;
+    $('calLoose').disabled = $('calSqueeze').disabled = !running;
+    if (loose != null && squeeze != null) {
+      $('status').textContent = loose > squeeze
+        ? `Calibrated. Squeezing cuts vibration by ${Math.round((1 - squeeze / loose) * 100)}%.`
+        : "Squeezing didn't lower the vibration. Try the other sensor.";
+    } else $('status').textContent = 'Now calibrate the other one.';
+  }, 2500);
+}
+$('calLoose').onclick = () => calibrate('loose');
+$('calSqueeze').onclick = () => calibrate('squeeze');
+document.addEventListener('visibilitychange', () => { if (document.hidden && running) $('stop').onclick(); });
+</script>
+</body>
+</html>
