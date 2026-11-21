@@ -1,0 +1,216 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Laptop Shooter — Gun</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; height: 100%; background: #0c0c10; color: #eee; font-family: -apple-system, system-ui, sans-serif; overflow: hidden; touch-action: none; }
+  #arm { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center; background: #0c0c10; z-index: 10; }
+  #arm h1 { margin: 0; font-size: 28px; letter-spacing: 1px; }
+  #arm p { margin: 0; color: #aaa; line-height: 1.4; max-width: 320px; }
+  #arm input { font-size: 20px; padding: 10px 14px; border-radius: 10px; border: 1px solid #444; background: #1a1a22; color: #fff; text-align: center; width: 220px; user-select: text; -webkit-user-select: text; }
+  #arm button { font-size: 22px; font-weight: 700; padding: 16px 40px; border-radius: 14px; border: 0; background: #ff3b3b; color: #fff; }
+  #ui { position: fixed; inset: 0; display: flex; flex-direction: column; padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom); }
+  #top { display: flex; align-items: center; justify-content: space-between; padding: 12px 4px; }
+  #name { font-weight: 700; font-size: 18px; }
+  #status { font-size: 13px; color: #aaa; }
+  #score { font-size: 28px; font-weight: 800; text-align: center; padding: 6px; }
+  #ammo { display: flex; justify-content: center; gap: 8px; padding: 8px; min-height: 40px; }
+  .bullet { width: 12px; height: 30px; border-radius: 6px 6px 2px 2px; background: linear-gradient(#ffd36b, #b8862b); }
+  .bullet.empty { background: #2a2a33; }
+  #msg { text-align: center; color: #ffcc4d; font-weight: 700; min-height: 26px; font-size: 18px; }
+  #row { display: flex; gap: 10px; padding: 10px 0; }
+  #row button { flex: 1; font-size: 17px; font-weight: 600; padding: 16px 0; border-radius: 12px; border: 1px solid #333; background: #1b1b24; color: #ddd; }
+  #fire { flex: 1; margin: 6px 0 14px; border-radius: 28px; border: 0; background: radial-gradient(circle at 50% 40%, #ff5a5a, #b80f0f); color: #fff; font-size: 44px; font-weight: 900; letter-spacing: 4px; box-shadow: 0 8px 0 #6d0000; }
+  #fire.down { transform: translateY(6px); box-shadow: 0 2px 0 #6d0000; background: radial-gradient(circle at 50% 40%, #ff8a5a, #d01f0f); }
+  #flash { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s; }
+</style>
+</head>
+<body>
+<div id="arm">
+  <h1>🔫 LAPTOP SHOOTER</h1>
+  <p>Hold your phone like a remote — screen up, top edge pointing at the laptop.</p>
+  <input id="nameInput" maxlength="14" placeholder="Your name">
+  <button id="armBtn">ARM</button>
+  <p id="armErr" style="color:#ff6b6b"></p>
+</div>
+
+<div id="ui">
+  <div id="top"><span id="name">—</span><span id="status">connecting…</span></div>
+  <div id="score">0</div>
+  <div id="ammo"></div>
+  <div id="msg"></div>
+  <div id="row">
+    <button id="center">🎯 Recenter</button>
+    <button id="reload">🔄 Reload</button>
+  </div>
+  <button id="fire">FIRE</button>
+</div>
+<div id="flash"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let ws, myColor = '#ff4d4d', ammo = 8, maxAmmo = 8;
+let audio;
+
+// ---------- orientation → aim ----------
+// Build the device→world rotation from deviceorientation Euler angles and
+// track the direction a point 45° between "top edge" and "back camera" faces.
+// That works whether the phone is held flat like a remote or upright like a camera.
+const D2R = Math.PI / 180;
+let yaw = 0, pitch = 0, yaw0 = null, pitch0 = 0, haveOrientation = false;
+const YAW_RANGE = 22, PITCH_RANGE = 14; // degrees from center to screen edge
+let aimX = 0, aimY = 0;
+
+function onOrientation(e) {
+  if (e.alpha == null) return;
+  const a = e.alpha * D2R, b = e.beta * D2R, g = e.gamma * D2R;
+  const cA = Math.cos(a), sA = Math.sin(a), cB = Math.cos(b), sB = Math.sin(b), cG = Math.cos(g), sG = Math.sin(g);
+  // columns 1 (device y) and 2 (device z) of R = Rz(a)Rx(b)Ry(g)
+  const yx = -cB * sA, yy = cA * cB, yz = sB;
+  const zx = cG * sA * sB + cA * sG, zy = sA * sG - cA * cG * sB, zz = cB * cG;
+  // forward = (y - z)/√2
+  const fx = (yx - zx) / Math.SQRT2, fy = (yy - zy) / Math.SQRT2, fz = (yz - zz) / Math.SQRT2;
+  yaw = Math.atan2(fx, fy) / D2R;
+  pitch = Math.asin(Math.max(-1, Math.min(1, fz))) / D2R;
+  haveOrientation = true;
+  if (yaw0 === null) recenter();
+  let dy = yaw - yaw0;
+  dy = ((dy + 540) % 360) - 180;
+  const tx = Math.max(-1, Math.min(1, dy / YAW_RANGE));
+  const ty = Math.max(-1, Math.min(1, -(pitch - pitch0) / PITCH_RANGE));
+  aimX += (tx - aimX) * 0.6; // light smoothing
+  aimY += (ty - aimY) * 0.6;
+}
+
+function recenter() { yaw0 = yaw; pitch0 = pitch; }
+
+let lastSent = 0;
+function sendLoop(t) {
+  if (haveOrientation && t - lastSent > 15) {
+    lastSent = t;
+    send({ t: 'aim', x: +aimX.toFixed(4), y: +aimY.toFixed(4) });
+  }
+  requestAnimationFrame(sendLoop);
+}
+
+// ---------- networking ----------
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+
+function connect() {
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+  ws.onopen = () => {
+    $('status').textContent = 'connected';
+    send({ t: 'hello', role: 'gun', name: $('nameInput').value.trim() || 'Player' });
+  };
+  ws.onclose = () => { $('status').textContent = 'reconnecting…'; setTimeout(connect, 1000); };
+  ws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    if (m.t === 'welcome') {
+      myColor = m.color;
+      $('name').style.color = myColor;
+      $('fire').style.background = `radial-gradient(circle at 50% 40%, ${myColor}, #300)`;
+      if (!m.screens) showMsg('Open the laptop page first!');
+    } else if (m.t === 'ammo') {
+      ammo = m.ammo; maxAmmo = m.max; renderAmmo();
+      if (m.reloading) showMsg('RELOADING…');
+    } else if (m.t === 'hit') {
+      $('score').textContent = m.score;
+      showMsg(m.pts > 0 ? `+${m.pts}${m.combo > 1 ? `  x${m.combo} COMBO` : ''}` : `${m.pts} 😬`);
+      flash(m.pts > 0 ? myColor : '#ff0000');
+      buzz(m.pts > 0 ? [30, 40, 60] : [200]);
+    } else if (m.t === 'score') {
+      $('score').textContent = m.score;
+    } else if (m.t === 'msg') {
+      showMsg(m.text);
+    }
+  };
+}
+
+// ---------- feedback ----------
+function renderAmmo() {
+  $('ammo').innerHTML = '';
+  for (let i = 0; i < maxAmmo; i++) {
+    const d = document.createElement('div');
+    d.className = 'bullet' + (i < ammo ? '' : ' empty');
+    $('ammo').appendChild(d);
+  }
+}
+let msgTimer;
+function showMsg(t) { $('msg').textContent = t; clearTimeout(msgTimer); msgTimer = setTimeout(() => $('msg').textContent = '', 1500); }
+function flash(c) { const f = $('flash'); f.style.background = c; f.style.transition = 'none'; f.style.opacity = .35; requestAnimationFrame(() => { f.style.transition = 'opacity .3s'; f.style.opacity = 0; }); }
+function buzz(p) { if (navigator.vibrate) navigator.vibrate(p); }
+
+function bang() {
+  if (!audio) return;
+  const t = audio.currentTime;
+  const len = audio.sampleRate * 0.15;
+  const buf = audio.createBuffer(1, len, audio.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+  const src = audio.createBufferSource(); src.buffer = buf;
+  const g = audio.createGain(); g.gain.value = 0.5;
+  src.connect(g).connect(audio.destination); src.start(t);
+}
+
+// ---------- controls ----------
+function fire(e) {
+  e.preventDefault();
+  $('fire').classList.add('down');
+  send({ t: 'fire' });
+  if (ammo > 0) { bang(); buzz(25); }
+}
+$('fire').addEventListener('touchstart', fire, { passive: false });
+$('fire').addEventListener('mousedown', fire);
+const up = () => $('fire').classList.remove('down');
+$('fire').addEventListener('touchend', up);
+$('fire').addEventListener('mouseup', up);
+$('center').onclick = () => { recenter(); showMsg('Centered'); };
+$('reload').onclick = () => send({ t: 'reload' });
+
+// shake / flick to reload
+window.addEventListener('devicemotion', e => {
+  const a = e.acceleration;
+  if (a && a.x != null && Math.hypot(a.x, a.y, a.z) > 28) {
+    const now = performance.now();
+    if (!window._lastShake || now - window._lastShake > 800) { window._lastShake = now; send({ t: 'reload' }); }
+  }
+});
+
+$('nameInput').value = localStorage.getItem('shooterName') || '';
+$('armBtn').onclick = async () => {
+  const name = $('nameInput').value.trim() || 'Player';
+  localStorage.setItem('shooterName', name);
+  $('name').textContent = name;
+  try {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+    audio.resume();
+  } catch {}
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) {
+      const r = await DeviceOrientationEvent.requestPermission();
+      if (r !== 'granted') throw new Error('Motion permission denied');
+    }
+    if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) {
+      await DeviceMotionEvent.requestPermission().catch(() => {});
+    }
+  } catch (err) {
+    $('armErr').textContent = err.message + ' — allow motion access and try again.';
+    return;
+  }
+  if (!window.isSecureContext) {
+    $('armErr').textContent = 'Open this page over https:// — motion sensors need it.';
+  }
+  window.addEventListener('deviceorientation', onOrientation);
+  setTimeout(() => { if (!haveOrientation) showMsg('No gyro data — is this a phone?'); }, 1500);
+  $('arm').style.display = 'none';
+  renderAmmo();
+  connect();
+  requestAnimationFrame(sendLoop);
+};
+</script>
+</body>
+</html>

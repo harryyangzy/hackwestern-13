@@ -1,0 +1,519 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Laptop Shooter</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #000; cursor: crosshair; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+// ======================================================================
+//  LAPTOP SHOOTER — this page is the target. Phones are the guns.
+// ======================================================================
+const cv = document.getElementById('c');
+const ctx = cv.getContext('2d');
+const crackCv = document.createElement('canvas');
+const cctx = crackCv.getContext('2d');
+let W, H, DPR;
+
+const ROUND_SECONDS = 60;
+const MAX_AMMO = 8;
+const RELOAD_MS = 1100;
+
+let gunUrl = '';
+let phase = 'lobby'; // lobby | countdown | play | over
+let phaseT = 0;      // seconds since phase began
+let timeLeft = ROUND_SECONDS;
+let shake = 0;
+const players = new Map();
+let targets = [], particles = [], popups = [], cracks = [];
+let spawnTimer = 0;
+
+// ---------------------------------------------------------------- sizing
+function resize() {
+  DPR = window.devicePixelRatio || 1;
+  W = innerWidth; H = innerHeight;
+  for (const c of [cv, crackCv]) { c.width = W * DPR; c.height = H * DPR; }
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  cctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  redrawCracks();
+}
+addEventListener('resize', resize);
+
+// ---------------------------------------------------------------- audio
+let audio;
+function initAudio() {
+  if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+  audio.resume();
+}
+addEventListener('pointerdown', initAudio);
+addEventListener('keydown', initAudio);
+
+function noise(dur, gain, filterFreq, type = 'lowpass') {
+  if (!audio || audio.state !== 'running') return;
+  const len = audio.sampleRate * dur;
+  const buf = audio.createBuffer(1, len, audio.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+  const src = audio.createBufferSource(); src.buffer = buf;
+  const f = audio.createBiquadFilter(); f.type = type; f.frequency.value = filterFreq;
+  const g = audio.createGain(); g.gain.value = gain;
+  src.connect(f).connect(g).connect(audio.destination); src.start();
+}
+function tone(freq, dur, gain = 0.15, type = 'square', slide = 0) {
+  if (!audio || audio.state !== 'running') return;
+  const t = audio.currentTime;
+  const o = audio.createOscillator(); o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(freq * slide, t + dur);
+  const g = audio.createGain(); g.gain.setValueAtTime(gain, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur);
+}
+const sfx = {
+  shot()   { noise(0.12, 0.6, 2500); noise(0.35, 0.25, 6000, 'highpass'); }, // bang + glass tinkle
+  hit()    { tone(880, 0.12, 0.12, 'square', 1.6); },
+  bad()    { tone(220, 0.4, 0.2, 'sawtooth', 0.5); },
+  empty()  { tone(1800, 0.03, 0.08, 'square'); },
+  reload() { tone(400, 0.05, 0.08); setTimeout(() => tone(600, 0.05, 0.08), 120); },
+  beep(hi) { tone(hi ? 1320 : 660, 0.18, 0.15, 'sine'); },
+};
+
+// ---------------------------------------------------------------- cracks
+function makeCrack(x, y) {
+  const rays = [];
+  const n = 8 + (Math.random() * 7 | 0);
+  for (let i = 0; i < n; i++) {
+    const ang = (i / n) * Math.PI * 2 + Math.random() * 0.5;
+    const len = 50 + Math.random() * 150;
+    const pts = [[x, y]];
+    let r = 0, a = ang;
+    while (r < len) {
+      r += 8 + Math.random() * 18;
+      a += (Math.random() - 0.5) * 0.35;
+      pts.push([x + Math.cos(ang) * r + Math.cos(a) * 3, y + Math.sin(ang) * r + Math.sin(a) * 3]);
+    }
+    rays.push(pts);
+  }
+  const rings = [12 + Math.random() * 8, 30 + Math.random() * 20];
+  return { x, y, rays, rings };
+}
+function drawCrack(c) {
+  cctx.save();
+  cctx.lineCap = 'round';
+  // radial fractures
+  for (const pts of c.rays) {
+    cctx.beginPath();
+    cctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) cctx.lineTo(pts[i][0], pts[i][1]);
+    cctx.strokeStyle = 'rgba(255,255,255,0.55)'; cctx.lineWidth = 1.2; cctx.stroke();
+    cctx.strokeStyle = 'rgba(0,0,0,0.5)'; cctx.lineWidth = 0.6;
+    cctx.translate(1, 1); cctx.stroke(); cctx.translate(-1, -1);
+  }
+  // concentric fractures
+  for (const rr of c.rings) {
+    cctx.beginPath();
+    c.rays.forEach((pts, i) => {
+      const a = Math.atan2(pts[1][1] - c.y, pts[1][0] - c.x);
+      const r = rr * (0.8 + Math.random() * 0.4);
+      const px = c.x + Math.cos(a) * r, py = c.y + Math.sin(a) * r;
+      i ? cctx.lineTo(px, py) : cctx.moveTo(px, py);
+    });
+    cctx.closePath();
+    cctx.strokeStyle = 'rgba(255,255,255,0.4)'; cctx.lineWidth = 1; cctx.stroke();
+  }
+  // impact hole
+  const g = cctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, 9);
+  g.addColorStop(0, 'rgba(0,0,0,0.95)'); g.addColorStop(0.6, 'rgba(30,30,30,0.9)'); g.addColorStop(1, 'rgba(255,255,255,0.4)');
+  cctx.fillStyle = g; cctx.beginPath(); cctx.arc(c.x, c.y, 8, 0, Math.PI * 2); cctx.fill();
+  cctx.restore();
+}
+function redrawCracks() { cctx.clearRect(0, 0, W, H); cracks.forEach(drawCrack); }
+function addCrack(x, y) { const c = makeCrack(x, y); cracks.push(c); drawCrack(c); }
+function clearCracks() { cracks = []; redrawCracks(); }
+
+// ---------------------------------------------------------------- targets
+const KINDS = {
+  bug:    { w: 1.0, r: 24, speed: 240, pts: 30,  life: 7 },
+  popup:  { w: 1.0, r: 0,  speed: 70,  pts: 10,  life: 9, rect: [190, 110] },
+  ball:   { w: 0.8, r: 36, speed: 150, pts: 20,  life: 8 },
+  star:   { w: 0.15, r: 20, speed: 420, pts: 100, life: 3.5 },
+  file:   { w: 0.35, r: 34, speed: 110, pts: -50, life: 7 },
+};
+const POPUP_TEXT = ['⚠️ VIRUS DETECTED', '🎉 YOU WON AN iPAD', 'Update available', 'Low battery 1%', 'Allow cookies?', 'Clippy: need help?'];
+
+function spawnTarget() {
+  const tot = Object.values(KINDS).reduce((s, k) => s + k.w, 0);
+  let r = Math.random() * tot, kind;
+  for (kind in KINDS) { r -= KINDS[kind].w; if (r <= 0) break; }
+  const k = KINDS[kind];
+  const speedScale = 1 + (1 - timeLeft / ROUND_SECONDS) * 0.6;
+  const ang = Math.random() * Math.PI * 2;
+  const margin = 120;
+  targets.push({
+    kind, born: 0, life: k.life, pts: k.pts,
+    x: margin + Math.random() * (W - 2 * margin),
+    y: margin + 60 + Math.random() * (H - 2 * margin - 60),
+    vx: Math.cos(ang) * k.speed * speedScale,
+    vy: Math.sin(ang) * k.speed * speedScale,
+    r: k.r, w: k.rect?.[0], h: k.rect?.[1],
+    text: POPUP_TEXT[Math.random() * POPUP_TEXT.length | 0],
+    spin: 0, wob: Math.random() * 10,
+  });
+}
+
+function hitTest(t, x, y) {
+  if (t.kind === 'popup') return Math.abs(x - t.x) < t.w / 2 && Math.abs(y - t.y) < t.h / 2;
+  return Math.hypot(x - t.x, y - t.y) < t.r * 1.15;
+}
+
+function updateTargets(dt) {
+  for (const t of targets) {
+    t.born += dt; t.spin += dt * 6; t.wob += dt;
+    if (t.kind === 'bug') { // zig-zag
+      const a = Math.atan2(t.vy, t.vx) + Math.sin(t.wob * 5) * dt * 3;
+      const s = Math.hypot(t.vx, t.vy);
+      t.vx = Math.cos(a) * s; t.vy = Math.sin(a) * s;
+    }
+    t.x += t.vx * dt; t.y += t.vy * dt;
+    const hw = t.w ? t.w / 2 : t.r, hh = t.h ? t.h / 2 : t.r;
+    if (t.x < hw) { t.x = hw; t.vx = Math.abs(t.vx); }
+    if (t.x > W - hw) { t.x = W - hw; t.vx = -Math.abs(t.vx); }
+    if (t.y < hh + 50) { t.y = hh + 50; t.vy = Math.abs(t.vy); }
+    if (t.y > H - hh) { t.y = H - hh; t.vy = -Math.abs(t.vy); }
+  }
+  targets = targets.filter(t => t.born < t.life);
+}
+
+function drawTarget(t) {
+  const fadeIn = Math.min(1, t.born * 4);
+  const fadeOut = Math.min(1, (t.life - t.born) * 2);
+  ctx.save();
+  ctx.globalAlpha = Math.min(fadeIn, fadeOut);
+  ctx.translate(t.x, t.y);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (t.kind === 'popup') {
+    const w = t.w, h = t.h;
+    ctx.fillStyle = '#ececec'; ctx.strokeStyle = '#888'; ctx.lineWidth = 1;
+    roundRect(-w / 2, -h / 2, w, h, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#d6d6d6'; roundRect(-w / 2, -h / 2, w, 22, 8); ctx.fill();
+    ['#ff5f57', '#febc2e', '#28c840'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(-w / 2 + 14 + i * 16, -h / 2 + 11, 5, 0, 7); ctx.fill(); });
+    ctx.fillStyle = '#222'; ctx.font = 'bold 15px -apple-system, system-ui';
+    ctx.fillText(t.text, 0, 8);
+    ctx.font = '11px -apple-system, system-ui'; ctx.fillStyle = '#666'; ctx.fillText('+10', 0, 34);
+  } else if (t.kind === 'ball') { // spinning beach ball
+    ctx.rotate(t.spin);
+    const cols = ['#ff3b30', '#ff9500', '#ffcc00', '#34c759', '#007aff', '#af52de'];
+    cols.forEach((c, i) => {
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(0, 0);
+      ctx.arc(0, 0, t.r, (i / 6) * Math.PI * 2, ((i + 1) / 6) * Math.PI * 2); ctx.fill();
+    });
+    ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(-t.r * .3, -t.r * .3, t.r * .35, 0, 7); ctx.fill();
+  } else if (t.kind === 'bug') {
+    ctx.rotate(Math.atan2(t.vy, t.vx) + Math.PI / 2);
+    ctx.font = `${t.r * 2}px serif`; ctx.fillText('🐛', 0, 0);
+  } else if (t.kind === 'star') {
+    ctx.rotate(t.spin * 0.5);
+    ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 25;
+    ctx.font = `${t.r * 2.2}px serif`; ctx.fillText('⭐', 0, 0);
+  } else if (t.kind === 'file') {
+    ctx.font = `${t.r * 1.8}px serif`; ctx.fillText('📄', 0, -6);
+    ctx.font = 'bold 11px -apple-system, system-ui'; ctx.fillStyle = '#ff6b6b';
+    ctx.fillText('unsaved_thesis.docx', 0, t.r + 2);
+    ctx.fillText("DON'T SHOOT", 0, t.r + 16);
+  }
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+// ---------------------------------------------------------------- particles
+function burst(x, y, color, n = 24) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, s = 100 + Math.random() * 400;
+    particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6 + Math.random() * 0.4, t: 0, color, size: 2 + Math.random() * 4 });
+  }
+}
+function floatText(x, y, text, color) { popups.push({ x, y, text, color, t: 0 }); }
+
+// ---------------------------------------------------------------- players
+function addPlayer(id, name, color) {
+  if (players.has(id)) return;
+  players.set(id, { id, name, color, ax: 0, ay: 0, x: W / 2, y: H / 2, score: 0, ammo: MAX_AMMO, reloadUntil: 0, combo: 0, lastHitAt: 0, recoil: 0, seen: performance.now() });
+}
+function toPhone(p, msg) { if (typeof p.id === 'number') send({ ...msg, to: p.id }); }
+function sendAmmo(p) { toPhone(p, { t: 'ammo', ammo: p.ammo, max: MAX_AMMO, reloading: p.reloadUntil > performance.now() }); }
+
+function startReload(p) {
+  if (p.reloadUntil > performance.now() || p.ammo === MAX_AMMO) return;
+  p.reloadUntil = performance.now() + RELOAD_MS;
+  sendAmmo(p);
+  sfx.reload();
+  setTimeout(() => { p.ammo = MAX_AMMO; p.reloadUntil = 0; sendAmmo(p); }, RELOAD_MS);
+}
+
+function fire(p) {
+  if (phase === 'lobby' || (phase === 'over' && phaseT > 2.5)) return startCountdown();
+  if (phase !== 'play') return;
+  if (p.reloadUntil > performance.now()) return;
+  if (p.ammo <= 0) { sfx.empty(); startReload(p); return; }
+
+  p.ammo--; p.recoil = 1;
+  const x = p.x, y = p.y;
+  addCrack(x, y);
+  sfx.shot();
+  shake = Math.min(18, shake + 9);
+  burst(x, y, '#ffffff', 10);
+
+  // topmost target first
+  let hit = null;
+  for (let i = targets.length - 1; i >= 0; i--) if (hitTest(targets[i], x, y)) { hit = targets[i]; targets.splice(i, 1); break; }
+
+  if (hit) {
+    let pts = hit.pts;
+    if (pts > 0) {
+      const now = performance.now();
+      p.combo = now - p.lastHitAt < 1500 ? p.combo + 1 : 1;
+      p.lastHitAt = now;
+      pts *= Math.min(p.combo, 5);
+      sfx.hit();
+      burst(hit.x, hit.y, p.color, 30);
+      floatText(hit.x, hit.y, `+${pts}${p.combo > 1 ? ` x${Math.min(p.combo, 5)}` : ''}`, p.color);
+    } else {
+      p.combo = 0;
+      sfx.bad();
+      burst(hit.x, hit.y, '#ff0000', 40);
+      floatText(hit.x, hit.y, `${pts} YOUR THESIS!`, '#ff3b3b');
+      shake = 30;
+    }
+    p.score += pts;
+    toPhone(p, { t: 'hit', pts, combo: Math.min(p.combo, 5), score: p.score });
+  } else {
+    p.combo = 0;
+  }
+  if (p.ammo === 0) startReload(p); else sendAmmo(p);
+}
+
+// ---------------------------------------------------------------- phases
+function setPhase(ph) { phase = ph; phaseT = 0; }
+let lastBeep = -1;
+function startCountdown() {
+  if (phase === 'countdown' || phase === 'play') return;
+  targets = []; particles = []; popups = [];
+  clearCracks();
+  for (const p of players.values()) {
+    p.score = 0; p.ammo = MAX_AMMO; p.combo = 0; p.reloadUntil = 0;
+    sendAmmo(p); toPhone(p, { t: 'score', score: 0 }); toPhone(p, { t: 'msg', text: 'GET READY' });
+  }
+  timeLeft = ROUND_SECONDS; lastBeep = -1;
+  setPhase('countdown');
+}
+
+function update(dt) {
+  phaseT += dt;
+  if (phase === 'countdown') {
+    const n = 3 - Math.floor(phaseT);
+    if (n !== lastBeep && n > 0) { lastBeep = n; sfx.beep(false); }
+    if (phaseT >= 3) { sfx.beep(true); setPhase('play'); spawnTimer = 0; for (let i = 0; i < 3; i++) spawnTarget(); }
+  } else if (phase === 'play') {
+    timeLeft -= dt;
+    spawnTimer -= dt;
+    const interval = 1.1 - (1 - timeLeft / ROUND_SECONDS) * 0.6;
+    if (spawnTimer <= 0 && targets.length < 14) { spawnTarget(); spawnTimer = interval; }
+    if (timeLeft <= 0) {
+      timeLeft = 0; setPhase('over'); targets = [];
+      const ranked = [...players.values()].sort((a, b) => b.score - a.score);
+      ranked.forEach((p, i) => toPhone(p, { t: 'msg', text: i === 0 && ranked.length > 1 ? '🏆 YOU WIN!' : `Final: ${p.score}` }));
+      tone(523, 0.2, 0.15, 'triangle'); setTimeout(() => tone(659, 0.2, 0.15, 'triangle'), 200); setTimeout(() => tone(784, 0.4, 0.15, 'triangle'), 400);
+    }
+  }
+  updateTargets(phase === 'play' ? dt : 0);
+
+  for (const p of players.values()) {
+    const tx = W / 2 + p.ax * W / 2, ty = H / 2 + p.ay * H / 2;
+    p.x += (tx - p.x) * Math.min(1, dt * 25);
+    p.y += (ty - p.y) * Math.min(1, dt * 25);
+    p.recoil = Math.max(0, p.recoil - dt * 6);
+  }
+  for (const q of particles) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 600 * dt; q.vx *= 0.98; }
+  particles = particles.filter(q => q.t < q.life);
+  for (const q of popups) { q.t += dt; q.y -= 60 * dt; }
+  popups = popups.filter(q => q.t < 1.2);
+  shake *= Math.pow(0.001, dt);
+}
+
+// ---------------------------------------------------------------- drawing
+function drawBackground() {
+  const g = ctx.createLinearGradient(0, 0, W, H);
+  g.addColorStop(0, '#1d2b64'); g.addColorStop(1, '#3a1c71');
+  ctx.fillStyle = g; ctx.fillRect(-50, -50, W + 100, H + 100);
+  // fake desktop menu bar
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-50, -50, W + 100, 50 + 26);
+  ctx.fillStyle = '#fff'; ctx.font = '600 13px -apple-system, system-ui'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText('  Laptop Shooter    File    Edit    Pain    Window    Help', 6, 13);
+  ctx.textAlign = 'right';
+  ctx.fillText(`screen integrity ${Math.max(0, 100 - cracks.length)}%  🔋`, W - 12, 13);
+}
+
+function drawCrosshair(p) {
+  const r = 22 + p.recoil * 10;
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.strokeStyle = p.color; ctx.lineWidth = 3;
+  ctx.shadowColor = p.color; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.stroke();
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    ctx.beginPath(); ctx.moveTo(dx * (r - 8), dy * (r - 8)); ctx.lineTo(dx * (r + 10), dy * (r + 10)); ctx.stroke();
+  }
+  ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, 7); ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.font = 'bold 13px -apple-system, system-ui'; ctx.textAlign = 'center';
+  ctx.fillText(p.name, 0, -r - 16);
+  // ammo pips
+  const reloading = p.reloadUntil > performance.now();
+  for (let i = 0; i < MAX_AMMO; i++) {
+    ctx.fillStyle = i < p.ammo && !reloading ? p.color : 'rgba(255,255,255,.2)';
+    ctx.fillRect(-MAX_AMMO * 4 + i * 8, r + 10, 5, 8);
+  }
+  if (reloading) { ctx.fillStyle = '#fff'; ctx.font = '11px -apple-system, system-ui'; ctx.fillText('RELOADING', 0, r + 32); }
+  ctx.restore();
+}
+
+function centerText(text, y, size, color = '#fff', weight = 800) {
+  ctx.font = `${weight} ${size}px -apple-system, system-ui`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillText(text, W / 2 + 3, y + 3);
+  ctx.fillStyle = color; ctx.fillText(text, W / 2, y);
+}
+
+function drawHUD() {
+  const list = [...players.values()].sort((a, b) => b.score - a.score);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  list.forEach((p, i) => {
+    ctx.font = '800 20px -apple-system, system-ui';
+    ctx.fillStyle = p.color; ctx.fillText(`${p.name}  ${p.score}`, 18, 42 + i * 28);
+  });
+  if (phase === 'play') {
+    ctx.textAlign = 'center';
+    ctx.font = '800 36px -apple-system, system-ui';
+    ctx.fillStyle = timeLeft < 10 ? '#ff4d4d' : '#fff';
+    ctx.fillText(Math.ceil(timeLeft), W / 2, 36);
+  }
+}
+
+function drawOverlay() {
+  if (phase === 'lobby') {
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, 0, W, H);
+    centerText('🔫 SHOOT YOUR LAPTOP', H * 0.24, Math.min(72, W / 12));
+    centerText('On your phone (same Wi-Fi), open:', H * 0.38, 22, '#bbb', 500);
+    centerText(gunUrl || '…', H * 0.45, Math.min(40, W / 22), '#ffd84d');
+    centerText('Tap “Show details → visit this website” on the certificate warning.', H * 0.51, 16, '#888', 400);
+    const n = [...players.values()].filter(p => p.id !== 'mouse').length;
+    centerText(n ? `${n} gun${n > 1 ? 's' : ''} connected — pull the trigger to start` : 'Waiting for guns… (or click here to play with the mouse)', H * 0.64, 26, n ? '#7dff4d' : '#fff', 700);
+    centerText('Shoot 🐛 bugs, 🌈 beach balls, popups & ⭐ stars.  Don’t shoot your 📄 unsaved thesis.', H * 0.74, 18, '#ccc', 500);
+    centerText('Point at the middle of the screen & hit Recenter on your phone. Shake the phone to reload.', H * 0.79, 16, '#999', 400);
+    if (!audio || audio.state !== 'running') centerText('🔇 click anywhere on this page to enable sound', H * 0.9, 15, '#ff9f4d', 500);
+  } else if (phase === 'countdown') {
+    const n = 3 - Math.floor(phaseT);
+    const f = phaseT % 1;
+    ctx.save(); ctx.globalAlpha = 1 - f * 0.7;
+    centerText(String(n), H / 2, 180 + f * 80);
+    ctx.restore();
+  } else if (phase === 'over') {
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 0, W, H);
+    centerText("TIME'S UP", H * 0.2, 80);
+    centerText(`Your laptop took ${cracks.length} bullets.`, H * 0.3, 24, '#bbb', 500);
+    const list = [...players.values()].sort((a, b) => b.score - a.score);
+    list.forEach((p, i) => centerText(`${i === 0 ? '🏆 ' : ''}${p.name} — ${p.score}`, H * 0.42 + i * 52, 40, p.color));
+    if (phaseT > 2.5) centerText('Pull the trigger to play again', H * 0.88, 24, '#fff', 600);
+  }
+}
+
+function draw() {
+  ctx.save();
+  if (shake > 0.5) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+  drawBackground();
+  targets.forEach(drawTarget);
+  ctx.drawImage(crackCv, 0, 0, W, H);
+  for (const q of particles) {
+    ctx.globalAlpha = 1 - q.t / q.life; ctx.fillStyle = q.color;
+    ctx.fillRect(q.x, q.y, q.size, q.size);
+  }
+  ctx.globalAlpha = 1;
+  for (const q of popups) {
+    ctx.globalAlpha = 1 - q.t / 1.2;
+    ctx.font = '900 28px -apple-system, system-ui'; ctx.textAlign = 'center'; ctx.fillStyle = q.color;
+    ctx.fillText(q.text, q.x, q.y);
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  drawHUD();
+  drawOverlay();
+  for (const p of players.values()) if (p.id !== 'mouse' || mouseActive) drawCrosshair(p);
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  update(dt); draw();
+  requestAnimationFrame(loop);
+}
+
+// ---------------------------------------------------------------- mouse player (for testing without a phone)
+let mouseActive = false;
+function mousePlayer() {
+  if (!players.has('mouse')) addPlayer('mouse', 'Mouse', '#ffffff');
+  mouseActive = true;
+  return players.get('mouse');
+}
+addEventListener('mousemove', e => {
+  if (!mouseActive) return;
+  const p = players.get('mouse');
+  p.ax = e.clientX / W * 2 - 1; p.ay = e.clientY / H * 2 - 1;
+});
+addEventListener('mousedown', e => {
+  const p = mousePlayer();
+  p.ax = e.clientX / W * 2 - 1; p.ay = e.clientY / H * 2 - 1;
+  p.x = e.clientX; p.y = e.clientY;
+  fire(p);
+});
+addEventListener('keydown', e => {
+  if (e.key === 'r' && players.has('mouse')) startReload(players.get('mouse'));
+  if (e.key === 'f') document.documentElement.requestFullscreen?.();
+});
+
+// ---------------------------------------------------------------- networking
+let ws;
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+function connect() {
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws');
+  ws.onopen = () => send({ t: 'hello', role: 'screen' });
+  ws.onclose = () => setTimeout(connect, 1000);
+  ws.onmessage = ev => {
+    const m = JSON.parse(ev.data);
+    if (m.t === 'info') gunUrl = m.gunUrl;
+    else if (m.t === 'join') { addPlayer(m.id, m.name, m.color); const p = players.get(m.id); sendAmmo(p); toPhone(p, { t: 'score', score: p.score }); sfx.reload(); }
+    else if (m.t === 'leave') players.delete(m.id);
+    else {
+      const p = players.get(m.id);
+      if (!p) return;
+      if (m.t === 'aim') { p.ax = m.x; p.ay = m.y; }
+      else if (m.t === 'fire') fire(p);
+      else if (m.t === 'reload') startReload(p);
+    }
+  };
+}
+
+resize();
+connect();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
