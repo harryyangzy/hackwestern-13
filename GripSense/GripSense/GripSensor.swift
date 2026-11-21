@@ -21,6 +21,11 @@ final class GripSensor: ObservableObject {
     @Published var channel: Channel = .accel { didSet { history.removeAll() } }
     @Published var vibrating = false
     @Published var intensity: Float = 1.0 { didSet { updateIntensity() } }
+    @Published var sharpness: Float = 0.5 { didSet { updateIntensity() } }
+    /// Pulsed: vibration switches on/off at `pulseHz`, and we only measure the part of the
+    /// sensor energy that follows that rhythm (lock-in detection), which rejects hand motion.
+    @Published var pulsed = true { didSet { history.removeAll(); resetCalibration(); if vibrating { startVibration() } } }
+    @Published var signalLevel: Double = 0          // what the grip estimate is computed from
 
     // Calibration
     @Published var looseLevel: Double?
@@ -40,6 +45,9 @@ final class GripSensor: ObservableObject {
     private var accelEnergy: [Double] = []
     private var gyroEnergy: [Double] = []
     private var calibrationSamples: [Double] = []
+    private let pulseHz = 5.0
+    private let lockInSeconds = 1.0
+    private var lockIn: [(t: Double, e: Double)] = []
 
     // MARK: - Lifecycle
 
@@ -66,30 +74,49 @@ final class GripSensor: ObservableObject {
         motion.gyroUpdateInterval = 1 / rate
         motion.startAccelerometerUpdates(to: .main) { [weak self] data, _ in
             guard let self, let a = data?.acceleration else { return }
-            self.ingest(SIMD3(a.x, a.y, a.z), mean: &self.accelMean, energy: &self.accelEnergy, isAccel: true)
+            self.ingest(SIMD3(a.x, a.y, a.z), t: data!.timestamp, mean: &self.accelMean, energy: &self.accelEnergy, isAccel: true)
         }
         motion.startGyroUpdates(to: .main) { [weak self] data, _ in
             guard let self, let r = data?.rotationRate else { return }
-            self.ingest(SIMD3(r.x, r.y, r.z), mean: &self.gyroMean, energy: &self.gyroEnergy, isAccel: false)
+            self.ingest(SIMD3(r.x, r.y, r.z), t: data!.timestamp, mean: &self.gyroMean, energy: &self.gyroEnergy, isAccel: false)
         }
     }
 
     /// High-pass each axis (subtract a slow running mean, removing gravity and hand drift),
     /// then keep a sliding window of squared magnitude to get vibration RMS.
-    private func ingest(_ v: SIMD3<Double>, mean: inout SIMD3<Double>, energy: inout [Double], isAccel: Bool) {
+    private func ingest(_ v: SIMD3<Double>, t: Double, mean: inout SIMD3<Double>, energy: inout [Double], isAccel: Bool) {
         mean += (v - mean) * 0.05
         let d = v - mean
-        energy.append((d * d).sum())
+        let e = (d * d).sum()
+        energy.append(e)
         if energy.count > window { energy.removeFirst(energy.count - window) }
         let rms = (energy.reduce(0, +) / Double(energy.count)).squareRoot()
 
         if isAccel { accelRMS = rms } else { gyroRMS = rms }
         guard (isAccel && channel == .accel) || (!isAccel && channel == .gyro) else { return }
 
-        history.append(rms)
+        let level = pulsed ? lockInLevel(t: t, e: e) : rms
+        signalLevel = level
+        history.append(level)
         if history.count > historyLength { history.removeFirst(history.count - historyLength) }
-        if calibrating != nil { calibrationSamples.append(rms) }
-        updateGrip(rms)
+        if calibrating != nil { calibrationSamples.append(level) }
+        updateGrip(level)
+    }
+
+    /// Amplitude of the energy signal at exactly the pulse frequency (phase-independent),
+    /// i.e. how much vibration energy appears when the motor is on vs off.
+    private func lockInLevel(t: Double, e: Double) -> Double {
+        lockIn.append((t, e))
+        while let first = lockIn.first, t - first.t > lockInSeconds { lockIn.removeFirst() }
+        guard lockIn.count > 10 else { return 0 }
+        var i = 0.0, q = 0.0, meanE = 0.0
+        for s in lockIn { meanE += s.e }
+        meanE /= Double(lockIn.count)
+        for s in lockIn {
+            let ph = 2 * Double.pi * pulseHz * s.t
+            i += (s.e - meanE) * cos(ph); q += (s.e - meanE) * sin(ph)
+        }
+        return (2 * (i * i + q * q).squareRoot() / Double(lockIn.count)).squareRoot()
     }
 
     private func updateGrip(_ rms: Double) {
@@ -159,17 +186,18 @@ final class GripSensor: ObservableObject {
         guard let engine else { return }
         do {
             try engine.start()
-            let event = CHHapticEvent(
-                eventType: .hapticContinuous,
-                parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 1),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5),
-                ],
-                relativeTime: 0,
-                duration: 10)
+            try? player?.stop(atTime: CHHapticTimeImmediate)
+            let params = [
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: 1),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5),
+            ]
+            let period = 1 / pulseHz
+            let event = CHHapticEvent(eventType: .hapticContinuous, parameters: params,
+                                      relativeTime: 0, duration: pulsed ? period / 2 : 10)
             let pattern = try CHHapticPattern(events: [event], parameters: [])
             let player = try engine.makeAdvancedPlayer(with: pattern)
             player.loopEnabled = true
+            if pulsed { player.loopEnd = period }
             try player.start(atTime: CHHapticTimeImmediate)
             self.player = player
             vibrating = true
@@ -186,7 +214,9 @@ final class GripSensor: ObservableObject {
     }
 
     private func updateIntensity() {
-        let p = CHHapticDynamicParameter(parameterID: .hapticIntensityControl, value: intensity, relativeTime: 0)
-        try? player?.sendParameters([p], atTime: CHHapticTimeImmediate)
+        let i = CHHapticDynamicParameter(parameterID: .hapticIntensityControl, value: intensity, relativeTime: 0)
+        // Sharpness control is additive (-1...1) on top of the event's 0.5.
+        let s = CHHapticDynamicParameter(parameterID: .hapticSharpnessControl, value: sharpness - 0.5, relativeTime: 0)
+        try? player?.sendParameters([i, s], atTime: CHHapticTimeImmediate)
     }
 }
