@@ -1,0 +1,26 @@
+.gt-card{background:#fffcf3ee;border:1px solid #afb5a5;border-radius:12px;box-shadow:0 8px 30px #263c3522;color:var(--ink)}
+#gt-hud{position:absolute;inset:0;pointer-events:none;z-index:4}
+#gt-hud[hidden],#gt-menu[hidden],#gt-open[hidden]{display:none}
+.gt-stats{position:absolute;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:18px;padding:8px 18px}
+.gt-stats div{display:flex;flex-direction:column;align-items:center;min-width:54px}
+.gt-stats small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.gt-stats b{font:600 22px var(--serif);font-variant-numeric:tabular-nums}
+.gt-stats b.low{color:var(--rust)}
+.gt-task{position:absolute;top:84px;left:50%;transform:translateX(-50%);padding:6px 14px;font:italic 15px var(--serif);white-space:nowrap}
+#gt-arrow{position:absolute;left:50%;top:50%;width:34px;height:34px;transition:opacity .3s}
+#gt-map{position:absolute;right:14px;top:14px;width:170px;height:170px;padding:6px}
+#gt-toast{position:absolute;left:50%;top:calc(50% + 60px);text-shadow:0 0 6px #fffcf3,0 0 3px #fffcf3;transform:translateX(-50%);font:600 17px var(--serif);color:var(--rust);opacity:0;transition:opacity .25s}
+#gt-toast.good{color:var(--green)}#gt-toast.show{opacity:1}
+.gt-pad{position:absolute;bottom:90px;left:0;right:0;display:none;justify-content:space-between;padding:0 16px;pointer-events:none}
+.gt-pad button{pointer-events:auto;width:64px;height:64px;border-radius:50%;background:#fffcf3cc;border:1px solid #afb5a5;font-size:22px;touch-action:none;user-select:none;-webkit-user-select:none}
+@media (pointer:coarse){.gt-pad{display:flex}}
+#gt-menu{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 28px));padding:22px 26px;z-index:6;text-align:center}
+#gt-menu h2{font:600 30px var(--serif);margin:0 0 8px}
+#gt-menu p{margin:0 0 10px;color:var(--muted)}
+#gt-menu .gt-keys{font-size:13px}
+#gt-menu kbd{font:12px var(--mono);border:1px solid var(--rule);border-radius:4px;padding:1px 5px;background:#fff;margin:0 1px}
+#gt-result:empty{display:none}#gt-result{color:var(--ink)!important;font:16px var(--serif)}
+#gt-start{margin-top:6px;background:var(--rust);color:#fff;border-radius:999px;padding:10px 26px;font-weight:600;font-size:15px}
+#gt-start:hover{filter:brightness(1.08)}
+.gt-x{position:absolute;top:8px;right:12px;font-size:22px;color:var(--muted)}
+#gt-open{position:absolute;top:14px;left:50%;transform:translateX(-50%);padding:8px 18px;font-weight:600;z-index:4}
