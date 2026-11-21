@@ -1,5 +1,6 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f8f5eb"><meta name="description" content="Turn a hand-drawn, register-built miniature of Amsterdam's Reguliersgracht and Keizersgracht. Explore its seasons, bridges and street life."><title>Pocket City</title>
+<!-- Gion Taxi. The city, its drawing engine and the street simulation are Pocket City by April Zhu (MIT licence, https://april-zhu.com/pocketcity). Map data © OpenStreetMap contributors (ODbL). -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f8f5eb"><meta name="description" content="Gion Taxi: drive a taxi through the lanes of Gion Shirakawa, Kyoto, alone or with a crew of phones."><title>Gion Taxi</title>
 <style>
 :root{--paper:#f6f3e9;--panel:#fffcf3;--ink:#263c35;--muted:#626c60;--rule:#cfcfc0;--rust:#ac4931;--green:#36594b;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}body{color:var(--ink);font:14px/1.4 var(--sans);background:var(--paper)}button,select,input{font:inherit;color:inherit}button,select{cursor:pointer}button{background:none;border:0}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--rust);outline-offset:3px}button:disabled{opacity:.35;cursor:default}svg{display:block}button svg,.tool svg,.symbol{width:17px;height:17px;flex:none}button{touch-action:manipulation}a{color:var(--green);text-underline-offset:2px}[hidden]{display:none!important}
@@ -42,7 +43,7 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid #afb5a5;border-
 </style></head><body>
 
 
-<header class="top"><div class="identity"><span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round"><g stroke="#507968" stroke-width="1.25"><path d="m2.7 28.8 11.5-5.4 12.3 2.7 10.6-4.4 8.2 10.6-12.6 7.2-12.3-2.7-10.2 4Z" fill="#a9ccaa"/><path d="m14.2 23.4 6.2 13.4 12.3 2.7-6.2-13.4Z" fill="#e9ddad"/><path d="m5.5 33.4 10.1-4.1 11.8 2.2 13.8-5.6" stroke="#6a9d95" stroke-width="2.3"/></g><g stroke="#774638" stroke-width="1.25"><path d="m24.8 30.9 8.9-4.8V13.8l-8.9 3.4Z" fill="#c98353"/><path d="m15.2 27.7 9.6 3.2V17.2l-2-.7v-2.3l-2-.7v-2.2l-2.7-.9v2.1l-1.9-.6v2.5l-1-.3Z" fill="#e8ac68"/><path d="m24.8 17.2 8.9-3.4-5.9-5.7-7 3.2 1 2.2 2 .7v2.3Z" fill="#985b49"/><path d="m11.6 32.8 8.9 3.6V17.7l-2.1-.8v-2.6l-2.2-.8v-2.7l-2.8-1.1v2.6l-2-.8v2.8l-1.8-.6v2.8l-1.4-.6v15.6Z" fill="#db7153"/><path d="m20.5 17.7 5.7-3-6-7.7-4 3.8v2.7l2.2.8v2.6Z" fill="#b35545"/><path d="m20.5 36.4 5.7-3.3V14.7l-5.7 3Z" fill="#a65548"/></g><g fill="#fceac8"><path d="m10.4 18.8 2.1.8v3.6l-2.1-.8Zm5 1.9 2.2.9v3.5l-2.2-.8Zm-5 4.4 2.1.8v3.6l-2.1-.8Z"/></g><path d="m15.4 33.9 2.2.8v-6.4l-2.2-.8Z" fill="#41584f"/><path d="m28.4 17 .1 3.3m2.6-4.6v3.2" stroke="#fcdfaa" stroke-width="1.65"/></svg></span><span class="wordmark">Pocket City</span></div><nav class="city-nav" aria-label="Place"><a aria-current="page" id="placeTab" href="#"></a></nav><div class="topnav"><div class="status" id="status"><i></i><span>Simulation live</span></div><button id="notesBtn" aria-label="Field notes" class="button" aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-2-5-3-9-2v15c4-1 7 0 9 2 2-2 5-3 9-2V4c-4-1-7 0-9 2v15"/></svg><span>Field notes</span></button></div></header>
+<header class="top"><div class="identity"><span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round"><g stroke="#507968" stroke-width="1.25"><path d="m2.7 28.8 11.5-5.4 12.3 2.7 10.6-4.4 8.2 10.6-12.6 7.2-12.3-2.7-10.2 4Z" fill="#a9ccaa"/><path d="m14.2 23.4 6.2 13.4 12.3 2.7-6.2-13.4Z" fill="#e9ddad"/><path d="m5.5 33.4 10.1-4.1 11.8 2.2 13.8-5.6" stroke="#6a9d95" stroke-width="2.3"/></g><g stroke="#774638" stroke-width="1.25"><path d="m24.8 30.9 8.9-4.8V13.8l-8.9 3.4Z" fill="#c98353"/><path d="m15.2 27.7 9.6 3.2V17.2l-2-.7v-2.3l-2-.7v-2.2l-2.7-.9v2.1l-1.9-.6v2.5l-1-.3Z" fill="#e8ac68"/><path d="m24.8 17.2 8.9-3.4-5.9-5.7-7 3.2 1 2.2 2 .7v2.3Z" fill="#985b49"/><path d="m11.6 32.8 8.9 3.6V17.7l-2.1-.8v-2.6l-2.2-.8v-2.7l-2.8-1.1v2.6l-2-.8v2.8l-1.8-.6v2.8l-1.4-.6v15.6Z" fill="#db7153"/><path d="m20.5 17.7 5.7-3-6-7.7-4 3.8v2.7l2.2.8v2.6Z" fill="#b35545"/><path d="m20.5 36.4 5.7-3.3V14.7l-5.7 3Z" fill="#a65548"/></g><g fill="#fceac8"><path d="m10.4 18.8 2.1.8v3.6l-2.1-.8Zm5 1.9 2.2.9v3.5l-2.2-.8Zm-5 4.4 2.1.8v3.6l-2.1-.8Z"/></g><path d="m15.4 33.9 2.2.8v-6.4l-2.2-.8Z" fill="#41584f"/><path d="m28.4 17 .1 3.3m2.6-4.6v3.2" stroke="#fcdfaa" stroke-width="1.65"/></svg></span><span class="wordmark">Gion Taxi</span></div><nav class="city-nav" aria-label="Place"><a aria-current="page" id="placeTab" href="#"></a></nav><div class="topnav"><div class="status" id="status"><i></i><span>Simulation live</span></div><button id="notesBtn" aria-label="Field notes" class="button" aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-2-5-3-9-2v15c4-1 7 0 9 2 2-2 5-3 9-2V4c-4-1-7 0-9 2v15"/></svg><span>Field notes</span></button></div></header>
 <main class="workspace">
 <aside class="rail" aria-label="Street atlas controls"><section class="paper info"><div class="stamp-line"><span>The Netherlands</span><i class="flag" aria-hidden="true"></i></div><h1 id="cityName">Amsterdam</h1><p class="location">Reguliersgracht × Keizersgracht</p><div class="coords"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.2"/></svg> 52.36345° N &nbsp; 4.89598° E</div>
 <div class="season-box"><h2 class="subhead">Season</h2><div class="season-scroll"><div id="chips" class="chips" role="group" aria-label="Season"><button class="chip" data-s="spring"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10m0 6c-5 0-6-3-6-5 4 0 6 2 6 5m0-2c4 0 6-2 6-4-3 0-6 1-6 4"/><path d="M12 9c-5 1-7-3-4-4-1-3 3-5 4-2 2-3 5-1 4 2 3 1 1 5-4 4Z" fill="#e8c5b1"/></svg> Spring</button><button class="chip" data-s="summer"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.1" fill="#f3d492"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/></svg> Summer</button><button class="chip" data-s="autumn"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3C9 3 3 7 5 14c2 7 13 4 15-11Z" fill="#eac29b"/><path d="M3 21 15 9m-5 5v-4"/></svg> Autumn</button><button class="chip" data-s="winter"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M3.5 7l17 10m-17 0 17-10M9 4l3 2 3-2M9 20l3-2 3 2M4 10l3-1V6m10 12v-3l3-1M4 14l3 1v3M17 6v3l3 1"/></svg> Winter</button></div><div class="events"><div class="select-wrap"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4c5-4 8 4 14 0v10c-6 4-9-4-14 0"/></svg><select id="event" aria-label="Special scenes"><option value="">Special scenes</option><option value="kings">King’s Day</option><option value="frozen">Frozen canals</option></select><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></svg></div><button class="chip" id="snow" hidden>+ Snow</button></div></div><div class="note" id="note" aria-live="polite"></div></div></section>
@@ -1182,10 +1183,11 @@ function CITY_EXTRA(t) {
   return [];
 }
 
+/* <gion-taxi player.js> */
 
 /* ---------- Gion Taxi: the player's car, drawn by the render worker ----------
    Appended after the Gion landmarks. The page sends self.PLAYER with each frame ({x, y, h, v, tx, ty, mode});
-   we draw the player's taxi and the fare marker with the kit's own parts, and hand back the traffic near the car
+   we draw the player's taxi, the fare marker and the navigator's ping ({px, py, pc}) with the kit's own parts, and hand back the traffic near the car
    (self.NEAR) so the page can tell when the taxi bumps into a car, a bike or a person. */
 const GION_EXTRA = typeof CITY_EXTRA === 'function' ? CITY_EXTRA : null;
 let PLAYER_MESH = null;
@@ -1212,6 +1214,15 @@ function fareMarker(x, y, mode, t) {
   }
   return parts;
 }
+// the navigator's ping (crew play): a small ring and a hanging lantern in the navigator's colour, where they tapped the map
+function pingMarker(x, y, col, t) {
+  const far = [0, 1, 2, 3].map(k => [x + Math.cos(k * Math.PI / 2) * 1.6, y + Math.sin(k * Math.PI / 2) * 1.6])
+    .sort((a, b) => depthOf([...a, 0]) - depthOf([...b, 0]))[0];
+  const bob = Math.sin(t * 3.1) * .15;
+  return [{ fp: rect(far[0], far[1], .05, .05), h: .06, draw: () => shape(atZ(polygon(x, y, 1.6, 24), .04), col, 0) + shape(atZ(polygon(x, y, 1.15, 24), .05), '#fbefd5', 0) },
+    { fp: rect(x, y, .4, .4), h: 6, draw: () => { const z0 = 4.6 + bob, fp = rect(x, y, .5, .5), cap = rect(x, y, .58, .58);
+      return loft(atZ(fp, z0), atZ(fp, z0 + 1), () => col) + shape(atZ(cap, z0 + 1.02), '#3a2e26', .2) + shape(atZ(cap, z0 - .02), '#3a2e26', .2) } }];
+}
 CITY_EXTRA = function (t) {
   const out = GION_EXTRA ? [].concat(GION_EXTRA(t) || []) : [];
   const me = self.PLAYER;
@@ -1221,11 +1232,13 @@ CITY_EXTRA = function (t) {
   const car = carDraw({ p: [me.x, me.y], d: [Math.cos(me.h), Math.sin(me.h)], mesh: PLAYER_MESH, m: soft('#c8513a'), v: Math.abs(me.v) });
   out.push({ fp: car.fp, h: car.z1, svg: car.svg });
   if (me.tx != null) out.push(...fareMarker(me.tx, me.ty, me.mode, t));
+  if (me.px != null) out.push(...pingMarker(me.px, me.py, me.pc || '#4f6d8a', t));
   self.NEAR = TRAFFIC.to(t).filter(a => Math.hypot(a.p[0] - me.x, a.p[1] - me.y) < 14 && a.alpha > .5)
     .map(a => ({ k: a.kind, id: a.id, x: a.p[0], y: a.p[1], dx: a.d[0], dy: a.d[1], L: a.shape[0], W: a.shape[1] }));
   return out;
 };
 
+/* </gion-taxi player.js> */
 </script>
 <script type="text/plain" id="city">
 /* Pocket City engine for any place.
@@ -2291,7 +2304,7 @@ const link=(label,url)=>url?'<a href="'+esc(url)+'" target="_blank" rel="noopene
 
 /* ---------- the place ---------- */
 const size=Math.round(META.size),fmt=(v,p,n)=>Math.abs(v).toFixed(5)+'° '+(v>=0?p:n);
-document.title='Pocket City · '+(CITY.title||CITY.name);
+document.title='Gion Taxi · '+(CITY.title||CITY.name);
 $('cityName').textContent=CITY.name;$('placeTab').textContent=CITY.name;
 document.querySelector('.stamp-line span').textContent=CITY.region||'';
 const flag=document.querySelector('.flag');
@@ -2352,7 +2365,7 @@ document.querySelector('.foot > div:last-child').innerHTML=osm+(CITY.credits?' �
 const notes=(CITY.notes||[]).map(n=>'<dt>'+esc(n.title)+'</dt><dd>'+esc(n.text)+(n.links&&n.links.length?' '+n.links.map(l=>link(l.label,l.url)).join(' · '):'')+'</dd>').join('');
 document.querySelector('.dialog-body').innerHTML='<dl class="source-list">'+notes+
   '<dt>Map data</dt><dd>Footprints, heights where mapped, streets, trees and shop names come from the '+esc(META.osm_base?META.osm_base.slice(0,10):'')+' OpenStreetMap extract. The '+size+' m square is turned '+Math.round(META.rotation)+'° to follow the streets. Unmapped heights, façades, colours, street furniture, trips and weather are illustrative. '+osm+' · ODbL</dd>'+
-  '<dt>Drawing</dt><dd>Pocket City by April Zhu. Colorfigures builds on Tolga Cohce’s iso-figure.</dd></dl>';
+  '<dt>Drawing</dt><dd>City drawing engine by April Zhu (MIT licence). Colorfigures builds on Tolga Cohce’s iso-figure.</dd></dl>';
 
 /* ---------- interaction (the same as the Pocket City atlas) ---------- */
 let camera={...iso},goal={...iso},focus=null,revision=0;
@@ -2490,6 +2503,7 @@ function tick(now){
 selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 
 </script>
+<!-- <gion-taxi game> -->
 <style>
 .gt-card{background:#fffcf3ee;border:1px solid #afb5a5;border-radius:12px;box-shadow:0 8px 30px #263c3522;color:var(--ink)}
 #gt-hud{position:absolute;inset:0;pointer-events:none;z-index:4}
@@ -2517,16 +2531,191 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 #gt-start:hover{filter:brightness(1.08)}
 .gt-x{position:absolute;top:8px;right:12px;font-size:22px;color:var(--muted)}
 #gt-open{position:absolute;top:14px;left:50%;transform:translateX(-50%);padding:8px 18px;font-weight:600;z-index:4}
+/* Gion Taxi crew play: the lobby card, the countdown, the navigator's callout and the crew strip.
+   Same cards, inks and type as drive.css (Pocket City's :root tokens), nothing new in the palette. */
+.gt-ghost{margin:8px 0 0 8px;background:transparent;color:var(--ink);border:1px solid var(--rust);border-radius:999px;padding:9px 20px;font-weight:600;font-size:15px}
+.gt-ghost:hover{background:#ac49310f}
+#gt-menu .gt-mpnote{margin:10px 0 0;font-size:12px}
+#gt-menu .gt-mpnote kbd{font-size:11px}
+#gt-lobby[hidden],#gt-count[hidden],#gt-call[hidden],#gt-crew[hidden]{display:none}
+#gt-lobby{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(700px,calc(100% - 28px));max-height:calc(100% - 28px);overflow:auto;padding:20px 26px 16px;z-index:6}
+#gt-lobby h2{font:600 28px var(--serif);margin:0 0 2px;text-align:center}
+#gt-lobby h2 span{font:italic 400 19px var(--serif);color:var(--muted);margin-left:4px}
+.gt-lsub{margin:0 0 12px;text-align:center;color:var(--muted)}
+.gt-lgrid{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:start}
+.gt-qr{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+#gt-qr{width:188px;height:188px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:#fffcf3;display:flex;align-items:center;justify-content:center}
+#gt-qr svg{width:100%;height:100%;display:block}
+.gt-qrmsg{font:italic 14px var(--serif);color:var(--muted);padding:14px;text-align:center;margin:0}
+.gt-qr figcaption{display:flex;flex-direction:column;align-items:center;line-height:1.15}
+.gt-qr small,.gt-res small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+#gt-room{font:600 32px var(--serif);letter-spacing:.14em;color:var(--rust)}
+#gt-url{font:12px var(--mono);color:var(--ink);margin-top:2px}
+#gt-net{font:italic 12px var(--serif);color:var(--muted);margin-top:2px;text-align:center;max-width:200px}
+#gt-url{word-break:break-all;text-align:center;max-width:200px}
+#gt-lobby.public .gt-lanhelp{display:none}
+#gt-ip{font-size:12px;color:var(--muted);text-decoration:underline;margin-top:4px}
+#gt-seats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+#gt-seats li{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--rule);border-radius:10px;background:#fff9;--c:#afb5a5}
+#gt-seats li.empty{border-style:dashed;background:transparent;opacity:.75}
+#gt-seats li.off{opacity:.6}
+#gt-seats li>i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px #fffcf3,0 0 0 3px var(--c)}
+#gt-seats li.empty>i{background:transparent;box-shadow:0 0 0 1px var(--rule)}
+#gt-seats li>div{flex:1;min-width:0;display:flex;flex-direction:column}
+#gt-seats b{font:600 16px var(--serif)}
+#gt-seats small{color:var(--muted);font-size:12px}
+#gt-seats .st{font:italic 14px var(--serif);color:var(--muted);white-space:nowrap}
+#gt-seats li.ready .st{color:var(--green);font-style:normal;font-weight:600}
+#gt-seats li.ready .st::before{content:'✓ '}
+#gt-seats li button{width:28px;height:28px;border-radius:50%;color:var(--muted);font-size:16px;flex:none}
+#gt-seats li button:hover{background:#263c350d;color:var(--ink)}
+.gt-lnote{margin:10px 0 0;font:italic 14px var(--serif);color:var(--muted)}
+#gt-lstart{display:block;margin:14px auto 0;background:var(--rust);color:#fff;border-radius:999px;padding:10px 30px;font-weight:600;font-size:15px}
+#gt-lstart:disabled{background:#cfcfc0;color:#fffcf3;cursor:default}
+#gt-lstart:not(:disabled):hover{filter:brightness(1.08)}
+#gt-lobby .gt-lhelp{margin:10px 0 0;font-size:12px;color:var(--muted);text-align:center}
+#gt-lresult:empty{display:none}
+.gt-res{border:1px solid var(--rule);border-radius:10px;padding:10px 14px;margin:0 0 14px;background:#fff9;text-align:center}
+.gt-res>b{font:600 18px var(--serif)}
+.gt-stars{color:#c9932c;margin-left:8px;letter-spacing:.1em}
+.gt-resrow{display:flex;justify-content:center;gap:22px;margin:6px 0 4px}
+.gt-resrow div{display:flex;flex-direction:column;align-items:center}
+.gt-resrow b{font:600 21px var(--serif);font-variant-numeric:tabular-nums}
+.gt-res p{margin:2px 0 0;font:italic 14px var(--serif);color:var(--muted)}
+#gt-count{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);font:600 120px var(--serif);color:var(--ink);text-shadow:0 0 18px #fffcf3,0 0 6px #fffcf3;z-index:6;pointer-events:none}
+#gt-count.pop{animation:gt-pop .9s ease-out}
+@keyframes gt-pop{0%{opacity:0;transform:translate(-50%,-50%) scale(1.35)}25%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:.15}}
+#gt-call{position:absolute;top:124px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:6px 14px 6px 10px;font:600 17px var(--serif);white-space:nowrap}
+#gt-call i{width:10px;height:10px;border-radius:50%}
+#gt-call .gt-callicon{font-size:15px;color:var(--rust)}
+#gt-call.pop{animation:gt-callin .35s ease-out}
+@keyframes gt-callin{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
+#gt-crew{position:absolute;left:14px;bottom:14px;display:flex;flex-direction:column;gap:3px;padding:7px 12px;font-size:12px}
+#gt-crew span{display:flex;align-items:center;gap:7px;color:var(--ink)}
+#gt-crew span.off{color:var(--muted);text-decoration:line-through}
+#gt-crew i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+#gt-lobby.has-result .gt-lsub{display:none}
+#gt-lobby.has-result #gt-qr{width:150px;height:150px}
+#gt-lobby.has-result .gt-res{margin-bottom:10px}
+@media (max-width:620px){.gt-lgrid{grid-template-columns:1fr;justify-items:center}#gt-seats{width:100%}}
 </style>
+<script>
+/* Gion Taxi: a small QR code encoder for the crew lobby (byte mode, error correction level M, versions 1–6,
+   i.e. up to 106 bytes, which is plenty for a join URL). Follows ISO/IEC 18004; the structure mirrors
+   Project Nayuki's reference encoder (MIT). Usage: GTQR.svg(text, {dark, light}) → an <svg> string. */
+const GTQR = (() => {
+  const ECC = [-1, 10, 16, 26, 18, 24, 16];     // ECC codewords per block, level M
+  const BLOCKS = [-1, 1, 1, 1, 2, 2, 4];        // number of blocks, level M
+  const rawModules = v => { let r = (16 * v + 128) * v + 64; if (v >= 2) { const n = Math.floor(v / 7) + 2; r -= (25 * n - 10) * n - 55 } return r };
+  const dataCodewords = v => Math.floor(rawModules(v) / 8) - ECC[v] * BLOCKS[v];
+  const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x } return z };
+  function divisor(degree) {
+    const r = Array(degree).fill(0); r[degree - 1] = 1; let root = 1;
+    for (let i = 0; i < degree; i++) { for (let j = 0; j < degree; j++) { r[j] = mul(r[j], root); if (j + 1 < degree) r[j] ^= r[j + 1] } root = mul(root, 2) }
+    return r;
+  }
+  function remainder(data, div) {
+    const r = div.map(() => 0);
+    for (const b of data) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => { r[i] ^= mul(c, f) }) }
+    return r;
+  }
+  const MASKS = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, x => x % 3 === 0, (x, y) => (x + y) % 3 === 0,
+    (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => x * y % 2 + x * y % 3 === 0,
+    (x, y) => (x * y % 2 + x * y % 3) % 2 === 0, (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0];
+
+  function matrix(text) {
+    const bytes = Array.from(new TextEncoder().encode(text));
+    let ver = 1;
+    while (ver <= 6 && 12 + bytes.length * 8 > dataCodewords(ver) * 8) ver++;
+    if (ver > 6) throw new Error('QR text too long: ' + bytes.length + ' bytes');
+    // data bits: byte mode, 8-bit count, payload, terminator, padding
+    const cap = dataCodewords(ver) * 8, bits = [];
+    const put = (v, n) => { for (let i = n - 1; i >= 0; i--) bits.push((v >>> i) & 1) };
+    put(4, 4); put(bytes.length, 8); bytes.forEach(b => put(b, 8));
+    put(0, Math.min(4, cap - bits.length)); put(0, (8 - bits.length % 8) % 8);
+    for (let pad = 0xEC; bits.length < cap; pad ^= 0xEC ^ 0x11) put(pad, 8);
+    const data = [];
+    for (let i = 0; i < bits.length; i += 8) data.push(bits.slice(i, i + 8).reduce((a, b) => a << 1 | b, 0));
+    // error correction, split into blocks and interleaved
+    const nb = BLOCKS[ver], ecl = ECC[ver], raw = Math.floor(rawModules(ver) / 8);
+    const nShort = nb - raw % nb, shortLen = Math.floor(raw / nb), div = divisor(ecl), blocks = [];
+    for (let i = 0, k = 0; i < nb; i++) {
+      const dat = data.slice(k, k + shortLen - ecl + (i < nShort ? 0 : 1)); k += dat.length;
+      const ecc = remainder(dat, div); if (i < nShort) dat.push(0); blocks.push(dat.concat(ecc));
+    }
+    const all = [];
+    for (let i = 0; i < blocks[0].length; i++) blocks.forEach((b, j) => { if (i !== shortLen - ecl || j >= nShort) all.push(b[i]) });
+    // function patterns
+    const size = ver * 4 + 17, mod = [], fn = [];
+    for (let y = 0; y < size; y++) { mod.push(Array(size).fill(false)); fn.push(Array(size).fill(false)) }
+    const set = (x, y, d) => { mod[y][x] = d; fn[y][x] = true };
+    for (let i = 0; i < size; i++) { set(6, i, i % 2 === 0); set(i, 6, i % 2 === 0) }
+    const finder = (cx, cy) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+      const x = cx + dx, y = cy + dy; if (x >= 0 && x < size && y >= 0 && y < size) { const d = Math.max(Math.abs(dx), Math.abs(dy)); set(x, y, d !== 2 && d !== 4) } } };
+    finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+    if (ver >= 2) { const p = size - 7; for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) set(p + dx, p + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1) }
+    const format = mask => {
+      const d = mask; let rem = d;   // level M = 00
+      for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+      const f = ((d << 10) | rem) ^ 0x5412, g = i => ((f >>> i) & 1) === 1;
+      for (let i = 0; i <= 5; i++) set(8, i, g(i));
+      set(8, 7, g(6)); set(8, 8, g(7)); set(7, 8, g(8));
+      for (let i = 9; i < 15; i++) set(14 - i, 8, g(i));
+      for (let i = 0; i < 8; i++) set(size - 1 - i, 8, g(i));
+      for (let i = 8; i < 15; i++) set(8, size - 15 + i, g(i));
+      set(8, size - 8, true);
+    };
+    format(0);
+    // codewords in the zigzag
+    let i = 0;
+    for (let right = size - 1; right >= 1; right -= 2) {
+      if (right === 6) right = 5;
+      for (let vert = 0; vert < size; vert++) for (let j = 0; j < 2; j++) {
+        const x = right - j, y = ((right + 1) & 2) === 0 ? size - 1 - vert : vert;
+        if (!fn[y][x] && i < all.length * 8) { mod[y][x] = ((all[i >>> 3] >>> (7 - (i & 7))) & 1) === 1; i++ }
+      }
+    }
+    // pick the mask with the lowest penalty (runs, 2×2 blocks, finder look-alikes, balance)
+    const apply = m => { for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!fn[y][x] && MASKS[m](x, y)) mod[y][x] = !mod[y][x] };
+    const penalty = () => {
+      let p = 0, dark = 0;
+      const line = get => { let run = 1, s = 0, str = '';
+        for (let k = 0; k < size; k++) { const v = get(k); str += v ? '1' : '0'; if (k && v === get(k - 1)) { run++; if (run === 5) s += 3; else if (run > 5) s++ } else run = 1 }
+        return s + 40 * ((str.match(/(?=1011101(0000))|(?=(0000)1011101)/g) || []).length) };
+      for (let k = 0; k < size; k++) { p += line(x => mod[k][x]) + line(y => mod[y][k]) }
+      for (let y = 0; y < size - 1; y++) for (let x = 0; x < size - 1; x++) { const c = mod[y][x]; if (c === mod[y][x + 1] && c === mod[y + 1][x] && c === mod[y + 1][x + 1]) p += 3 }
+      for (const row of mod) for (const v of row) if (v) dark++;
+      return p + Math.floor(Math.abs(dark * 20 - size * size * 10) / (size * size)) * 10;
+    };
+    let best = 0, bestP = Infinity;
+    for (let m = 0; m < 8; m++) { apply(m); format(m); const p = penalty(); if (p < bestP) { bestP = p; best = m } apply(m) }
+    apply(best); format(best);
+    return mod;
+  }
+
+  function svg(text, { dark = '#263c35', light = '#fffcf3', margin = 4 } = {}) {
+    const m = matrix(text), n = m.length + margin * 2;
+    let d = '';
+    m.forEach((row, y) => row.forEach((v, x) => { if (v) d += `M${x + margin} ${y + margin}h1v1h-1z` }));
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" role="img" aria-label="QR code: ${text.replace(/[&<>"]/g, '')}"><rect width="${n}" height="${n}" fill="${light}"/><path d="${d}" fill="${dark}"/></svg>`;
+  }
+  return { matrix, svg };
+})();
+if (typeof module === 'object') module.exports = GTQR;
+else window.GTQR = GTQR;
+
+</script>
 <script>
 /* Gion Taxi: a driving game on top of the Pocket City of Gion Shirakawa.
    Runs after the Pocket City page script and shares its globals (camera, goal, view, iso, setPlay, redraw).
-   The taxi lives here (physics, fares, score); the render worker draws it from window.PLAYER (see player.js). */
+   The taxi lives here (physics, fares, score); the render worker draws it from window.PLAYER (see player.js).
+   Input comes through one interface (readInput): the keyboard and touch pad write `keys`, phone controllers (mp.js)
+   write `remote`. window.GionTaxi is the API mp.js uses: state, events, door, camera and navigator pings. */
 (() => {
 const $ = id => document.getElementById(id);
 const SC = new Function($('data').textContent + ';return SCENE;')();
 const HALF = SC.meta.half;
-document.title = 'Gion Taxi · Pocket City of Gion Shirakawa';
+document.title = 'Gion Taxi · Gion Shirakawa, Kyoto';
 
 /* ---------- geometry ---------- */
 function inside(p, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j];
@@ -2593,6 +2782,14 @@ map.innerHTML = `<g transform="scale(1,-1)">
 /* ---------- state ---------- */
 const keys = new Set();
 let driving = false, chase = true, car, fare, yen = 0, fares = 0, clock = 90, last = 0, bumpCool = 0, toastT = 0, shake = 0, camYaw = 0, finished = false;
+// crew play (mp.js): phone inputs, the door the operator opens at a lantern, and shift stats for the results card
+const remote = { gas: 0, brake: 0, turn: 0 };
+let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
+const handlers = {};
+const emit = (name, data) => (handlers[name] || []).forEach(f => { try { f(data) } catch (e) { console.error(e) } });
+const TASKS = { pickup: 'Pick up the passenger at the orange lantern', drop: 'Take them to the gold lantern' };
+const setTask = () => { $('gt-task').textContent = fare.atDoor ? (fare.mode === 'pickup' ? 'Stopped at the lantern: open the door' : 'Arrived: open the door to let them out') : TASKS[fare.mode] };
+function clearRemote() { remote.gas = remote.brake = remote.turn = 0 }
 const best = () => +(localStorage.getItem('gionTaxiBest') || 0);
 function toast(msg, good) { const t = $('gt-toast'); t.textContent = msg; t.className = good ? 'good show' : 'show'; toastT = 1.8 }
 function spotAway(from, min) {
@@ -2603,17 +2800,20 @@ function spotAway(from, min) {
 function newFare() {
   const p = spotAway(car, 45), d = spotAway(p, 70);
   fare = { mode: 'pickup', p, d, dist: Math.hypot(d.x - p.x, d.y - p.y) };
-  $('gt-task').textContent = 'Pick up the passenger at the orange lantern';
+  setTask();
 }
 function start() {
   car = { x: START.x, y: START.y, h: START.h, v: 0, steer: 0 };
   yen = 0; fares = 0; clock = 90; finished = false; camYaw = car.h * 180 / Math.PI + 180;
+  bumpCount = 0; penaltyYen = 0; penaltyTime = 0; fareTimes = []; doorOpen = 0; bumpCool = 0; ping = null; keys.clear(); clearRemote();
   newFare(); driving = true; $('gt-menu').hidden = true; $('gt-open').hidden = true; $('gt-hud').hidden = false;
   if (!playing) setPlay(true);
   stage.querySelector('canvas').focus?.();
+  emit('start');
 }
 function stop(result) {
-  driving = false; window.PLAYER = null; keys.clear();
+  const was = driving;
+  driving = false; window.PLAYER = null; keys.clear(); clearRemote(); ping = null;
   $('gt-hud').hidden = true; $('gt-menu').hidden = false;
   if (result) {
     if (yen > best()) localStorage.setItem('gionTaxiBest', yen);
@@ -2621,6 +2821,11 @@ function stop(result) {
   }
   $('gt-start').textContent = result ? 'Drive again' : 'Start driving';
   setView('cine');
+  if (was) emit('stop', summary());
+}
+function summary() {
+  return { fares, yen, best: best(), bumps: bumpCount, penaltyYen, penaltyTime,
+    avgFare: fareTimes.length ? fareTimes.reduce((a, b) => a + b, 0) / fareTimes.length : 0, fastest: fareTimes.length ? Math.min(...fareTimes) : 0 };
 }
 $('gt-start').onclick = start;
 $('gt-open').onclick = () => { $('gt-menu').hidden = false; $('gt-open').hidden = true };
@@ -2630,15 +2835,29 @@ $('gt-close').onclick = () => { $('gt-menu').hidden = true; $('gt-open').hidden 
 /* ---------- input ---------- */
 const KEYMAP = { ArrowUp: 'gas', w: 'gas', W: 'gas', ArrowDown: 'brake', s: 'brake', S: 'brake', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
 addEventListener('keydown', e => {
-  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden) start(); return }
+  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu) start(); return }
   if (e.target.closest && e.target.closest('select,input,dialog')) return;
   if (KEYMAP[e.key]) { keys.add(KEYMAP[e.key]); e.preventDefault(); e.stopPropagation() }
-  else if (e.key === 'c' || e.key === 'C') { chase = !chase; toast(chase ? 'Chase camera' : 'Overhead camera', true) }
+  else if (e.key === 'c' || e.key === 'C') toggleCam();
+  else if (e.key === 'e' || e.key === 'E') openDoor();
   else if (e.key === 'Escape') stop(true);
   else if (e.key === ' ' || ['+', '=', '-', 'Home'].includes(e.key)) { e.preventDefault(); e.stopPropagation() }
 }, true);
 addEventListener('keyup', e => { if (KEYMAP[e.key]) keys.delete(KEYMAP[e.key]) }, true);
 addEventListener('blur', () => keys.clear());
+function toggleCam() { chase = !chase; toast(chase ? 'Chase camera' : 'Overhead camera', true); emit('cam', chase) }
+// The rear door: in crew play the operator opens it at a lantern; solo, the passenger lets themself in (doorNeeded = false)
+function openDoor() {
+  if (!driving || !doorNeeded) return;
+  doorOpen = 1.2; emit('door');
+  if (!fare.atDoor) toast('Door opened');
+}
+// the shared input: keyboard/touch pad (0 or 1) merged with the phones (analog). With keys only it is exactly the old input.
+function readInput() {
+  const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0);
+  return { gas: Math.max(keys.has('gas') ? 1 : 0, remote.gas), brake: Math.max(keys.has('brake') ? 1 : 0, remote.brake),
+    turn: Math.max(-1, Math.min(1, kTurn + remote.turn)) };
+}
 for (const b of document.querySelectorAll('#gt-pad button')) {
   const k = b.dataset.k;
   b.onpointerdown = e => { e.preventDefault(); keys.add(k); b.setPointerCapture(e.pointerId) };
@@ -2648,10 +2867,12 @@ for (const b of document.querySelectorAll('#gt-pad button')) {
 /* ---------- physics ---------- */
 const MAX = 11, REV = 4, WHEELBASE = 2.7;
 function step(dt) {
-  const gas = keys.has('gas'), brake = keys.has('brake'), turn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0);
-  if (gas) car.v += (car.v < 0 ? 12 : 5.5 * (1 - car.v / MAX)) * dt;
-  else if (brake) car.v -= (car.v > 0 ? 12 : 3) * dt;
-  else car.v -= Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
+  const { gas, brake, turn } = readInput();
+  // analog pedals blend the old full-pedal response with coasting; a full pedal (1, as from the keyboard) is the old physics exactly
+  const coast = -Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
+  if (gas > 0) car.v += gas * (car.v < 0 ? 12 : 5.5 * (1 - car.v / MAX)) * dt + (1 - gas) * coast;
+  else if (brake > 0) car.v -= brake * (car.v > 0 ? 12 : 3) * dt - (1 - brake) * coast;
+  else car.v += coast;
   car.v = Math.max(-REV, Math.min(MAX, car.v));
   const steerMax = .55 / (1 + Math.abs(car.v) * .06);
   car.steer += (turn * steerMax - car.steer) * Math.min(1, dt * 8);
@@ -2660,7 +2881,7 @@ function step(dt) {
   if (fits(nx, ny, nh)) { car.x = nx; car.y = ny; car.h = nh }
   else if (fits(car.x + Math.cos(nh) * car.v * dt, car.y, nh)) { car.x += Math.cos(nh) * car.v * dt * .5; car.h = nh; car.v *= .9 }   // slide along a kerb
   else if (fits(car.x, car.y + Math.sin(nh) * car.v * dt, nh)) { car.y += Math.sin(nh) * car.v * dt * .5; car.h = nh; car.v *= .9 }
-  else { if (Math.abs(car.v) > 4) { toast('Scrape!'); shake = .25 } car.v *= -.3 }
+  else { if (Math.abs(car.v) > 4) { toast('Scrape!'); shake = .25; emit('scrape') } car.v *= -.3 }
 }
 function bumps(dt) {
   bumpCool -= dt;
@@ -2672,7 +2893,9 @@ function bumps(dt) {
     const reach = a.k === 'car' ? Math.max(a.L, a.W) * .8 : a.k === 'bike' ? .8 : .35;
     if (Math.abs(along) < CAR.L / 2 + reach && Math.abs(side) < CAR.W / 2 + reach * .6) {
       const cost = a.k === 'ped' ? 600 : a.k === 'bike' ? 400 : 300;
+      penaltyYen += Math.min(yen, cost); penaltyTime += Math.min(clock, 3); bumpCount++;
       yen = Math.max(0, yen - cost); clock = Math.max(0, clock - 3); car.v *= -.25; bumpCool = 1.2; shake = .3;
+      emit('bump', { kind: a.k, cost });
       toast(a.k === 'ped' ? 'Watch the pedestrians! −¥' + cost : a.k === 'bike' ? 'You clipped a bike! −¥' + cost : 'Fender bender! −¥' + cost);
       return;
     }
@@ -2681,12 +2904,18 @@ function bumps(dt) {
 function fareLogic() {
   const target = fare.mode === 'pickup' ? fare.p : fare.d, dist = Math.hypot(target.x - car.x, target.y - car.y);
   if (dist < 3.2 && Math.abs(car.v) < 2.5) {
-    if (fare.mode === 'pickup') { fare.mode = 'drop'; fare.t = 0; toast('Passenger aboard!', true); $('gt-task').textContent = 'Take them to the gold lantern' }
+    if (doorNeeded && doorOpen <= 0) {   // crew play: wait at the lantern until the operator opens the door
+      if (!fare.atDoor) { fare.atDoor = true; setTask(); emit('atdoor', fare.mode) }
+      return target;
+    }
+    doorOpen = 0; fare.atDoor = false;
+    if (fare.mode === 'pickup') { fare.mode = 'drop'; fare.t = 0; toast('Passenger aboard!', true); setTask(); emit('pickup') }
     else {
       const pay = Math.round((500 + fare.dist * 12 + Math.max(0, 40 - fare.t) * 25) / 10) * 10, bonus = Math.round(8 + fare.dist / 12);
-      yen += pay; fares++; clock += bonus; toast('Fare paid ¥' + pay + ' · +' + bonus + ' s', true); newFare();
+      yen += pay; fares++; clock += bonus; fareTimes.push(fare.t); toast('Fare paid ¥' + pay + ' · +' + bonus + ' s', true); newFare();
+      emit('dropoff', { pay, bonus });
     }
-  }
+  } else if (fare.atDoor) { fare.atDoor = false; setTask() }
   return target;
 }
 
@@ -2695,12 +2924,13 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
   if (!driving) return;
-  step(dt); bumps(dt);
+  step(dt); bumps(dt); doorOpen = Math.max(0, doorOpen - dt);
   if (fare.mode === 'drop') fare.t += dt;
   const target = fareLogic();
   clock -= dt;
   if (clock <= 0) { clock = 0; stop(true); return }
-  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, tx: target.x, ty: target.y, mode: fare.mode };
+  if (ping && now > ping.until) ping = null;
+  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, tx: target.x, ty: target.y, mode: fare.mode, ...(ping ? { px: ping.x, py: ping.y, pc: ping.color } : {}) };
   // camera: behind the taxi (chase) or the plot's own iso angle, a little ahead of the car
   const want = chase ? car.h * 180 / Math.PI + 180 : iso.yaw;
   let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * (chase ? 3.2 : 6));
@@ -2727,9 +2957,392 @@ function frame(now) {
   redraw();
 }
 requestAnimationFrame(frame);
-window.GionTaxi = { start, stop, get car() { return car }, keys };
+const api = window.GionTaxi = {
+  start, stop, keys, remote, toggleCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false,
+  get car() { return car }, get driving() { return driving }, get chase() { return chase },
+  get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
+  on(name, f) { (handlers[name] = handlers[name] || []).push(f) },
+  setPing(x, y, color, ms = 6000) { ping = { x, y, color, until: performance.now() + ms } },
+  state() {
+    if (!car || !fare) return null;
+    const target = fare.mode === 'pickup' ? fare.p : fare.d;
+    return { driving, clock, yen, fares, chase, x: car.x, y: car.y, h: car.h, v: car.v, mode: fare.mode, tx: target.x, ty: target.y,
+      atDoor: !!fare.atDoor, doorNeeded, fareDist: fare.dist, fareT: fare.t || 0,
+      fareEst: fare.mode === 'drop' ? Math.round((500 + fare.dist * 12 + Math.max(0, 40 - (fare.t || 0)) * 25) / 10) * 10 : 0, ...summary() };
+  },
+};
 })();
 
 </script>
+<script>
+/* Gion Taxi crew play (the laptop side). Runs after drive.js and uses its API (window.GionTaxi).
+   The laptop is the authority: it owns the one shared taxi, the roles, the ready states and the shift. Phones
+   (pad.html) send input and actions over the crew server (server.js); this file checks every message, merges the
+   phones' pedals and wheel into GionTaxi.remote, and sends the phones a 10 Hz picture of the shift.
+   Opened from file:// there is no server, so the menu just explains how to start one. */
+(() => {
+const GT = window.GionTaxi, $ = id => document.getElementById(id);
+if (!GT) return;
+const SC = GT.scene, HALF = SC.meta.half;
+const served = /^https?:$/.test(location.protocol);
+
+/* ---------- roles: which roles each phone holds, by crew size (seat order) ---------- */
+const ROLE_SETS = {
+  1: [['steer', 'pedals', 'ops']],
+  2: [['steer', 'ops'], ['pedals', 'nav']],
+  3: [['steer'], ['pedals'], ['nav', 'ops']],
+  4: [['steer'], ['pedals'], ['nav'], ['ops']],
+};
+const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors & camera' };
+const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
+const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
+const STALE_MS = 700, GRACE_MS = 20000;
+
+let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
+let phase = 'off';             // off | lobby | count | driving | results
+let crew = [];                 // seat order: [{ pid, name, color, on, ready, offAt, input, lastIn }]
+let result = null, countT = null;
+const rolesOf = p => (ROLE_SETS[crew.length] || [])[crew.indexOf(p)] || [];
+const holder = role => crew.find(p => p.on && rolesOf(p).includes(role));
+const find = pid => crew.find(p => p.pid === pid);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- UI: a menu button, the lobby card, the crew strip and the navigator's callouts ---------- */
+const menu = $('gt-menu');
+$('gt-start').insertAdjacentHTML('afterend', served
+  ? '<button id="gt-mp" class="gt-ghost">Play with phones</button><p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, navigator, doors.</p>'
+  : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
+$('stage').insertAdjacentHTML('beforeend', `
+<div id="gt-lobby" class="gt-card" hidden>
+  <button id="gt-lclose" class="gt-x" aria-label="Close the room">×</button>
+  <h2>Gion Taxi <span>crew shift</span></h2>
+  <p class="gt-lsub">One taxi, up to four phones. Scan to join, pick up fares together.</p>
+  <div id="gt-lresult"></div>
+  <div class="gt-lgrid">
+    <figure class="gt-qr">
+      <div id="gt-qr" aria-live="polite"></div>
+      <figcaption><small>Room</small><b id="gt-room">····</b><span id="gt-url"></span><span id="gt-net"></span><button id="gt-ip" hidden>Other network ›</button></figcaption>
+    </figure>
+    <div class="gt-crewcol"><ol id="gt-seats"></ol><p class="gt-lnote" id="gt-lnote"></p></div>
+  </div>
+  <button id="gt-lstart" disabled>Start shift</button>
+  <p class="gt-keys gt-lhelp gt-lanhelp">Phones on the same Wi-Fi as this laptop. Campus Wi-Fi often blocks phones from reaching a laptop: then restart the server with <kbd>--tunnel</kbd>, or put everyone on one phone's Personal Hotspot.</p>
+</div>
+<div id="gt-count" hidden></div>`);
+$('gt-hud').insertAdjacentHTML('beforeend', '<div id="gt-call" class="gt-card" hidden></div><div id="gt-crew" class="gt-card" hidden></div>');
+const mapG = $('gt-map').querySelector('g');
+mapG.insertAdjacentHTML('beforeend', '<g id="gt-mping" visibility="hidden"><circle r="7" fill="none" stroke-width="1.6"><animate attributeName="r" values="3;9;3" dur="1.4s" repeatCount="indefinite"/></circle><circle r="2.6"/></g>');
+
+function showLobby(on) {
+  $('gt-lobby').hidden = !on;
+  if (on) { menu.hidden = true; $('gt-open').hidden = true }
+  GT.lockMenu = on;
+}
+function renderLobby() {
+  if (phase === 'off') return;
+  $('gt-room').textContent = room || '····';
+  const url = joinURL();
+  if (url) {
+    $('gt-qr').innerHTML = GTQR.svg(url);
+    $('gt-url').textContent = url.replace(/^https?:\/\//, '').replace(/\?r=.*/, '');
+    $('gt-net').textContent = publicUrl ? 'Over the internet: any network works' : 'Same Wi-Fi as this laptop';
+  } else $('gt-qr').innerHTML = `<p class="gt-qrmsg">${!wsOk ? 'Connecting to the crew server…' : 'No network found. Connect this laptop to Wi-Fi or a phone’s hotspot.'}</p>`;
+  $('gt-ip').hidden = ips.length < 2 || isLanHost() || !!publicUrl;
+  $('gt-lobby').classList.toggle('public', !!publicUrl);
+  const seats = [];
+  for (let i = 0; i < 4; i++) {
+    const p = crew[i];
+    if (!p) { seats.push(`<li class="empty"><i></i><div><b>Seat ${i + 1}</b><small>${i === 0 ? 'Scan the code to join' : 'Waiting for a phone'}</small></div></li>`); continue }
+    const status = !p.on ? 'Reconnecting…' : phase === 'driving' || phase === 'count' ? 'On shift' : p.ready ? 'Ready' : 'Not ready';
+    seats.push(`<li style="--c:${p.color}" class="${p.on ? '' : 'off'} ${p.ready ? 'ready' : ''}"><i></i><div><b>${esc(p.name)}</b><small>${rolesOf(p).map(r => ROLE_NAMES[r]).join(' · ')}</small></div>
+      <span class="st">${status}</span>${crew.length > 1 ? `<button data-swap="${i}" title="Swap roles with the next seat" aria-label="Swap roles">⇅</button>` : ''}<button data-kick="${i}" title="Remove this phone" aria-label="Remove ${esc(p.name)}">×</button></li>`);
+  }
+  $('gt-seats').innerHTML = seats.join('');
+  const notReady = crew.filter(p => !p.ready || !p.on).length;
+  $('gt-lstart').disabled = !canStart();
+  $('gt-lstart').textContent = result ? 'Start next shift' : 'Start shift';
+  $('gt-lnote').textContent = !wsOk ? 'Can’t reach the crew server. Is node gion-drive/server.js still running?'
+    : !crew.length ? 'Up to four phones. Two or more is best: roles are shared out by crew size.'
+    : notReady ? `Waiting for ${notReady} phone${notReady === 1 ? '' : 's'} to get ready.` : 'Everyone’s ready.';
+  $('gt-lresult').innerHTML = result ? resultHTML(result) : '';
+  $('gt-lobby').classList.toggle('has-result', !!result);
+  renderCrewStrip();
+}
+function rating(r) { return r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0 }
+function resultHTML(r) {
+  const stars = '★'.repeat(rating(r)) + '☆'.repeat(3 - rating(r));
+  return `<div class="gt-res"><b>Shift over</b><span class="gt-stars" aria-label="${rating(r)} of 3">${stars}</span>
+    <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div>
+    <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>−¥${r.penaltyYen.toLocaleString()}</b></div></div>
+    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ¥${r.best.toLocaleString()}.</p></div>`;
+}
+function renderCrewStrip() {
+  const el = $('gt-crew'), on = phase === 'driving' && crew.length;
+  el.hidden = !on;
+  if (on) el.innerHTML = crew.map(p => `<span class="${p.on ? '' : 'off'}" style="--c:${p.color}"><i></i>${rolesOf(p).map(r => ROLE_NAMES[r]).join(' · ')}</span>`).join('');
+}
+let callT = 0;
+function showCall(dir, p) {
+  const [icon, text] = CALLS[dir];
+  const el = $('gt-call');
+  el.innerHTML = `<i style="background:${p.color}"></i><span class="gt-callicon">${icon}</span><span>${text}</span>`;
+  el.hidden = false; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  clearTimeout(callT); callT = setTimeout(() => { el.hidden = true }, 3200);
+}
+function showPing(x, y, color) {
+  GT.setPing(x, y, color, 6000);
+  const g = $('gt-mping'); g.setAttribute('transform', `translate(${x} ${y})`); g.setAttribute('visibility', 'visible');
+  g.querySelector('circle').setAttribute('stroke', color); g.lastElementChild.setAttribute('fill', color);
+  clearTimeout(showPing.t); showPing.t = setTimeout(() => g.setAttribute('visibility', 'hidden'), 6000);
+}
+
+/* ---------- networking ---------- */
+const isLanHost = () => !['localhost', '127.0.0.1', '[::1]', '::1'].includes(location.hostname);
+function joinURL() {
+  if (!room) return null;
+  if (publicUrl) return `${publicUrl}/join?r=${room}`;   // a public tunnel works from any network, so it wins
+  const host = isLanHost() ? location.host : ips.length ? `${ips[ipIndex % ips.length]}:${port}` : null;
+  return host ? `${location.protocol}//${host}/join?r=${room}` : null;
+}
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)) }
+const toPhones = (m, to = '*') => send({ t: 'to', to, m });
+function connect() {
+  const s = ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`);
+  s.onopen = () => {
+    wsOk = true; retry = 0;
+    let saved = {}; try { saved = JSON.parse(sessionStorage.getItem('gtRoom') || '{}') } catch {}
+    send({ t: 'host', room: saved.room, key: saved.key });
+  };
+  s.onmessage = e => { let m; try { m = JSON.parse(e.data) } catch { return } onServer(m) };
+  s.onclose = () => {
+    if (ws !== s) return;
+    wsOk = false; ws = null;
+    for (const p of crew) { p.on = false; p.offAt = p.offAt || performance.now() }
+    applyInputs(); renderLobby();
+    if (phase !== 'off') setTimeout(connect, Math.min(4000, 500 * 2 ** retry++));
+  };
+}
+function onServer(m) {
+  if (m.t === 'room') {
+    if (room && m.room !== room) { crew = []; result = null }   // the server forgot our room (it restarted): a new room, phones must rescan
+    room = m.room; key = m.key; ips = m.ips || []; publicUrl = m.publicUrl || null; port = m.port || port;
+    try { sessionStorage.setItem('gtRoom', JSON.stringify({ room, key })) } catch {}
+    renderLobby();
+  } else if (m.t === 'peer') {
+    let p = find(m.pid);
+    if (m.on && !p) {
+      if (crew.length >= 4) return send({ t: 'drop', pid: m.pid });
+      const used = new Set(crew.map(c => c.color)), names = new Set(crew.map(c => c.name));
+      p = { pid: m.pid, name: 'Player ' + [1, 2, 3, 4].find(n => !names.has('Player ' + n)), color: COLORS.find(c => !used.has(c)),
+        on: true, ready: false, offAt: 0, input: { turn: 0, gas: 0, brake: 0 }, lastIn: 0 };
+      crew.push(p); rolesChanged();
+    } else if (p) {
+      p.on = !!m.on; p.offAt = m.on ? 0 : performance.now();
+      if (!m.on) { p.input = { turn: 0, gas: 0, brake: 0 }; applyInputs() }   // release a dropped phone's wheel and pedals at once
+    }
+    broadcastLobby();
+  } else if (m.t === 'from') {
+    const p = find(m.pid);
+    if (p) onPhone(p, m.m || {});
+  }
+}
+const num = v => typeof v === 'number' && Number.isFinite(v);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function onPhone(p, m) {
+  p.on = true;
+  const roles = rolesOf(p);
+  switch (m.t) {
+    case 'hello': sendMap(p.pid); broadcastLobby(); if (lastRoute) toPhones(lastRoute, p.pid); break;
+    case 'ready':
+      if (phase === 'lobby' || phase === 'results') { p.ready = !!m.v; broadcastLobby() }
+      break;
+    case 'in':   // continuous controls; only from the role's holder and only during a shift
+      if (phase !== 'driving') break;
+      if (roles.includes('steer') && num(m.turn)) p.input.turn = clamp(m.turn, -1, 1);
+      if (roles.includes('pedals')) { if (num(m.gas)) p.input.gas = clamp(m.gas, 0, 1); if (num(m.brake)) p.input.brake = clamp(m.brake, 0, 1) }
+      p.lastIn = performance.now(); applyInputs();
+      break;
+    case 'door': if (phase === 'driving' && roles.includes('ops')) GT.openDoor(); break;
+    case 'cam': if (phase === 'driving' && roles.includes('ops') && typeof m.chase === 'boolean' && m.chase !== GT.chase) GT.toggleCam(); break;
+    case 'call': if (phase === 'driving' && roles.includes('nav') && CALLS[m.d]) { showCall(m.d, p); toPhones({ t: 'ev', k: 'call', d: m.d }) } break;
+    case 'ping':
+      if (phase === 'driving' && roles.includes('nav') && num(m.x) && num(m.y) && Math.abs(m.x) <= HALF && Math.abs(m.y) <= HALF) {
+        showPing(m.x, m.y, p.color); toPhones({ t: 'ev', k: 'ping', x: m.x, y: m.y });
+      }
+      break;
+  }
+}
+// merge the phones into the shared input; a phone that stopped sending (backgrounded, out of range) lets go
+function applyInputs() {
+  const now = performance.now(), r = GT.remote;
+  let turn = 0, gas = 0, brake = 0;
+  if (phase === 'driving') for (const p of crew) {
+    if (!p.on || now - p.lastIn > STALE_MS) continue;
+    turn += p.input.turn; gas = Math.max(gas, p.input.gas); brake = Math.max(brake, p.input.brake);
+  }
+  r.turn = clamp(turn, -1, 1); r.gas = gas; r.brake = brake;
+  GT.doorNeeded = phase === 'driving' && !!holder('ops');
+}
+function rolesChanged() {
+  for (const p of crew) p.input = { turn: 0, gas: 0, brake: 0 };
+  applyInputs();
+}
+function broadcastLobby() {
+  renderLobby();
+  toPhones({ t: 'lobby', phase, room, result, canStart: canStart(),
+    seats: crew.map(p => ({ pid: p.pid, name: p.name, color: p.color, roles: rolesOf(p), on: p.on, ready: p.ready })) });
+}
+function sendMap(to) {
+  const ring = r => 'M' + r.map(q => q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join('L') + 'Z';
+  toPhones({ t: 'map', half: HALF, roads: SC.roads.map(rs => rs.map(ring).join('')).join(''), water: SC.water.map(rs => rs.map(ring).join('')).join(''),
+    bldg: SC.buildings.map(b => ring(b.ring)).join('') }, to);
+}
+const canStart = () => wsOk && crew.length > 0 && crew.every(p => p.on && p.ready) && (phase === 'lobby' || phase === 'results');
+
+/* ---------- lifecycle: lobby → countdown → shift → results → (ready again) → next shift ---------- */
+function openRoom() {
+  phase = result ? 'results' : 'lobby'; showLobby(true); renderLobby();
+  if (!ws) connect();
+  refreshInfo();
+}
+function closeRoom() {
+  send({ t: 'close' }); try { sessionStorage.removeItem('gtRoom') } catch {}
+  const s = ws; ws = null; if (s) s.close();
+  phase = 'off'; room = null; crew = []; result = null; wsOk = false; applyInputs();
+  showLobby(false); menu.hidden = false; renderCrewStrip();
+}
+function startCountdown() {
+  if (!canStart()) return;
+  phase = 'count'; for (const p of crew) p.ready = false;
+  showLobby(false); menu.hidden = true; broadcastLobby();
+  let n = 3; const el = $('gt-count');
+  const tick = () => {
+    if (phase !== 'count') { el.hidden = true; return }
+    if (n === 0) { el.hidden = true; GT.lockMenu = false; GT.start(); return }
+    el.textContent = n; el.hidden = false; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+    toPhones({ t: 'count', n }); n--; countT = setTimeout(tick, 900);
+  };
+  tick();
+}
+GT.on('start', () => {
+  if (phase === 'off') return;
+  phase = 'driving'; GT.lockMenu = true; lastTarget = null; lastRoute = null;
+  for (const p of crew) { p.input = { turn: 0, gas: 0, brake: 0 }; p.lastIn = 0 }   // nothing carries over from the last shift
+  applyInputs(); broadcastLobby(); sendState();
+});
+GT.on('stop', r => {
+  if (phase === 'off') return;
+  phase = 'results'; result = r; for (const p of crew) { p.ready = false; p.input = { turn: 0, gas: 0, brake: 0 } }
+  applyInputs(); showLobby(true); broadcastLobby();
+});
+for (const k of ['bump', 'pickup', 'dropoff', 'scrape', 'door', 'atdoor']) GT.on(k, d => { if (phase === 'driving') toPhones({ t: 'ev', k, ...(d && typeof d === 'object' ? d : { v: d }) }) });
+GT.on('cam', chase => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', chase }) });
+
+if (served) $('gt-mp').onclick = openRoom;
+$('gt-lclose').onclick = closeRoom;
+$('gt-lstart').onclick = startCountdown;
+$('gt-ip').onclick = () => { ipIndex++; renderLobby() };
+$('gt-seats').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.swap != null) { const i = +b.dataset.swap, j = (i + 1) % crew.length; [crew[i], crew[j]] = [crew[j], crew[i]]; rolesChanged() }
+  else if (b.dataset.kick != null) { const p = crew[+b.dataset.kick]; if (p) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1); rolesChanged() } }
+  broadcastLobby();
+};
+addEventListener('keydown', e => { if (e.key === 'Enter' && !$('gt-lobby').hidden && canStart()) { e.preventDefault(); startCountdown() } });
+async function refreshInfo() {
+  if (!served || phase === 'off') return;
+  try { const r = await (await fetch('/info', { cache: 'no-store' })).json(); const before = joinURL(); ips = r.ips || []; publicUrl = r.publicUrl || null; port = r.port || port; if (joinURL() !== before) renderLobby() } catch {}
+}
+setInterval(() => { if (!$('gt-lobby').hidden) refreshInfo() }, 5000);
+
+/* ---------- the navigator's route: a breadth-first distance field over 2 m road cells, rebuilt per fare stage ---------- */
+const CELL = 2, N = Math.ceil(2 * HALF / CELL);
+let walk = null;
+const cx = i => -HALF + (i + .5) * CELL;
+function buildWalk() {
+  walk = new Uint8Array(N * N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const x = cx(i), y = cx(j);
+    walk[j * N + i] = [[0, 0], [.8, 0], [-.8, 0], [0, .8], [0, -.8]].every(([dx, dy]) => GT.onRoad([x + dx, y + dy])) ? 1 : 0;
+  }
+}
+const cellOf = (x, y) => [clamp(Math.floor((x + HALF) / CELL), 0, N - 1), clamp(Math.floor((y + HALF) / CELL), 0, N - 1)];
+function nearestWalk(x, y) {
+  const [i0, j0] = cellOf(x, y);
+  for (let r = 0; r < 8; r++) {
+    let best = null, bd = Infinity;
+    for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) {
+      if (i < 0 || j < 0 || i >= N || j >= N || !walk[j * N + i]) continue;
+      const d = Math.hypot(cx(i) - x, cx(j) - y); if (d < bd) { bd = d; best = j * N + i }
+    }
+    if (best != null) return best;
+  }
+  return null;
+}
+const NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+let field = null, lastTarget = null, lastRoute = null;
+function buildField(tx, ty) {
+  field = new Int32Array(N * N).fill(-1);
+  const s = nearestWalk(tx, ty); if (s == null) return;
+  const q = [s]; field[s] = 0;
+  for (let h = 0; h < q.length; h++) {
+    const c = q[h], i = c % N, j = (c - i) / N;
+    for (const [di, dj] of NB) {
+      const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue;
+      const n = nj * N + ni;
+      if (walk[n] && field[n] < 0 && (!di || !dj || (walk[j * N + ni] && walk[nj * N + i]))) { field[n] = field[c] + 1; q.push(n) }
+    }
+  }
+}
+function clear(a, b) {
+  const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.ceil(L / .8);
+  for (let k = 1; k < n; k++) { const [i, j] = cellOf(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n); if (!walk[j * N + i]) return false }
+  return true;
+}
+function route(st) {
+  if (!walk) buildWalk();
+  const tk = st.tx.toFixed(1) + ',' + st.ty.toFixed(1);
+  if (tk !== lastTarget) { buildField(st.tx, st.ty); lastTarget = tk }
+  let c = nearestWalk(st.x, st.y); if (c == null || field[c] < 0) return null;
+  const cells = [c];
+  while (field[c] > 0 && cells.length < N * 4) {
+    const i = c % N, j = (c - i) / N; let nx = c;
+    for (const [di, dj] of NB) { const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue; const n = nj * N + ni; if (field[n] >= 0 && field[n] < field[nx]) nx = n }
+    if (nx === c) break; c = nx; cells.push(c);
+  }
+  const raw = [[st.x, st.y], ...cells.map(c => [cx(c % N), cx(Math.floor(c / N))]), [st.tx, st.ty]];
+  const pts = [raw[0]];   // pull the string tight: keep only the corners the road forces
+  for (let a = 0; a < raw.length - 1;) { let b = raw.length - 1; while (b > a + 1 && !clear(raw[a], raw[b])) b--; pts.push(raw[b]); a = b }
+  let len = 0; for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
+  return { pts: pts.map(p => [+p[0].toFixed(1), +p[1].toFixed(1)]), len: Math.round(len) };
+}
+
+/* ---------- the 10 Hz picture of the shift for the phones, and the watchdogs ---------- */
+let routeT = 0;
+function sendState() {
+  const st = GT.state(); if (!st || phase !== 'driving') return;
+  const now = performance.now();
+  if (now - routeT > 400 && holder('nav')) {
+    routeT = now;
+    try { const r = route(st); if (r) { const m = { t: 'route', ...r }; if (!lastRoute || JSON.stringify(m.pts) !== JSON.stringify(lastRoute.pts)) toPhones(m); lastRoute = m } } catch (e) { console.error(e) }
+  }
+  toPhones({ t: 's', clock: +st.clock.toFixed(1), yen: st.yen, fares: st.fares, v: +st.v.toFixed(2), x: +st.x.toFixed(2), y: +st.y.toFixed(2), h: +st.h.toFixed(3),
+    mode: st.mode, tx: st.tx, ty: st.ty, atDoor: st.atDoor, doorNeeded: st.doorNeeded, chase: st.chase, fareEst: st.fareEst, dist: lastRoute ? lastRoute.len : null });
+}
+setInterval(() => {
+  if (phase === 'off') return;
+  const now = performance.now();
+  applyInputs();
+  if (phase === 'driving') sendState();
+  // a phone gone longer than the grace period gives up its seat; roles are shared out again (keyboard covers meanwhile)
+  const gone = crew.filter(p => !p.on && p.offAt && now - p.offAt > GRACE_MS);
+  if (gone.length && wsOk) { for (const p of gone) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1) } rolesChanged(); broadcastLobby() }
+}, 100);
+setInterval(() => send({ t: 'hb' }), 2000);
+window.GionCrew = { get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()) };
+})();
+
+</script>
+<!-- </gion-taxi game> -->
 </body></html>
 

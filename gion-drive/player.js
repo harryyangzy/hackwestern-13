@@ -1,7 +1,7 @@
 
 /* ---------- Gion Taxi: the player's car, drawn by the render worker ----------
    Appended after the Gion landmarks. The page sends self.PLAYER with each frame ({x, y, h, v, tx, ty, mode});
-   we draw the player's taxi and the fare marker with the kit's own parts, and hand back the traffic near the car
+   we draw the player's taxi, the fare marker and the navigator's ping ({px, py, pc}) with the kit's own parts, and hand back the traffic near the car
    (self.NEAR) so the page can tell when the taxi bumps into a car, a bike or a person. */
 const GION_EXTRA = typeof CITY_EXTRA === 'function' ? CITY_EXTRA : null;
 let PLAYER_MESH = null;
@@ -28,6 +28,15 @@ function fareMarker(x, y, mode, t) {
   }
   return parts;
 }
+// the navigator's ping (crew play): a small ring and a hanging lantern in the navigator's colour, where they tapped the map
+function pingMarker(x, y, col, t) {
+  const far = [0, 1, 2, 3].map(k => [x + Math.cos(k * Math.PI / 2) * 1.6, y + Math.sin(k * Math.PI / 2) * 1.6])
+    .sort((a, b) => depthOf([...a, 0]) - depthOf([...b, 0]))[0];
+  const bob = Math.sin(t * 3.1) * .15;
+  return [{ fp: rect(far[0], far[1], .05, .05), h: .06, draw: () => shape(atZ(polygon(x, y, 1.6, 24), .04), col, 0) + shape(atZ(polygon(x, y, 1.15, 24), .05), '#fbefd5', 0) },
+    { fp: rect(x, y, .4, .4), h: 6, draw: () => { const z0 = 4.6 + bob, fp = rect(x, y, .5, .5), cap = rect(x, y, .58, .58);
+      return loft(atZ(fp, z0), atZ(fp, z0 + 1), () => col) + shape(atZ(cap, z0 + 1.02), '#3a2e26', .2) + shape(atZ(cap, z0 - .02), '#3a2e26', .2) } }];
+}
 CITY_EXTRA = function (t) {
   const out = GION_EXTRA ? [].concat(GION_EXTRA(t) || []) : [];
   const me = self.PLAYER;
@@ -37,6 +46,7 @@ CITY_EXTRA = function (t) {
   const car = carDraw({ p: [me.x, me.y], d: [Math.cos(me.h), Math.sin(me.h)], mesh: PLAYER_MESH, m: soft('#c8513a'), v: Math.abs(me.v) });
   out.push({ fp: car.fp, h: car.z1, svg: car.svg });
   if (me.tx != null) out.push(...fareMarker(me.tx, me.ty, me.mode, t));
+  if (me.px != null) out.push(...pingMarker(me.px, me.py, me.pc || '#4f6d8a', t));
   self.NEAR = TRAFFIC.to(t).filter(a => Math.hypot(a.p[0] - me.x, a.p[1] - me.y) < 14 && a.alpha > .5)
     .map(a => ({ k: a.kind, id: a.id, x: a.p[0], y: a.p[1], dx: a.d[0], dy: a.d[1], L: a.shape[0], W: a.shape[1] }));
   return out;
