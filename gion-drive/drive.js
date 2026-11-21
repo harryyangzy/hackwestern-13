@@ -1,11 +1,13 @@
 /* Gion Taxi: a driving game on top of the Pocket City of Gion Shirakawa.
    Runs after the Pocket City page script and shares its globals (camera, goal, view, iso, setPlay, redraw).
-   The taxi lives here (physics, fares, score); the render worker draws it from window.PLAYER (see player.js). */
+   The taxi lives here (physics, fares, score); the render worker draws it from window.PLAYER (see player.js).
+   Input comes through one interface (readInput): the keyboard and touch pad write `keys`, phone controllers (mp.js)
+   write `remote`. window.GionTaxi is the API mp.js uses: state, events, door, camera and navigator pings. */
 (() => {
 const $ = id => document.getElementById(id);
 const SC = new Function($('data').textContent + ';return SCENE;')();
 const HALF = SC.meta.half;
-document.title = 'Gion Taxi · Pocket City of Gion Shirakawa';
+document.title = 'Gion Taxi · Gion Shirakawa, Kyoto';
 
 /* ---------- geometry ---------- */
 function inside(p, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j];
@@ -72,6 +74,14 @@ map.innerHTML = `<g transform="scale(1,-1)">
 /* ---------- state ---------- */
 const keys = new Set();
 let driving = false, chase = true, car, fare, yen = 0, fares = 0, clock = 90, last = 0, bumpCool = 0, toastT = 0, shake = 0, camYaw = 0, finished = false;
+// crew play (mp.js): phone inputs, the door the operator opens at a lantern, and shift stats for the results card
+const remote = { gas: 0, brake: 0, turn: 0 };
+let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
+const handlers = {};
+const emit = (name, data) => (handlers[name] || []).forEach(f => { try { f(data) } catch (e) { console.error(e) } });
+const TASKS = { pickup: 'Pick up the passenger at the orange lantern', drop: 'Take them to the gold lantern' };
+const setTask = () => { $('gt-task').textContent = fare.atDoor ? (fare.mode === 'pickup' ? 'Stopped at the lantern: open the door' : 'Arrived: open the door to let them out') : TASKS[fare.mode] };
+function clearRemote() { remote.gas = remote.brake = remote.turn = 0 }
 const best = () => +(localStorage.getItem('gionTaxiBest') || 0);
 function toast(msg, good) { const t = $('gt-toast'); t.textContent = msg; t.className = good ? 'good show' : 'show'; toastT = 1.8 }
 function spotAway(from, min) {
@@ -82,17 +92,20 @@ function spotAway(from, min) {
 function newFare() {
   const p = spotAway(car, 45), d = spotAway(p, 70);
   fare = { mode: 'pickup', p, d, dist: Math.hypot(d.x - p.x, d.y - p.y) };
-  $('gt-task').textContent = 'Pick up the passenger at the orange lantern';
+  setTask();
 }
 function start() {
   car = { x: START.x, y: START.y, h: START.h, v: 0, steer: 0 };
   yen = 0; fares = 0; clock = 90; finished = false; camYaw = car.h * 180 / Math.PI + 180;
+  bumpCount = 0; penaltyYen = 0; penaltyTime = 0; fareTimes = []; doorOpen = 0; bumpCool = 0; ping = null; keys.clear(); clearRemote();
   newFare(); driving = true; $('gt-menu').hidden = true; $('gt-open').hidden = true; $('gt-hud').hidden = false;
   if (!playing) setPlay(true);
   stage.querySelector('canvas').focus?.();
+  emit('start');
 }
 function stop(result) {
-  driving = false; window.PLAYER = null; keys.clear();
+  const was = driving;
+  driving = false; window.PLAYER = null; keys.clear(); clearRemote(); ping = null;
   $('gt-hud').hidden = true; $('gt-menu').hidden = false;
   if (result) {
     if (yen > best()) localStorage.setItem('gionTaxiBest', yen);
@@ -100,6 +113,11 @@ function stop(result) {
   }
   $('gt-start').textContent = result ? 'Drive again' : 'Start driving';
   setView('cine');
+  if (was) emit('stop', summary());
+}
+function summary() {
+  return { fares, yen, best: best(), bumps: bumpCount, penaltyYen, penaltyTime,
+    avgFare: fareTimes.length ? fareTimes.reduce((a, b) => a + b, 0) / fareTimes.length : 0, fastest: fareTimes.length ? Math.min(...fareTimes) : 0 };
 }
 $('gt-start').onclick = start;
 $('gt-open').onclick = () => { $('gt-menu').hidden = false; $('gt-open').hidden = true };
@@ -109,15 +127,29 @@ $('gt-close').onclick = () => { $('gt-menu').hidden = true; $('gt-open').hidden 
 /* ---------- input ---------- */
 const KEYMAP = { ArrowUp: 'gas', w: 'gas', W: 'gas', ArrowDown: 'brake', s: 'brake', S: 'brake', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
 addEventListener('keydown', e => {
-  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden) start(); return }
+  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu) start(); return }
   if (e.target.closest && e.target.closest('select,input,dialog')) return;
   if (KEYMAP[e.key]) { keys.add(KEYMAP[e.key]); e.preventDefault(); e.stopPropagation() }
-  else if (e.key === 'c' || e.key === 'C') { chase = !chase; toast(chase ? 'Chase camera' : 'Overhead camera', true) }
+  else if (e.key === 'c' || e.key === 'C') toggleCam();
+  else if (e.key === 'e' || e.key === 'E') openDoor();
   else if (e.key === 'Escape') stop(true);
   else if (e.key === ' ' || ['+', '=', '-', 'Home'].includes(e.key)) { e.preventDefault(); e.stopPropagation() }
 }, true);
 addEventListener('keyup', e => { if (KEYMAP[e.key]) keys.delete(KEYMAP[e.key]) }, true);
 addEventListener('blur', () => keys.clear());
+function toggleCam() { chase = !chase; toast(chase ? 'Chase camera' : 'Overhead camera', true); emit('cam', chase) }
+// The rear door: in crew play the operator opens it at a lantern; solo, the passenger lets themself in (doorNeeded = false)
+function openDoor() {
+  if (!driving || !doorNeeded) return;
+  doorOpen = 1.2; emit('door');
+  if (!fare.atDoor) toast('Door opened');
+}
+// the shared input: keyboard/touch pad (0 or 1) merged with the phones (analog). With keys only it is exactly the old input.
+function readInput() {
+  const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0);
+  return { gas: Math.max(keys.has('gas') ? 1 : 0, remote.gas), brake: Math.max(keys.has('brake') ? 1 : 0, remote.brake),
+    turn: Math.max(-1, Math.min(1, kTurn + remote.turn)) };
+}
 for (const b of document.querySelectorAll('#gt-pad button')) {
   const k = b.dataset.k;
   b.onpointerdown = e => { e.preventDefault(); keys.add(k); b.setPointerCapture(e.pointerId) };
@@ -127,10 +159,12 @@ for (const b of document.querySelectorAll('#gt-pad button')) {
 /* ---------- physics ---------- */
 const MAX = 11, REV = 4, WHEELBASE = 2.7;
 function step(dt) {
-  const gas = keys.has('gas'), brake = keys.has('brake'), turn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0);
-  if (gas) car.v += (car.v < 0 ? 12 : 5.5 * (1 - car.v / MAX)) * dt;
-  else if (brake) car.v -= (car.v > 0 ? 12 : 3) * dt;
-  else car.v -= Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
+  const { gas, brake, turn } = readInput();
+  // analog pedals blend the old full-pedal response with coasting; a full pedal (1, as from the keyboard) is the old physics exactly
+  const coast = -Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
+  if (gas > 0) car.v += gas * (car.v < 0 ? 12 : 5.5 * (1 - car.v / MAX)) * dt + (1 - gas) * coast;
+  else if (brake > 0) car.v -= brake * (car.v > 0 ? 12 : 3) * dt - (1 - brake) * coast;
+  else car.v += coast;
   car.v = Math.max(-REV, Math.min(MAX, car.v));
   const steerMax = .55 / (1 + Math.abs(car.v) * .06);
   car.steer += (turn * steerMax - car.steer) * Math.min(1, dt * 8);
@@ -139,7 +173,7 @@ function step(dt) {
   if (fits(nx, ny, nh)) { car.x = nx; car.y = ny; car.h = nh }
   else if (fits(car.x + Math.cos(nh) * car.v * dt, car.y, nh)) { car.x += Math.cos(nh) * car.v * dt * .5; car.h = nh; car.v *= .9 }   // slide along a kerb
   else if (fits(car.x, car.y + Math.sin(nh) * car.v * dt, nh)) { car.y += Math.sin(nh) * car.v * dt * .5; car.h = nh; car.v *= .9 }
-  else { if (Math.abs(car.v) > 4) { toast('Scrape!'); shake = .25 } car.v *= -.3 }
+  else { if (Math.abs(car.v) > 4) { toast('Scrape!'); shake = .25; emit('scrape') } car.v *= -.3 }
 }
 function bumps(dt) {
   bumpCool -= dt;
@@ -151,7 +185,9 @@ function bumps(dt) {
     const reach = a.k === 'car' ? Math.max(a.L, a.W) * .8 : a.k === 'bike' ? .8 : .35;
     if (Math.abs(along) < CAR.L / 2 + reach && Math.abs(side) < CAR.W / 2 + reach * .6) {
       const cost = a.k === 'ped' ? 600 : a.k === 'bike' ? 400 : 300;
+      penaltyYen += Math.min(yen, cost); penaltyTime += Math.min(clock, 3); bumpCount++;
       yen = Math.max(0, yen - cost); clock = Math.max(0, clock - 3); car.v *= -.25; bumpCool = 1.2; shake = .3;
+      emit('bump', { kind: a.k, cost });
       toast(a.k === 'ped' ? 'Watch the pedestrians! −¥' + cost : a.k === 'bike' ? 'You clipped a bike! −¥' + cost : 'Fender bender! −¥' + cost);
       return;
     }
@@ -160,12 +196,18 @@ function bumps(dt) {
 function fareLogic() {
   const target = fare.mode === 'pickup' ? fare.p : fare.d, dist = Math.hypot(target.x - car.x, target.y - car.y);
   if (dist < 3.2 && Math.abs(car.v) < 2.5) {
-    if (fare.mode === 'pickup') { fare.mode = 'drop'; fare.t = 0; toast('Passenger aboard!', true); $('gt-task').textContent = 'Take them to the gold lantern' }
+    if (doorNeeded && doorOpen <= 0) {   // crew play: wait at the lantern until the operator opens the door
+      if (!fare.atDoor) { fare.atDoor = true; setTask(); emit('atdoor', fare.mode) }
+      return target;
+    }
+    doorOpen = 0; fare.atDoor = false;
+    if (fare.mode === 'pickup') { fare.mode = 'drop'; fare.t = 0; toast('Passenger aboard!', true); setTask(); emit('pickup') }
     else {
       const pay = Math.round((500 + fare.dist * 12 + Math.max(0, 40 - fare.t) * 25) / 10) * 10, bonus = Math.round(8 + fare.dist / 12);
-      yen += pay; fares++; clock += bonus; toast('Fare paid ¥' + pay + ' · +' + bonus + ' s', true); newFare();
+      yen += pay; fares++; clock += bonus; fareTimes.push(fare.t); toast('Fare paid ¥' + pay + ' · +' + bonus + ' s', true); newFare();
+      emit('dropoff', { pay, bonus });
     }
-  }
+  } else if (fare.atDoor) { fare.atDoor = false; setTask() }
   return target;
 }
 
@@ -174,12 +216,13 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
   if (!driving) return;
-  step(dt); bumps(dt);
+  step(dt); bumps(dt); doorOpen = Math.max(0, doorOpen - dt);
   if (fare.mode === 'drop') fare.t += dt;
   const target = fareLogic();
   clock -= dt;
   if (clock <= 0) { clock = 0; stop(true); return }
-  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, tx: target.x, ty: target.y, mode: fare.mode };
+  if (ping && now > ping.until) ping = null;
+  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, tx: target.x, ty: target.y, mode: fare.mode, ...(ping ? { px: ping.x, py: ping.y, pc: ping.color } : {}) };
   // camera: behind the taxi (chase) or the plot's own iso angle, a little ahead of the car
   const want = chase ? car.h * 180 / Math.PI + 180 : iso.yaw;
   let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * (chase ? 3.2 : 6));
@@ -206,5 +249,18 @@ function frame(now) {
   redraw();
 }
 requestAnimationFrame(frame);
-window.GionTaxi = { start, stop, get car() { return car }, keys };
+const api = window.GionTaxi = {
+  start, stop, keys, remote, toggleCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false,
+  get car() { return car }, get driving() { return driving }, get chase() { return chase },
+  get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
+  on(name, f) { (handlers[name] = handlers[name] || []).push(f) },
+  setPing(x, y, color, ms = 6000) { ping = { x, y, color, until: performance.now() + ms } },
+  state() {
+    if (!car || !fare) return null;
+    const target = fare.mode === 'pickup' ? fare.p : fare.d;
+    return { driving, clock, yen, fares, chase, x: car.x, y: car.y, h: car.h, v: car.v, mode: fare.mode, tx: target.x, ty: target.y,
+      atDoor: !!fare.atDoor, doorNeeded, fareDist: fare.dist, fareT: fare.t || 0,
+      fareEst: fare.mode === 'drop' ? Math.round((500 + fare.dist * 12 + Math.max(0, 40 - (fare.t || 0)) * 25) / 10) * 10 : 0, ...summary() };
+  },
+};
 })();
