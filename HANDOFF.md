@@ -21,7 +21,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
 | Gion Taxi | Driving game on an isometric map of Gion, Kyoto | `gion-drive/` | Yes: merged into `main` (PR #1) |
-| GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes: branch `vibrate-grip` (build 2, commit `9a4e322`); not in `main` yet |
+| GripSense (iOS) | Estimates grip force from vibration damping, and now from ultrasonic sound | `GripSense/` | Build 2: branch `vibrate-grip` (`9a4e322`), PR #3 open. **Build 3 (sound mode) is on TestFlight but uncommitted** |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes: branch `vibrate-grip` (commit `9a4e322`); not in `main` yet |
 | Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (commit `9a1132d`); not in `main` yet |
 
@@ -51,7 +51,8 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 
 ### GripSense iOS app (`GripSense/`)
 - **Idea:** the phone vibrates; a tighter grip damps the vibration, so the accelerometer/gyro energy drops.
-  Calibrate "light" and "hard" grip, then a meter shows how hard you're squeezing.
+  Calibrate "light" and "hard" grip, then a meter shows how hard you're squeezing. Build 3 adds a second
+  method that uses sound instead (see below).
 - **On GitHub (branch `vibrate-grip`, commit `2a948ad`):** first version: continuous vibration, accel/gyro RMS,
   chart, calibration, grip meter.
 - **Build 2 (branch `vibrate-grip`, commit `9a4e322`; also on TestFlight):**
@@ -67,39 +68,21 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   can't deploy to it. Updating to Xcode 27 (App Store) fixes that and also clears Apple's SDK warning email
   (ITMS-90725). Until then, install through TestFlight.
 - **Project file is generated:** after editing `GripSense/project.yml`, run `xcodegen generate` in `GripSense/`.
-- **Likely cause of the weak signal:** the iPhone's motion sensors are capped at about 100 Hz. **Proposed next
-  step (waiting on Harry's go-ahead):** a ForcePhone-style audio mode that plays an inaudible ~18–20 kHz tone
-  from the speaker and listens with the mic. The published version of that approach works on iOS.
-- **Next:** check build 2 on the phone and decide on the audio mode.
-
-### Grip Sense Web (`web/index.html`)
-- A browser version of GripSense for phones: Start/Stop, sensor choice, live graph and grip meter.
-- **Vibration only works on Android** (`navigator.vibrate`). The trick of rapidly toggling an iOS switch
-  control to get haptic ticks does **not** work: Harry felt no vibration on his iPhone.
-- Served from Harry's Mac through a temporary ngrok URL (the link changes, so don't hand it out as permanent).
-- On branch `vibrate-grip` (commit `9a4e322`).
-
-### Laptop Shooter (`shooter/`)
-- "Your laptop is the target, your phone is the gun." Run `node shooter/server.js` (Node 18+, no install).
-  Laptop opens http://localhost:8080; phones on the same network open the `https://…:8443/gun` URL shown
-  (self-signed cert; HTTPS is needed for motion sensors). Tilt to aim, tap to fire, shake to reload. Several
-  phones can play at once; mouse works as a fallback. Full instructions in `shooter/README.md`.
-- **Gameplay:** 60 s rounds, 8-shot clip, combo multiplier up to x5. Targets are bugs, beach balls, popups and
-  stars; shooting the "unsaved_thesis.docx" file costs 50 points.
-- **Networking:** campus/hackathon Wi-Fi blocked phone-to-laptop traffic (probably client isolation). Fix:
-  connect the laptop to the phone's Personal Hotspot. The server now looks up the laptop's network address on
-  every request, so switching networks no longer leaves a stale link. `shooter/README.md` doesn't mention the
-  hotspot tip yet.
-- **Tested:** the phone-to-laptop relay was tested with a script (join, aim, fire, hit sent back to the phone,
-  leave), and both pages load in headless Chrome with no errors. The phone page loads on Harry's phone.
-  **Full gameplay on a real phone (gyro aiming, firing) isn't confirmed yet.**
-- Harry has a separate private setup & troubleshooting doc for sharing with friends (ask him for it; the link
-  isn't kept in the repo).
-- On branch `laptop-shooter` (commit `9a1132d`). The HTTPS certificate in `shooter/.cert/` is made locally
-  and is git-ignored, so a fresh clone generates its own.
+- **Likely cause of the weak signal:** the iPhone's motion sensors are capped at about 100 Hz, which is why
+  build 3 adds a sound-based mode.
+- **Build 3 (on TestFlight, uncommitted in git):** a ForcePhone-style *Sound* mode.
+  - The app now opens on a "Sound (new) / Vibration" switch.
+  - Sound mode plays 18, 19 and 20 kHz tones through the speaker or earpiece and measures each tone's amplitude
+    and phase at the microphone (48 kHz, lock-in demodulation). It calibrates "loose" and "squeeze", then
+    projects onto that direction to give a 0–100% grip. Needs microphone permission.
+  - New files: `GripSense/GripSense/AudioGripSensor.swift` and `SoundView.swift`; build number 3.
+  - **Not tested on a device yet.**
+  - The code is in a separate worktree, `~/Downloads/hw13-grip` (branch `vibrate-grip`), **not committed**:
+    Harry hasn't asked to commit it yet. It isn't in PR #3, which has build 2 only.
+- **Next:** test build 3 (sound mode) and build 2 on the phone; commit build 3 when Harry says so.
 
 ## Open items
-1. GripSense: check build 2 on the phone; decide whether to build the ultrasonic audio mode; update to Xcode 27.
+1. GripSense: test build 3's sound mode (and build 2) on the phone; commit build 3; update to Xcode 27.
 2. Laptop Shooter: confirm full gameplay on a real phone; add the hotspot tip to `shooter/README.md`.
-3. Decide which branches to merge into `main` (`vibrate-grip`, `laptop-shooter`, `handoff-doc`).
+3. Merge PR #3 (GripSense build 2 + web) and then PR #4 (Laptop Shooter) into `main`, in that order.
 4. Try Gion Taxi on a phone.
