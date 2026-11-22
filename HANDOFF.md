@@ -1,6 +1,6 @@
 # Handoff: Harry's work on Hack Western 13
 
-Last updated: 2026-11-21 (late night; everything merged into `main`: crew play via PR #6, Laptop Shooter + GripSense build 2 + Grip Sense Web via PR #4). Repo: https://github.com/harryyangzy/hackwestern-13
+Last updated: 2026-11-22 (Gion Taxi "Wrong Turn" deception mode with Solana devnet wagers, pushed on branch `gion-deception`, not in `main` yet). Repo: https://github.com/harryyangzy/hackwestern-13
 
 This file is the single source of truth on what Harry is working on. It is written so that any Claude Code
 session (or teammate) can read it and brief the team. **When you update the team, use only what is in this
@@ -20,7 +20,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
-| Gion Taxi | Driving game on an isometric map of Gion, Kyoto; solo or a crew of 1–4 phones sharing one taxi | `gion-drive/` | Yes, in `main` (solo PR #1, crew play PR #6) |
+| Gion Taxi | Driving game on an isometric map of Gion, Kyoto; solo or a crew of 1–4 phones sharing one taxi | `gion-drive/` | Yes, in `main` (solo PR #1, crew play PR #6). Wrong Turn mode: branch `gion-deception`, not in `main` yet |
 | GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes, in `main` (build 2, via PR #4) |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes, in `main` (via PR #4) |
 | Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes, in `main` (PR #4, with two-corner calibration) |
@@ -57,6 +57,23 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   30 server protocol checks; the lobby QR decodes to the right LAN URL; keyboard physics bit-identical to before).
   **Not tried on real phones or campus Wi-Fi yet.** Same Wi-Fi caveat as Laptop Shooter: use a phone's hotspot if
   phones can't reach the laptop.
+
+- **Wrong Turn mode (branch `gion-deception`, pushed, not in `main` yet):** a deception mode for 3–4 phones. One
+  secret imposter (picked by the server, shown only on their phone) tries to make the trip miss ¥3,000 using 3 subtle
+  sabotages; the crew votes after the shift. Players lock in hidden wagers in devnet SOL through an Anchor escrow program
+  (`gion-drive/solana/`, program `4J4FopP5witLrMaxehCm54vGjnaGHmRSQYwiRzMRC7hG` on devnet). The server reports the
+  result; Solana enforces the deposits, commitments, deadlines, payouts and refunds. Player keys are devnet burners
+  held by the server. Files: `wt-server.js` + `chain.js` (server), `wt.js`/`wt.css` (laptop), `wt-pad.js` (phones), small
+  hooks in `server.js`, `mp.js`, `drive.js`, `pad.html`. How it plays: `gion-drive/README.md`; rules and trust model:
+  `gion-drive/solana/README.md`.
+- **Wrong Turn tested:** program: 6 payout unit tests + 4 full-loop tests on a local SVM. On devnet: full games with 3
+  emulated phones (headless Chrome) for crew-wins-by-vote and cancel-and-refund, and one phone plus two bots for
+  imposter-wins; no page errors. **Not tried on real phones yet; the missed-reveal path was only tested on the local SVM.**
+  For testing with fewer than 3 phones, tick "Fill empty seats with bots" under Wrong Turn in the lobby. The
+  server wallet (`gion-drive/solana/.keys/server.json`, git-ignored) had about 0.011 devnet SOL left; top it up at
+  https://faucet.solana.com before demoing with the default 0.01 SOL stake.
+- **Possible conflict:** branch `gion-shooter` (PR #8, shooter role) edits the same files (`mp.js`, `pad.html`,
+  `server.js`, `build.py`); both sets of hooks are additive, so whichever merges second needs a small manual merge.
 
 ### GripSense iOS app (`GripSense/`)
 - **Idea:** the phone vibrates; a tighter grip damps the vibration, so the accelerometer/gyro energy drops.
@@ -111,6 +128,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   and is git-ignored, so a fresh clone generates its own.
 
 ## Open items
+0. Gion Taxi Wrong Turn: try it with real phones, open a PR for `gion-deception`, and merge it with `gion-shooter`.
 1. GripSense: check build 2 on the phone; decide whether to build the ultrasonic audio mode; update to Xcode 27.
 2. Laptop Shooter: confirm full gameplay on a real phone; add the hotspot tip to `shooter/README.md`.
 3. Try Gion Taxi on a phone, and try crew play with real phones.

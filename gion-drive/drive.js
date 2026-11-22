@@ -76,6 +76,8 @@ const keys = new Set();
 let driving = false, chase = true, car, fare, yen = 0, fares = 0, clock = 90, last = 0, bumpCool = 0, toastT = 0, shake = 0, camYaw = 0, finished = false;
 // crew play (mp.js): phone inputs, the door the operator opens at a lantern, and shift stats for the results card
 const remote = { gas: 0, brake: 0, turn: 0 };
+// Wrong Turn mode (wt.js) bends these; at their defaults the game is exactly as before
+const mods = { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 };
 let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
 const handlers = {};
 const emit = (name, data) => (handlers[name] || []).forEach(f => { try { f(data) } catch (e) { console.error(e) } });
@@ -141,14 +143,17 @@ function toggleCam() { chase = !chase; toast(chase ? 'Chase camera' : 'Overhead 
 // The rear door: in crew play the operator opens it at a lantern; solo, the passenger lets themself in (doorNeeded = false)
 function openDoor() {
   if (!driving || !doorNeeded) return;
+  if (performance.now() < mods.doorJamUntil) { toast('The door is stuck!'); emit('jammed'); return }
   doorOpen = 1.2; emit('door');
   if (!fare.atDoor) toast('Door opened');
 }
 // the shared input: keyboard/touch pad (0 or 1) merged with the phones (analog). With keys only it is exactly the old input.
 function readInput() {
   const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0);
-  return { gas: Math.max(keys.has('gas') ? 1 : 0, remote.gas), brake: Math.max(keys.has('brake') ? 1 : 0, remote.brake),
-    turn: Math.max(-1, Math.min(1, kTurn + remote.turn)) };
+  const now = performance.now();
+  return { gas: now < mods.gasCutUntil ? 0 : Math.max(keys.has('gas') ? 1 : 0, remote.gas),
+    brake: Math.max(keys.has('brake') ? 1 : 0, remote.brake * mods.brakeScale),
+    turn: Math.max(-1, Math.min(1, kTurn + remote.turn + mods.turnBias)) };
 }
 for (const b of document.querySelectorAll('#gt-pad button')) {
   const k = b.dataset.k;
@@ -242,15 +247,15 @@ function frame(now) {
   const arrow = $('gt-arrow');
   arrow.style.transform = `translate(-50%,-50%) rotate(${Math.atan2(sx, -sy) * 180 / Math.PI}deg) translateY(-110px)`;
   arrow.querySelector('path').setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
-  arrow.style.opacity = Math.hypot(gx, gy) < 12 ? .25 : 1;
+  arrow.style.opacity = mods.hideTarget ? 0 : Math.hypot(gx, gy) < 12 ? .25 : 1;
   $('gt-me').setAttribute('transform', `translate(${car.x} ${car.y}) rotate(${car.h * 180 / Math.PI}) scale(1.6)`);
-  const mt = $('gt-mt'); mt.setAttribute('cx', target.x); mt.setAttribute('cy', target.y); mt.setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
+  const mt = $('gt-mt'); mt.style.visibility = mods.hideTarget ? 'hidden' : ''; mt.setAttribute('cx', target.x); mt.setAttribute('cy', target.y); mt.setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
   toastT -= dt; if (toastT <= 0) $('gt-toast').classList.remove('show');
   redraw();
 }
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
-  start, stop, keys, remote, toggleCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false,
+  start, stop, keys, remote, mods, toggleCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false,
   get car() { return car }, get driving() { return driving }, get chase() { return chase },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },

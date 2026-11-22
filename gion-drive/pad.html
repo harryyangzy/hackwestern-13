@@ -298,6 +298,8 @@ function setConn() {
   $('banner').textContent = !joined ? 'Reconnecting to the laptop…' : 'The laptop dropped out. Waiting for it to come back…';
 }
 function onMsg(m) {
+  if (typeof m.t === 'string' && m.t.startsWith('dx-')) return window.WTPad?.(m);   // Wrong Turn (wt-pad.js)
+  if (m.t === 'joined' || (m.t === 'host' && m.on)) setTimeout(() => window.WTPad?.({ t: 'dx-joined' }));
   switch (m.t) {
     case 'joined': joined = true; hostOn = m.host; setConn(); send({ t: 'hello' }); if (!lobby) waitMsg('Joined room ' + m.room, m.host ? 'Waiting for the laptop…' : 'Waiting for the laptop to come back…'); break;
     case 'err': fatal = true; joined = false; if (ws) ws.close(); release(); joinForm(ERR[m.code] || 'Couldn’t join.'); break;
@@ -526,6 +528,8 @@ function frame(now) {
 requestAnimationFrame(frame);
 show('wait'); connect();
 window.GionPad = { get ctl() { return ctl }, get roles() { return myRoles }, get phase() { return phase }, get screen() { return screen }, pid };
+window.WTPadAPI = { send, buzz, toast, get screen() { return screen }, get roles() { return myRoles } };
 })();
 </script>
+<script src="/wt-pad.js"></script>
 </body></html>
