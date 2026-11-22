@@ -1,0 +1,18 @@
+{
+ "lat": 43.6531456,
+ "lon": -79.3839221,
+ "rotation": 17,
+ "size": 200.0,
+ "asked": {
+  "lat": 43.6527,
+  "lon": -79.3838
+ },
+ "moved_m": 50.2,
+ "famous_inside": [
+  "Toronto City Hall"
+ ],
+ "famous_cut": [],
+ "keep_missing": [],
+ "place": "",
+ "osm_base": "2026-11-21T23:54:47Z"
+}

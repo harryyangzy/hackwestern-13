@@ -1,4 +1,10 @@
-# Gion Taxi
+# Gion Taxi (and London, Toronto, Amsterdam)
+
+Four cities, one game: `gion-taxi.html` (Gion Shirakawa, Kyoto), `taxi-london.html` (Western University's main campus
+in London, Ontario, from University College to Middlesex College across UC Hill: the campus paths are drivable), `taxi-toronto.html` (Nathan Phillips
+Square and City Hall) and `taxi-amsterdam.html` (where the Reguliersgracht crosses the Keizersgracht). Switch cities
+from the menu; with the server running they're also at `/gion`, `/london`, `/toronto`, `/amsterdam`, and a crew keeps
+its room when the host switches city.
 
 Drive a taxi through the lanes of Gion Shirakawa, Kyoto. Pick up at the orange lantern, drop off at the gold one,
 and do as many fares as you can before the 90-second shift ends. Play solo on the keyboard, or as a crew of 2–4
@@ -7,7 +13,11 @@ phones sharing one taxi.
 ## Solo
 
 Open `gion-taxi.html` in a browser (it works offline, no server needed) and press **Start driving**.
-Arrows/WASD drive, `C` switches camera, `Esc` ends the shift.
+Arrows/WASD drive (hold ↓ to brake, then reverse), `C` cycles the camera (kart → chase → overhead), `Esc` ends the shift.
+The red and cream kerbs mark the road; dark and cream ones mark the edge of the map.
+
+**Gion Bowling** (bonus mode, from the menu or the crew lobby): 60 seconds to knock over as many pedestrians as you can.
+Each person counts once; hits in quick succession multiply (up to ×5); cars still cost time.
 
 ## Crew: phones as controllers
 
@@ -29,9 +39,13 @@ Node 18 or newer, no `npm install`. Then:
 | 4 | wheel · pedals · navigator · doors & camera |
 
 - **Wheel:** drag the rim round to steer. Let go and it straightens.
-- **Pedals:** hold gas or brake; slide your thumb down to press harder. Keep holding brake to reverse.
+- **Pedals:** a touch is a full pedal; slide your thumb up to ease off. The **D / R** switch above the gas picks the
+  direction: in R the gas pedal backs up. The brake pedal only ever brakes. (On the keyboard, holding ↓ still brakes, then reverses.)
 - **Navigator:** a heading-up map with the route to the lantern. Call turns, or tap the map to drop a marker in the laptop's scene.
-- **Doors & camera:** when the taxi stops at a lantern, the passenger waits until you open the door. You also switch the laptop's camera.
+- **Doors & camera:** when the taxi stops at a lantern, the passenger waits until you open the door. You also switch the laptop's camera (kart, chase, overhead).
+
+**Full screen on phones:** Android goes full screen on the first tap. iPhone Safari can't go full screen from a web page,
+so the controller asks for one swipe up, which makes Safari hide its bars in landscape.
 
 The host can swap roles (⇅) or remove a phone (×) in the lobby. After a shift, **Start next shift** keeps the same room and crew.
 The keyboard keeps working during a crew shift. `E` opens the door.
@@ -64,7 +78,7 @@ Without a tunnel:
 python3 gion-drive/build.py
 ```
 
-It uses the Pocket City skill at `~/Downloads/pocket-city` (or `--skill PATH`) when it's installed. Otherwise it rebuilds
+`python3 gion-drive/build.py --city london` builds one city. It uses the Pocket City skill at `~/Downloads/pocket-city` (or `--skill PATH`) when it's installed. Otherwise it rebuilds
 from the existing `gion-taxi.html`, swapping in the current files between its `<gion-taxi …>` markers.
 `pad.html` and `server.js` are served as they are and aren't built.
 

@@ -20,7 +20,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
-| Gion Taxi | Driving game on an isometric map of Gion, Kyoto; solo or a crew of 1–4 phones sharing one taxi | `gion-drive/` | Solo: merged into `main` (PR #1). Crew play: branch `gion-multiplayer`, not in `main` yet |
+| Gion Taxi | Driving game on isometric maps of Gion (Kyoto), Western's campus (London ON), Nathan Phillips Sq (Toronto) and the Amsterdam canal ring; solo or a crew of 1–4 phones sharing one taxi | `gion-drive/` | Solo: merged into `main` (PR #1). Crew play: branch `gion-multiplayer`, not in `main` yet |
 | GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes: branch `vibrate-grip` (build 2, commit `9a4e322`); not in `main` yet |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes: branch `vibrate-grip` (commit `9a4e322`); not in `main` yet |
 | Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes: branch `laptop-shooter` (commit `9a1132d`); not in `main` yet |

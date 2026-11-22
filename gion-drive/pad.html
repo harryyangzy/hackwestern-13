@@ -1,18 +1,29 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#f6f3e9"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<title>Gion Taxi · Crew</title>
+<title>Taxi crew</title>
 <style>
-/* Gion Taxi phone controller. One page, four instruments (wheel, pedals, navigator's map, doors & camera), laid out
+/* Taxi crew phone controller (every city). One page, four instruments (wheel, pedals, navigator's map, doors & camera), laid out
    for whichever roles the laptop gives this phone. Same paper, inks and type as the game. */
 :root{--ink:#263c35;--paper:#f6f3e9;--panel:#fffcf3;--muted:#626c60;--rule:#cfcfc0;--rust:#ac4931;--green:#36594b;--gold:#c9932c;--card:#fffcf3ee;--line:#afb5a5;
   --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:"Helvetica Neue",Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--me:#c8513a}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:15px/1.35 var(--sans);overscroll-behavior:none}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:15px/1.35 var(--sans);overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation}
+#lobby,#drive,#parts,#count{touch-action:none}
 body{background:radial-gradient(120% 90% at 50% 0%,#fbf8ef 0,var(--paper) 60%,#eee8d8 100%);overflow:hidden;position:fixed;inset:0;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 [hidden]{display:none!important}
+html.scrollfs{height:auto}
+html.scrollfs body{position:static;height:calc(100vh + 260px);overflow:visible}
+html.scrollfs section{position:fixed}
+#swipe{position:fixed;inset:0;z-index:48;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:#f6f3e9f2;text-align:center;touch-action:pan-y;padding:20px}
+#swipe.on{display:flex}
+#swipe svg{width:64px;height:64px;animation:swipeup 1.6s ease-in-out infinite}
+@keyframes swipeup{0%{transform:translateY(22px);opacity:0}30%{opacity:1}100%{transform:translateY(-26px);opacity:0}}
+#swipe h2{font-size:24px}
+#swipe p{font:italic 15px var(--serif);color:var(--muted);margin:0;max-width:460px}
+#swipe button{margin-top:6px;font-size:13px;color:var(--muted);text-decoration:underline}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 30px #263c3522}
 small,.cap{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 h1,h2{font-family:var(--serif);font-weight:600;margin:0}
@@ -98,6 +109,13 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
   background-image:repeating-linear-gradient(0deg,#0000 0 9px,#0002 9px 11px),linear-gradient(var(--pc),var(--pc));transition:transform .05s}
 .plate span{font:600 17px var(--serif);color:#fff;text-shadow:0 1px 0 #0004;background:var(--pc);padding:1px 8px;border-radius:6px}
 .pedal.brake{--pc:var(--rust)} .pedal.gas{--pc:var(--green)}
+.pedal.gas.rev{--pc:#4f6d8a}
+.gear{display:flex;width:100%;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff9;margin-bottom:6px;flex:none}
+.gear button{flex:1;padding:5px 0 4px;font:600 20px var(--serif);color:var(--muted);display:flex;flex-direction:column;align-items:center;line-height:1}
+.gear button small{font-size:8.5px;margin-top:2px;letter-spacing:.06em}
+.gear button.on{background:var(--ink);color:var(--panel)}
+.gear button.on small{color:#fffcf3b0}
+.gear button[data-g="R"].on{background:#4f6d8a}
 .pedal .hint{min-height:2.6em}
 /* speedo */
 #c-speedo{flex:1}
@@ -148,7 +166,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 <div id="rotate"><svg viewBox="0 0 64 64" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="6" width="24" height="44" rx="4" fill="#fffcf3"/><path d="M28 44h8" /><path d="M50 52a22 22 0 0 1-14 8" stroke="#ac4931"/><path d="m34 57 2 3-3 2" stroke="#ac4931"/></svg><h2>Turn your phone sideways</h2><p>The taxi’s controls are made for landscape.</p></div>
 
 <section id="join" hidden><form class="card joincard" id="joinForm" autocomplete="off">
-  <h1>Gion Taxi</h1><p>Enter the room code shown on the laptop.</p>
+  <h1>Taxi crew</h1><p>Enter the room code shown on the laptop.</p>
   <input id="code" maxlength="4" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="ABCD" aria-label="Room code">
   <p id="joinErr" role="alert"></p>
   <button class="pill" type="submit">Join the crew</button>
@@ -173,7 +191,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
   <div class="card bar">
     <div class="who"><i class="seatdot"></i><b id="barName">Player</b><span id="barRoles"></span></div>
     <span id="task"></span>
-    <div class="stats"><div><small>Time</small><b id="clock">90</b></div><div><small>Yen</small><b id="yen">¥0</b></div><div><small>Fares</small><b id="fares">0</b></div></div>
+    <div class="stats"><div><small>Time</small><b id="clock">90</b></div><div><small id="lab1">Yen</small><b id="yen">¥0</b></div><div><small id="lab2">Fares</small><b id="fares">0</b></div></div>
     <i class="conn" id="conn" title="Connection"></i>
   </div>
   <div id="panels"></div>
@@ -197,8 +215,8 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
     <div class="steerbar"><span style="left:0">◀</span><span style="right:0">▶</span><i id="steerDot"></i></div>
     <p class="hint">Drag the rim round · let go to straighten</p>
   </div>
-  <div class="comp pedal brake" id="c-brake"><span class="cap" style="left:auto;position:relative;top:0;margin-bottom:6px">Brake</span><div class="track" id="brakeTrack"><div class="fill"></div><div class="plate"><span>Brake</span></div></div><p class="hint">Hold to brake · keep holding to reverse</p></div>
-  <div class="comp pedal gas" id="c-gas"><span class="cap" style="left:auto;position:relative;top:0;margin-bottom:6px">Gas</span><div class="track" id="gasTrack"><div class="fill"></div><div class="plate"><span>Gas</span></div></div><p class="hint">Hold · slide down to press harder</p></div>
+  <div class="comp pedal brake" id="c-brake"><span class="cap" style="left:auto;position:relative;top:0;margin-bottom:6px">Brake</span><div class="track" id="brakeTrack"><div class="fill"></div><div class="plate"><span>Brake</span></div></div><p class="hint">Hold to slow down and stop</p></div>
+  <div class="comp pedal gas" id="c-gas"><div class="gear" id="gear" role="group" aria-label="Gear"><button data-g="D" class="on" aria-pressed="true">D<small>Drive</small></button><button data-g="R" aria-pressed="false">R<small>Reverse</small></button></div><div class="track" id="gasTrack"><div class="fill"></div><div class="plate"><span>Gas</span></div></div><p class="hint" id="gasHint">Hold to go forward · slide up to ease off</p></div>
   <div class="comp" id="c-speedo"><svg id="speedo" viewBox="-100 -78 200 130" aria-label="Speedometer">
       <path d="M-74.5 43A86 86 0 1 1 74.5 43" fill="none" stroke="#cfcfc0" stroke-width="6" stroke-linecap="round"/>
       <path id="spArc" d="M-74.5 43A86 86 0 1 1 74.5 43" fill="none" stroke="#36594b" stroke-width="6" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
@@ -226,10 +244,11 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
   <div class="comp" id="c-ops"><span class="cap">Doors &amp; camera</span>
     <div class="meter"><div class="flag" id="flag"><span lang="ja">空車</span><small>For hire</small></div><div class="meterYen"><small>This fare</small><b id="fareYen">—</b></div></div>
     <button id="door" disabled><svg viewBox="0 0 40 40" fill="none" stroke="#263c35" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M8 34V9l14-4v29Z" fill="#c9932c55"/><path d="M22 5h9v29h-9M18 20v3"/></svg><span id="doorLabel">Door</span></button>
-    <div class="seg" id="cam"><button data-chase="1" class="on">Chase</button><button data-chase="0">Overhead</button></div>
+    <div class="seg" id="cam"><button data-cam="kart" class="on">Kart</button><button data-cam="chase">Chase</button><button data-cam="top">Overhead</button></div>
     <p class="hint" id="opsHint">Open the door when the taxi stops at a lantern</p>
   </div>
 </div>
+<div id="swipe" aria-live="polite"><svg viewBox="0 0 48 48" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 40V10m-9 9 9-9 9 9"/></svg><h2>Swipe up for full screen</h2><p>One swipe up hides Safari’s bars so the controls fill the screen. If the bars come back, swipe up again.</p><button id="swipeSkip">Not now</button></div>
 <div id="count" hidden></div>
 <div id="banner" class="card" hidden></div>
 <div id="toast"></div>
@@ -312,15 +331,15 @@ function onMsg(m) {
 }
 
 /* ---------- lobby ---------- */
-let lobby = null, me = null, myRoles = [], phase = 'lobby', ready = false;
+let lobby = null, me = null, myRoles = [], phase = 'lobby', ready = false, BOWL = 'Bowling';   // BOWL: the city's bowling mode name
 function onLobby(m) {
-  lobby = m; phase = m.phase;
+  lobby = m; phase = m.phase; if (m.bowl) BOWL = m.bowl; if (m.brand) document.title = m.brand + ' · Crew';
   me = m.seats.find(s => s.pid === pid) || null;
   const roles = me ? me.roles : [];
   if (roles.join() !== myRoles.join()) { myRoles = roles; layout(); release() }
   if (me) document.documentElement.style.setProperty('--me', me.color);
   ready = !!(me && me.ready);
-  $('youRoom').textContent = 'Room ' + m.room; $('youName').textContent = me ? me.name : 'Waiting for a seat';
+  $('youRoom').textContent = 'Room ' + m.room + (m.game === 'bowling' ? ' · ' + BOWL : ' · Taxi shift'); $('youName').textContent = me ? me.name : 'Waiting for a seat';
   $('barName').textContent = me ? me.name : ''; $('barRoles').textContent = roles.map(r => ROLE_INFO[r][0]).join(' · ');
   $('roleList').innerHTML = roles.map(r => `<li><svg viewBox="0 0 30 30" fill="none" stroke="#263c35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ROLE_INFO[r][2]}</svg><div><b>${ROLE_INFO[r][0]}</b><span>${ROLE_INFO[r][1]}</span></div></li>`).join('');
   $('ready').classList.toggle('on', ready); $('ready').setAttribute('aria-pressed', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
@@ -334,6 +353,8 @@ function onLobby(m) {
   setConn();
 }
 function resultHTML(r) {
+  if (r.mode === 'bowling') { const b = r.score >= 4000 ? 3 : r.score >= 2000 ? 2 : r.score >= 600 ? 1 : 0;
+    return `<div class="card res"><b class="t">Time!</b><span class="stars">${'★'.repeat(b)}${'☆'.repeat(3 - b)}</span><div class="row"><div><small>Pins</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div></div>` }
   const n = r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0;
   return `<div class="card res"><b class="t">Shift over</b><span class="stars">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span><div class="row"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div><div><small>Bumps</small><b>${r.bumps}</b></div></div></div>`;
 }
@@ -365,9 +386,9 @@ function layout() {
 }
 
 /* ---------- controls ---------- */
-const ctl = { turn: 0, gas: 0, brake: 0 };
+const ctl = { turn: 0, gas: 0, brake: 0, gear: 'D' };
 let wheelA = 0, wheelHeld = null, wheelLast = 0, wheelCenter = null;
-const WHEEL_MAX = 120;   // degrees of wheel rotation for full lock
+const WHEEL_MAX = 100;   // degrees of wheel rotation for full lock
 const wheelEl = $('wheel');
 const angleAt = e => Math.atan2(e.clientY - wheelCenter[1], e.clientX - wheelCenter[0]) * 180 / Math.PI;
 wheelEl.addEventListener('pointerdown', e => {
@@ -387,15 +408,24 @@ for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) wheelEl.a
 function pedal(trackId, key) {
   const el = $(trackId); let held = null, y0 = 0;
   const set = v => { ctl[key] = v; el.querySelector('.fill').style.height = (v * 100) + '%'; el.querySelector('.plate').style.transform = `translateY(${v * 10}px) scaleY(${1 - v * .05})` };
-  el.addEventListener('pointerdown', e => { e.preventDefault(); if (held != null) return; held = e.pointerId; el.setPointerCapture(e.pointerId); y0 = e.clientY; set(.8); buzz(8) });
-  el.addEventListener('pointermove', e => { if (e.pointerId !== held) return; const h = el.getBoundingClientRect().height; set(Math.max(.25, Math.min(1, .8 + (e.clientY - y0) / (h * .45)))) });
+  el.addEventListener('pointerdown', e => { e.preventDefault(); if (held != null) return; held = e.pointerId; el.setPointerCapture(e.pointerId); y0 = e.clientY; set(1); buzz(8) });
+  el.addEventListener('pointermove', e => { if (e.pointerId !== held) return; const h = el.getBoundingClientRect().height; set(Math.max(.3, Math.min(1, 1 - (y0 - e.clientY) / (h * .5)))) });
   const up = e => { if (e.pointerId === held) { held = null; set(0) } };
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, up);
   return () => { held = null; set(0) };
 }
 const releaseBrake = pedal('brakeTrack', 'brake'), releaseGas = pedal('gasTrack', 'gas');
+// the gear: D drives forward, R drives backward on the same gas pedal; the brake pedal only ever brakes
+function setGear(g) {
+  ctl.gear = g;
+  for (const b of $('gear').children) { b.classList.toggle('on', b.dataset.g === g); b.setAttribute('aria-pressed', b.dataset.g === g) }
+  $('c-gas').classList.toggle('rev', g === 'R');
+  $('c-gas').querySelector('.plate span').textContent = g === 'R' ? 'Reverse' : 'Gas';
+  $('gasHint').textContent = g === 'R' ? 'Hold to back up · switch to D to go forward' : 'Hold to go forward · slide up to ease off';
+}
+$('gear').addEventListener('pointerdown', e => { const b = e.target.closest('[data-g]'); if (!b) return; e.preventDefault(); if (ctl.gear !== b.dataset.g) { setGear(b.dataset.g); buzz(15); sendNow() } });
 // let go of everything: on role change, disconnect, the end of a shift, or when the phone is put away
-function release() { wheelHeld = null; wheelA = 0; releaseBrake(); releaseGas(); ctl.turn = 0; sendNow() }
+function release() { wheelHeld = null; wheelA = 0; releaseBrake(); releaseGas(); ctl.turn = 0; if (phase !== 'driving') setGear('D'); sendNow() }
 document.addEventListener('visibilitychange', () => { if (document.hidden) release() });
 addEventListener('blur', release);
 for (const t of ['gesturestart', 'gesturechange', 'contextmenu']) document.addEventListener(t, e => e.preventDefault(), { passive: false });
@@ -405,7 +435,7 @@ let sent = '', sentAt = 0;
 function message() {
   const m = { t: 'in' };
   if (myRoles.includes('steer')) m.turn = +ctl.turn.toFixed(3);
-  if (myRoles.includes('pedals')) { m.gas = +ctl.gas.toFixed(2); m.brake = +ctl.brake.toFixed(2) }
+  if (myRoles.includes('pedals')) { m.gas = +ctl.gas.toFixed(2); m.brake = +ctl.brake.toFixed(2); m.gear = ctl.gear }
   return m;
 }
 function sendNow() { if (!myRoles.includes('steer') && !myRoles.includes('pedals')) return; const m = message(), s = JSON.stringify(m); send(m); sent = s; sentAt = performance.now() }
@@ -422,6 +452,19 @@ function onState(m) {
   if (first) Object.assign(view, { x: m.x, y: m.y, h: m.h, v: m.v });
   $('clock').textContent = Math.ceil(m.clock); $('clock').classList.toggle('low', m.clock < 15);
   $('yen').textContent = '¥' + m.yen.toLocaleString(); $('fares').textContent = m.fares;
+  const bowl = m.game === 'bowling';
+  $('lab1').textContent = bowl ? 'Pins' : 'Yen'; $('lab2').textContent = bowl ? 'Score' : 'Fares';
+  if (bowl) {
+    $('yen').textContent = m.pins; $('fares').textContent = m.score.toLocaleString();
+    $('task').textContent = BOWL + ': knock over the pedestrians';
+    $('navTarget').textContent = BOWL; $('navDist').textContent = 'Call the turns toward the crowds';
+    $('mtarget').setAttribute('visibility', 'hidden'); $('mroute').setAttribute('points', '');
+    $('flag').classList.remove('hired'); $('flag').innerHTML = '<span lang="ja">回送</span><small>Off duty</small>'; $('fareYen').textContent = m.pins + ' pins';
+    $('door').disabled = true; $('door').classList.remove('call'); $('doorLabel').textContent = 'Door'; $('opsHint').textContent = 'No passengers in ' + BOWL + ': you run the camera';
+    for (const b of $('cam').children) b.classList.toggle('on', b.dataset.cam === m.cam);
+    return;
+  }
+  $('mtarget').setAttribute('visibility', 'visible');
   $('task').textContent = m.atDoor ? (m.doorNeeded ? 'At the lantern: open the door' : 'At the lantern') : m.mode === 'pickup' ? 'Pick up at the orange lantern' : 'Drop off at the gold lantern';
   // navigator
   const pick = m.mode === 'pickup', col = pick ? '#f26a2e' : '#f2c94c';
@@ -435,7 +478,7 @@ function onState(m) {
   const door = $('door'); door.disabled = !m.doorNeeded; door.classList.toggle('call', !!m.atDoor && m.doorNeeded);
   $('doorLabel').textContent = m.atDoor ? (pick ? 'Let them in' : 'Let them out') : 'Door';
   $('opsHint').textContent = m.atDoor ? 'They’re waiting: open the door!' : pick ? 'Open the door when the taxi stops at the orange lantern' : 'Open the door at the gold lantern';
-  for (const b of $('cam').children) b.classList.toggle('on', (b.dataset.chase === '1') === m.chase);
+  for (const b of $('cam').children) b.classList.toggle('on', b.dataset.cam === m.cam);
   if (m.atDoor && !atDoorBefore && myRoles.includes('ops')) buzz([40, 60, 40]);
   atDoorBefore = m.atDoor;
 }
@@ -443,6 +486,7 @@ let atDoorBefore = false;
 function onEvent(m) {
   if (m.k === 'bump') { toast(m.kind === 'ped' ? 'Watch the pedestrians! −¥' + m.cost : m.kind === 'bike' ? 'Clipped a bike! −¥' + m.cost : 'Fender bender! −¥' + m.cost); if (myRoles.includes('steer') || myRoles.includes('pedals')) buzz(120) }
   else if (m.k === 'scrape') { if (myRoles.includes('steer')) buzz(50) }
+  else if (m.k === 'pin') { toast((m.combo >= 3 ? 'Strike ×' + Math.min(m.combo, 5) + '! +' : 'Strike! +') + m.pts, true); buzz(25) }
   else if (m.k === 'pickup') { toast('Passenger aboard!', true); buzz(30) }
   else if (m.k === 'dropoff') { toast('Fare paid ¥' + m.pay + ' · +' + m.bonus + ' s', true); buzz([30, 50, 30]) }
   else if (m.k === 'call' && !myRoles.includes('nav')) toast('Navigator: ' + (CALL_TEXT[m.d] || ''), true);
@@ -494,7 +538,7 @@ $('calls').addEventListener('click', e => {
 });
 /* ---------- doors & camera ---------- */
 $('door').addEventListener('click', () => { if (phase !== 'driving') return; send({ t: 'door' }); buzz(20); $('door').classList.add('press'); setTimeout(() => $('door').classList.remove('press'), 150) });
-$('cam').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || phase !== 'driving') return; send({ t: 'cam', chase: b.dataset.chase === '1' }); buzz(10) });
+$('cam').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || phase !== 'driving') return; send({ t: 'cam', cam: b.dataset.cam }); buzz(10) });
 
 /* ---------- speedometer ticks ---------- */
 const spA = v => -120 + Math.min(1, Math.max(0, v / 40)) * 240;
@@ -515,15 +559,40 @@ function frame(now) {
     let dh = st.h - view.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); view.h += dh * k;
     const kmh = Math.abs(view.v) * 3.6, shown = Math.round(kmh);
     $('hubKmh').textContent = view.v < -.3 ? 'R' : shown;
-    $('spVal').textContent = view.v < -.3 ? 'R ' + shown : shown;
+    $('spVal').textContent = (ctl.gear === 'R' || view.v < -.3) ? 'R ' + shown : shown;
     $('spNeedle').setAttribute('transform', `rotate(${spA(kmh)})`);
     $('spArc').setAttribute('stroke-dasharray', `${(Math.min(1, kmh / 40) * 100).toFixed(1)} 100`);
-    $('spHint').textContent = st.atDoor ? 'Stopped at the lantern' : kmh < 9 && Math.abs(st.tx - st.x) + Math.abs(st.ty - st.y) < 12 ? 'Slow enough to stop here' : 'Stop gently at the lanterns, under 9 km/h';
+    $('spHint').textContent = st.game === 'bowling' ? BOWL + ': full speed ahead' : st.atDoor ? 'Stopped at the lantern' : kmh < 9 && Math.abs(st.tx - st.x) + Math.abs(st.ty - st.y) < 12 ? 'Slow enough to stop here' : 'Stop gently at the lanterns, under 9 km/h';
     if (!$('c-map').parentElement.isSameNode($('parts'))) placeMap();
   }
   pump(now);
 }
 requestAnimationFrame(frame);
+const isIOS = /iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standalone = navigator.standalone || matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches;
+let swipeSkipped = false;
+function goFullscreen() {
+  const el = document.documentElement;
+  if (document.fullscreenElement || !el.requestFullscreen) return;
+  el.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { window.screen.orientation.lock('landscape').catch(() => {}) } catch {} }).catch(() => {});
+}
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#join')) goFullscreen() }, { capture: true });
+// Safari on iPhone can't go full screen from a web page, but it hides its bars once the page scrolls in landscape
+function checkBars() {
+  if (!isIOS || standalone) return;
+  const landscape = innerWidth > innerHeight, full = Math.min(window.screen.width, window.screen.height);
+  const bars = landscape && innerHeight < full - 24 && (screen === 'lobby' || screen === 'drive');
+  $('swipe').classList.toggle('on', bars && !swipeSkipped);
+}
+if (isIOS && !standalone) {
+  document.documentElement.classList.add('scrollfs');
+  for (const ev of ['resize', 'scroll', 'orientationchange']) addEventListener(ev, () => setTimeout(checkBars, 60), { passive: true });
+  setInterval(checkBars, 700);
+}
+$('swipeSkip').onclick = () => { swipeSkipped = true; checkBars() };
+// no pinch-zoom on the controller screens (iOS ignores user-scalable=no), no double-tap zoom anywhere
+document.addEventListener('touchstart', e => { if (e.touches.length > 1 && !e.target.closest('#join')) e.preventDefault() }, { passive: false });
+document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
 show('wait'); connect();
 window.GionPad = { get ctl() { return ctl }, get roles() { return myRoles }, get phase() { return phase }, get screen() { return screen }, pid };
 })();

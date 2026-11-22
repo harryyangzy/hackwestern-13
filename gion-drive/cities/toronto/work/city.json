@@ -1,0 +1,317 @@
+{
+ "name": "Toronto",
+ "title": "Nathan Phillips Square, Toronto",
+ "region": "Ontario",
+ "place": "Toronto City Hall × Queen St W",
+ "timezone": "America/Toronto",
+ "level": 3.7,
+ "styles": {
+  "default": {
+   "facade": "office",
+   "wall": [
+    "#dcd8cf",
+    "#cfcac0",
+    "#e3dfd6"
+   ],
+   "trim": "#eeebe4",
+   "glass": [
+    "#8fa6b3",
+    "#9db2bd"
+   ],
+   "roof": "flat",
+   "flatRoof": "#9a9a96",
+   "levels": 6,
+   "floor": 3.8,
+   "shop": "poi",
+   "parapet": 0.6
+  },
+  "rules": [
+   {
+    "if": {
+     "maxLevels": 3
+    },
+    "set": {
+     "facade": "civic",
+     "wall": [
+      "#d6cdbb"
+     ]
+    }
+   }
+  ]
+ },
+ "buildings": {},
+ "palette": {
+  "ground": "#e4dfd4",
+  "road": "#9f9fa3",
+  "pavement": "#d9d5cc",
+  "walk": "#d4cfc4",
+  "grass": "#9ccb6c",
+  "slab": "#d0c9bb",
+  "marking": "#f3efe6",
+  "kerb": "#d2cdc3",
+  "paving": "#bcb6ab",
+  "water": "#87b6c4"
+ },
+ "paving": {
+  "style": "tiles",
+  "size": 1.2
+ },
+ "lamp": {
+  "colour": "#3a3f44",
+  "height": 6.5,
+  "head": "#f1ead6"
+ },
+ "trees": {
+  "default": {
+   "style": 1,
+   "colours": [
+    "#7fb35c",
+    "#91be64"
+   ],
+   "height": 10,
+   "autumn": "#e3a03c"
+  },
+  "rules": [
+   {
+    "match": "Gleditsia|honey",
+    "style": 4,
+    "autumn": "#ecc94b"
+   },
+   {
+    "match": "Acer|maple",
+    "style": 3,
+    "autumn": "#d9583a"
+   }
+  ]
+ },
+ "people": {
+  "clothes": [
+   "#3d4a5e",
+   "#e7e2d6",
+   "#6b7f94",
+   "#a64a3c",
+   "#4f6b4f",
+   "#d8b56a",
+   "#5c4b78",
+   "#2f3238"
+  ],
+  "umbrellas": [
+   "#2f3238",
+   "#3d4a5e",
+   "#a64a3c",
+   "#e7e2d6"
+  ]
+ },
+ "vehicles": {
+  "kinds": [
+   "sedan",
+   "hatch",
+   "mpv",
+   "sedan",
+   "van"
+  ],
+  "colours": [
+   "#f2f2ee",
+   "#2e3139",
+   "#99a3ae",
+   "#7a2f3a",
+   "#3d4f6b"
+  ],
+  "plate": "#f2f2ee",
+  "taxi": {
+   "share": 0.15,
+   "colours": [
+    "#f0f0ea"
+   ],
+   "kind": "sedan",
+   "sign": "#f6e7a6"
+  }
+ },
+ "seasonLabel": "Season",
+ "seasons": [
+  {
+   "id": "spring",
+   "label": "Spring",
+   "leaves": "spring",
+   "crowd": 1.1,
+   "note": {
+    "text": "Lake Ontario moderates Toronto's climate, among the mildest in Canada east of the Rockies.",
+    "source": "Wikipedia: Climate of Toronto",
+    "url": "https://en.wikipedia.org/wiki/Climate_of_Toronto"
+   }
+  },
+  {
+   "id": "summer",
+   "label": "Summer",
+   "leaves": "summer",
+   "crowd": 1.4,
+   "note": {
+    "text": "In summer the reflecting pool is a decorative feature that cools the square.",
+    "source": "City of Toronto",
+    "url": "https://www.toronto.ca/services-payments/venues-facilities-bookings/booking-city-facilities/city-squares/nathan-phillips-square/whats-there-at-nathan-phillips-square/"
+   }
+  },
+  {
+   "id": "autumn",
+   "label": "Autumn",
+   "leaves": "autumn",
+   "crowd": 1.0,
+   "note": {
+    "text": "Viljo Revell's City Hall opened on 13 September 1965.",
+    "source": "Wikipedia: Toronto City Hall",
+    "url": "https://en.wikipedia.org/wiki/Toronto_City_Hall"
+   }
+  },
+  {
+   "id": "winter",
+   "label": "Winter",
+   "leaves": "bare",
+   "coats": true,
+   "ice": true,
+   "crowd": 1.1,
+   "note": {
+    "text": "The reflecting pool becomes a public skating rink from November to March.",
+    "source": "City of Toronto",
+    "url": "https://www.toronto.ca/services-payments/venues-facilities-bookings/booking-city-facilities/city-squares/nathan-phillips-square/whats-there-at-nathan-phillips-square/"
+   }
+  },
+  {
+   "id": "snow",
+   "label": "Snow",
+   "sub": "winter",
+   "leaves": "bare",
+   "snow": true,
+   "wx": "snow",
+   "coats": true,
+   "ice": true,
+   "crowd": 0.8,
+   "note": {
+    "text": "Downtown Toronto averages 121.5 cm of snow a year.",
+    "source": "Wikipedia: Climate of Toronto",
+    "url": "https://en.wikipedia.org/wiki/Climate_of_Toronto"
+   }
+  }
+ ],
+ "occasionLabel": "Special scenes",
+ "occasions": [
+  {
+   "id": "cavalcade",
+   "label": "Cavalcade of Lights",
+   "leaves": "bare",
+   "coats": true,
+   "ice": true,
+   "night": 0.9,
+   "litShare": 0.75,
+   "crowd": 1.8,
+   "decor": {
+    "fairy": [
+     "#fff3c4",
+     "#ffe7a8",
+     "#ffd98a"
+    ]
+   },
+   "note": {
+    "text": "The square's Christmas tree and over 300,000 LED lights glow from dusk to 11 p.m. nightly.",
+    "source": "City of Toronto",
+    "url": "https://www.toronto.ca/news/cavalcade-of-lights-brings-music-skating-and-holiday-magic-to-nathan-phillips-square/"
+   }
+  }
+ ],
+ "months": [
+  "winter",
+  "winter",
+  "winter",
+  "spring",
+  "spring",
+  "summer",
+  "summer",
+  "summer",
+  "autumn",
+  "autumn",
+  "winter",
+  "winter"
+ ],
+ "views": [
+  {
+   "id": "towers",
+   "label": "City Hall towers",
+   "camera": {
+    "yaw": -110,
+    "pitch": 24,
+    "zoom": 1.6,
+    "x": 0,
+    "y": 10,
+    "z": 30
+   }
+  },
+  {
+   "id": "square",
+   "label": "The square",
+   "camera": {
+    "yaw": -100,
+    "pitch": 34,
+    "zoom": 2.4,
+    "x": 0,
+    "y": -50,
+    "z": 2
+   }
+  }
+ ],
+ "legend": [
+  {
+   "name": "Toronto City Hall",
+   "source": "Hand-built · photos",
+   "count": "",
+   "icon": "landmark",
+   "camera": {
+    "yaw": -110,
+    "pitch": 24,
+    "zoom": 1.6,
+    "x": 0,
+    "y": 10,
+    "z": 30
+   }
+  },
+  {
+   "name": "Reflecting pool",
+   "source": "OpenStreetMap",
+   "count": "",
+   "icon": "water",
+   "camera": {
+    "yaw": -100,
+    "pitch": 34,
+    "zoom": 2.4,
+    "x": 0,
+    "y": -50,
+    "z": 2
+   }
+  }
+ ],
+ "notes": [
+  {
+   "title": "Toronto City Hall",
+   "text": "Viljo Revell's design: two curved towers, the east one 27 storeys (99.5 m) and the west one 20 storeys (79.4 m), around a domed, saucer-shaped council chamber on a podium.",
+   "links": [
+    {
+     "label": "Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Toronto_City_Hall"
+    },
+    {
+     "label": "City of Toronto tours",
+     "url": "https://www.toronto.ca/services-payments/venues-facilities-bookings/booking-city-facilities/city-hall/tours-points-of-interest/"
+    }
+   ]
+  },
+  {
+   "title": "What is illustrative",
+   "text": "Measured from OpenStreetMap: footprints, tower heights, the pool. Drawn by eye: the towers' ribs and glazing, the chamber's profile, the lights, people and traffic.",
+   "links": [
+    {
+     "label": "OpenStreetMap",
+     "url": "https://www.openstreetmap.org/#map=18/43.6531/-79.3839"
+    }
+   ]
+  }
+ ],
+ "vivid": true
+}

@@ -69,7 +69,7 @@ function handler(req, res) {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     return res.end(JSON.stringify({ ips: lanIPs(), port: PORT, publicUrl }));
   }
-  const file = FILES[url];
+  const file = FILES[url] || (/^\/(gion-taxi|taxi-[a-z]+)\.html$/.test(url) ? url.slice(1) : /^\/(london|toronto|amsterdam|gion)$/.test(url) ? (url === '/gion' ? 'gion-taxi.html' : 'taxi' + url.replace('/', '-') + '.html') : null);
   if (!file) { res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('Not found. The game is at / and phones join at /join'); }
   fs.readFile(path.join(__dirname, file), (err, data) => {
     if (err) { res.writeHead(500); return res.end('Could not read ' + file); }

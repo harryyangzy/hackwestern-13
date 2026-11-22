@@ -4,11 +4,36 @@ Last updated 2026-11-21, after adding crew (QR-code multiplayer) play on branch 
 `gion-drive/`. The repo-level [`../HANDOFF.md`](../HANDOFF.md) is the team status doc for every project.
 Player-facing instructions: [`README.md`](README.md).
 
-**Rules for future work:** keep the Pocket City visuals, the HUD styling and the driving feel exactly as they are.
-Keyboard physics are tested to be bit-identical to the pre-multiplayer version (§9). Make changes in the source
+**Rules for future work:** keep the Pocket City visuals and the HUD styling. The driving was retuned after playtesting
+(2026-11-21, see §5): quicker reverse, tighter turning, sliding along walls, a low kart camera, 60 fps while driving. Make changes in the source
 files and rebuild (§4); never hand-edit only `gion-taxi.html`.
 
 ---
+
+## 0. Cities (added 2026-11-21)
+
+| City | Page | Plot | Scene files |
+|---|---|---|---|
+| Gion, Kyoto | `gion-taxi.html` | the skill's Gion example | `~/Downloads/pocket-city/assets/examples/gion/` |
+| London, Ontario | `taxi-london.html` | 320 m: University College (west) to Middlesex College (east) across UC Hill, Western main campus | `cities/london/work/` |
+| Toronto | `taxi-toronto.html` | 200 m: City Hall whole, the square, half the pool (a bigger plot cuts Old City Hall or Osgoode Hall) | `cities/toronto/work/` |
+| Amsterdam | `taxi-amsterdam.html` | 200 m at Reguliersgracht × Keizersgracht | `cities/amsterdam/work/` |
+
+Each new city was made with the skill's pipeline (`fetch_osm.py` → `plot.py` → `prep.py`, then a hand-written
+`city.json` with sourced season and occasion notes and `landmarks.js`): London has a hand-built University College
+with the Middlesex Memorial Tower and Middlesex College with its clock tower and copper spire (the tower's place on
+the building is interpreted: drawn over the round bay at its south end; the Thames, outside the plot, was dropped from
+London's osm.json because the skill's boat placer fails when wide water lies just outside the square); Toronto has City Hall's podium, both curved towers (heights from OSM) and the saucer
+council chamber; Amsterdam has no landmark inside the plot. `osm.json` and the skill's test pages are git-ignored;
+re-fetch with `fetch_osm.py` (coordinates in each `plot.json`). Python needs `shapely` for plot/prep.
+
+`build.py` holds the per-city settings (`CITIES`): brand ("London Taxi"), bowling-mode name, the menu blurb and
+`drivePaths` (London: Western's campus is nearly all footpaths, so the paths are drivable; kerbs, the minimap, fare
+spots and navigator routes all follow). They reach the page as `window.GT_CITY` and the worker as `GT_CITY`.
+The road grid (connectivity + navigator routes) now lives in `drive.js` (`GionTaxi.route`); fare spots are limited to
+the network connected to the start, so every fare is reachable (tested: 16/16 fare stages routable in every city).
+In every camera the worker hides trees over the taxi and between it and the camera, and draws buildings in front of it
+see-through (x-ray), so canal elms and tall buildings never hide the taxi.
 
 ## 1. What it is
 
@@ -88,16 +113,39 @@ python3 gion-drive/build.py             # after editing any built-in file
 **One input interface:** `readInput()` merges the keyboard with the phones:
 `gas = max(key, remote.gas)`, `brake = max(key, remote.brake)`, `turn = clamp(keyTurn + remote.turn, −1, 1)`, where +1 means left.
 
-**Physics (`step(dt)`):** the constants are unchanged (`MAX 11`, `REV 4`, `WHEELBASE 2.7`; acceleration 5.5,
-braking 12, reverse 3, drag 2.2; steering .55/(1+|v|·.06), easing ×8). Analog pedals blend the full-pedal response
-with coasting: `dv = p·pedalTerm + (1−p)·coast`. At p = 1 (the keyboard) that is exactly the old formula. Partial
-gas therefore settles at a lower cruising speed. Analog `turn` feeds straight into the steering target.
+**Physics (`step(dt)` + `move(dt)`), retuned after playtesting:** `MAX 11` m/s, `REV 5.5`, `WHEELBASE 2.7`;
+acceleration 6.2, braking 16, reverse 7, drag 2.2; steering .66/(1+|v|·.055) (≈3.5 m turning radius at walking
+pace), easing ×11. Analog pedals blend with coasting: `dv = p·pedalTerm + (1−p)·coast`.
+`move()` replaces the old bounce (`v *= −0.3`): if the next pose doesn't fit, it tries directions turned ±0.18…0.9
+rad (the steering side first) and slides along the wall, turning the body toward the wall's line at ≤1.6 rad/s and
+losing the speed that went into the wall. Head-on it stops (no bounce) and, if you keep steering, pivots slowly
+(1.1 rad/s). A taxi already clipping a kerb may make any move that doesn't clip more and keeps its centre on the road,
+so it can never get stuck. Bumps slow the taxi (`v *= .3`) instead of flinging it backwards.
+
+**Cameras (`CAMS` in drive.js):** `kart` (default: pitch 36°, close, the taxi pushed to the lower third by moving
+the view centre up the road), `chase` (the original), `top` (overhead). `C` or the operator's phone cycles them.
+The renderer is orthographic, so there is no perspective horizon; the kart camera is the closest it gets.
+`build.py` patches the page's frame cap to 60 fps while `window.PLAYER` is set (30 on phones); a frame takes ~10 ms.
+
+**Kerbs (`player.js`):** red/cream stripes along every road edge (dark/cream at the plot edge), 1.6 m pieces built
+once from `SCENE.roads`, drawn within 70 m of the taxi and sorted by their farthest corner like the fare ring.
+
+**Gion Bowling (`mode === 'bowling'`):** 60 s, no fares; each pedestrian or cyclist scores once (100 / 150 × combo up
+to ×5 within 2.2 s); cars still cost 3 s. Hit agents (`kind+id`) travel in `PLAYER.hit`, and `player.js` filters them
+out of `TRAFFIC.to()` so they disappear (and leave `NEAR`); `PLAYER.pops` draws dust puffs. Separate best score
+(`gionBowlBest`). The crew lobby has a Taxi shift / Gion Bowling switch.
 
 **Phone controls (`pad.html`)**
-- **Wheel:** a rotational drag on the rim, ±120° = full lock. When released it springs back (exponential, rate 9/s).
+- **Wheel:** a rotational drag on the rim, ±100° = full lock. When released it springs back (exponential, rate 9/s).
   Turning clockwise on screen = right = negative `turn`.
-- **Pedals:** a touch starts at 0.8 and sliding down reaches 1 (sliding up, 0.25). Release = 0. The brake keeps
-  the reverse behaviour.
+- **Pedals:** a touch is a full pedal (1); sliding up eases off to 0.3. Release = 0. A **D / R** gear switch sits
+  above the gas: `remote.gear`, sent with each `in` message. In `readInput()` the phone's gas becomes `gas` (D) or
+  `back` (R, brakes then reverses), and the phone's brake is `stopper`: it brakes to a stop and never reverses. The
+  keyboard's ↓ keeps the arcade brake-then-reverse. The gear resets to D between shifts.
+- **No zoom, full screen:** `touch-action` off on the controls, multi-touch `touchstart` and `dblclick` prevented
+  (iOS ignores `user-scalable=no`). Android: Fullscreen API + landscape lock on the first tap. iPhone: the page is
+  made scrollable and a "Swipe up for full screen" overlay asks for one swipe, which makes Safari hide its bars in
+  landscape (`checkBars()` shows it again if they return). Not yet tried on a real iPhone.
 - **Sending:** about 30 Hz while values change, plus a 150 ms heartbeat while a control is held. The laptop drops a
   phone's input after 700 ms without one (`STALE_MS`).
 

@@ -1,0 +1,19 @@
+{
+ "lat": 43.009,
+ "lon": -81.27175,
+ "rotation": -11,
+ "size": 320.0,
+ "asked": {
+  "lat": 43.009,
+  "lon": -81.27175
+ },
+ "moved_m": 0.0,
+ "famous_inside": [
+  "Middlesex College",
+  "University College"
+ ],
+ "famous_cut": [],
+ "keep_missing": [],
+ "place": "",
+ "osm_base": "2026-11-22T00:33:32Z"
+}
