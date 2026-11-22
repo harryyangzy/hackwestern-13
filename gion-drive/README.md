@@ -97,8 +97,10 @@ Payout: you always get back what you didn't wager; winners split the losers' wag
 who doesn't reveal forfeits their whole stake to the winners; a cancelled trip refunds every stake. Details, the trust model
 and the program: `solana/README.md`.
 
-Setup (once): `npm install` in `gion-drive/` (adds `@solana/web3.js` for the server only), and the server wallet in
-`solana/.keys/server.json` needs devnet SOL (https://faucet.solana.com). Each game uses about 0.00002 SOL in fees; the stakes
+Setup (once): `npm install` in `gion-drive/` (adds `@solana/web3.js` for the server only). The server wallet lives in
+`solana/.keys/server.json`, which is git-ignored: on a fresh clone the server makes a new one on first start and prints
+its address. Paste that address into https://faucet.solana.com (Devnet) and ask for SOL; about 0.05 covers a 4-player game.
+You don't need anyone else's key: the deployed program accepts any wallet as a game's authority. Each game uses about 0.00002 SOL in fees; the stakes
 come back to the server wallet afterwards. `WT_STAKE=0.001 node gion-drive/server.js` sets a different stake.
 Plain crew play still needs no install. Keys never leave the server: each player gets a devnet burner wallet the server holds.
 

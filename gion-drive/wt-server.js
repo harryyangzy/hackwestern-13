@@ -24,6 +24,21 @@ const log = (...a) => console.log(new Date().toISOString().slice(11, 19), '[wron
 const hex = b => Buffer.from(b).toString('hex');
 
 function available() { return chain ? null : chainErr || 'Solana is not set up' }
+const FAUCET = 'https://faucet.solana.com';
+const needFor = n => n * (STAKE + chainMod.BURNER_RENT) + 5_000_000;   // stakes + burner rent + game account rent and fees
+const fundHint = () => `Fund the server wallet ${chain.server.publicKey.toBase58()} with devnet SOL at ${FAUCET} (choose Devnet).`;
+
+// on start: say which wallet this server uses, and top it up from the devnet faucet if it can't cover a 4-player game
+if (chain) (async () => {
+  try {
+    if (chain.createdWallet) log('made a new server wallet in solana/.keys/server.json (git-ignored, keep it)');
+    let bal = await chain.balance(chain.server.publicKey);
+    log(`server wallet ${chain.server.publicKey.toBase58()} has ${bal / 1e9} devnet SOL`);
+    if (bal >= needFor(4)) return;
+    try { await chain.airdrop(1e9); bal = await chain.balance(chain.server.publicKey); log(`airdropped 1 devnet SOL, now ${bal / 1e9}`) }
+    catch { log('not enough SOL for Wrong Turn and the RPC airdrop is unavailable. ' + fundHint()) }
+  } catch (e) { log('could not reach Solana devnet: ' + e.message) }
+})();
 
 // helpers given by server.js: toHost(room, msg), toPhone(room, pid, msg), toPhones(room, msg)
 function create(io) {
@@ -53,6 +68,11 @@ function create(io) {
       for (let i = 0; seats.length < 3; i++) seats.push({ pid: 'bot' + i, name: 'Bot ' + 'ABC'[i], color: palette.find(c => !used.has(c) && used.add(c)) || '#888888', roles: [], bot: true });
     }
     if (seats.length < 3) return H(room, { t: 'dx-error', why: 'Wrong Turn needs three or four connected phones.' });
+    try {
+      const bal = await chain.balance(chain.server.publicKey);
+      if (bal < needFor(seats.length)) return H(room, { t: 'dx-error', why: `The server wallet has ${bal / 1e9} SOL, needs about ${needFor(seats.length) / 1e9}. ` + fundHint() });
+    } catch (e) { return H(room, { t: 'dx-error', why: 'Could not reach Solana devnet: ' + e.message }) }
+    if (room.wt && !['done', 'error'].includes(room.wt.phase)) return;   // a second setup landed while we checked the balance
     const gameId = Date.now(), imposterPid = seats[crypto.randomInt(seats.length)].pid;
     const w = room.wt = { phase: 'setup', gameId, game: null, stake: STAKE, goal: Math.max(500, Math.min(20000, +m.goal || DEFAULT_GOAL)),
       seats, imposterPid, roleSalt: crypto.randomBytes(32), burners: {}, commits: {}, chainSeat: {}, sab: { left: SAB_CHARGES, last: 0 },

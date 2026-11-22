@@ -20,10 +20,20 @@ const i64 = v => { const b = Buffer.alloc(8); b.writeBigInt64LE(BigInt(v)); retu
 const explorer = sig => `https://explorer.solana.com/tx/${sig}?cluster=devnet`;
 
 function loadKeypair(file) { return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(file, 'utf8')))) }
+// .keys/ is git-ignored, so a fresh clone has no server wallet: make one. The deployed program accepts any wallet as a
+// game's authority (the game account is derived from it), so each person running the server can use their own.
+function loadOrCreateServer(file) {
+  if (fs.existsSync(file)) return { key: loadKeypair(file), created: false };
+  const k = Keypair.generate();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(Array.from(k.secretKey)), { mode: 0o600 });
+  return { key: k, created: true };
+}
 
 class Chain {
   constructor() {
-    this.server = loadKeypair(path.join(KEYS, 'server.json'));
+    const s = loadOrCreateServer(path.join(KEYS, 'server.json'));
+    this.server = s.key; this.createdWallet = s.created;
     this.conn = new Connection(RPC, 'confirmed');
     this.burnerFile = path.join(KEYS, 'burners.json');
   }
@@ -41,6 +51,12 @@ class Chain {
     }
   }
   balance(pk) { return this.conn.getBalance(pk, 'confirmed') }
+  // devnet faucet over RPC; often rate-limited, so callers fall back to pointing at https://faucet.solana.com
+  async airdrop(lamports) {
+    const sig = await this.conn.requestAirdrop(this.server.publicKey, lamports);
+    await this.conn.confirmTransaction(sig, 'confirmed');
+    return sig;
+  }
   // the game account as the program stores it (seat order is the order the joins landed, not the order they were sent)
   async readGame(game) {
     const a = await this.conn.getAccountInfo(game, 'confirmed'); if (!a) return null;
