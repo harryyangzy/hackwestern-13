@@ -13,11 +13,8 @@ if (!P) return;
 const has = r => P.roles.includes(r);
 const driving = () => P.phase === 'driving';
 
-/* ---------- the sprites, small (same order as shoot.js KINDS) ---------- */
-const SPR = [[' /\\_/\\ ', '( o.o )', ' > ^ < '], ['(\\ /)', ' )|( ', '(/ \\)'], [' .o. ', 'o(@)o', " 'o' "], ['\\ | /', '- * -', '/ | \\'],
-  ['/\\/\\', '\\  /', ' \\/ '], [' /\\ ', '<  >', ' \\/ '], [' __ ', '/  \\', '\\__/']];
-const STUCK_CAT = [' /\\_/\\ ', '( >.< )', ' > ^ < '];
-const MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+/* ---------- the visitors, small: cuties.js draws them, the same as the windshield ---------- */
+const CU = window.GionCuties, KINDS = CU ? CU.KINDS : [];
 let sh = null;   // the laptop's latest picture
 
 /* ---------- One Euro filter: smooth when still, responsive when moving ---------- */
@@ -151,16 +148,16 @@ function glassRect(w, h, top = 22, bottom = 26) {   // the laptop screen's shape
   const ar = sh && sh.ar || 1.6, aw = w - 16, ah = h - top - bottom, gw = Math.min(aw, ah * ar), gh = gw / ar;
   return { x: (w - gw) / 2, y: top + (ah - gh) / 2, w: gw, h: gh };
 }
-function mini(g, lines, x, y, fs, color, alpha) {
-  g.save(); g.globalAlpha = alpha; g.font = `600 ${fs.toFixed(1)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = color;
-  lines.forEach((l, i) => g.fillText(l, x, y + (i - (lines.length - 1) / 2) * fs * 1.05)); g.restore();
+function mini(g, k, x, y, r, color, alpha, state = 'fly') {
+  if (CU) CU.draw(g, KINDS[k] || KINDS[0], x, y, r, color, { state, alpha, t: performance.now() / 1000, ph: k });
+  else { g.save(); g.globalAlpha = alpha; g.fillStyle = color; g.beginPath(); g.arc(x, y, r * .7, 0, 6.283); g.fill(); g.restore() }
 }
 function drawAim() {
   const [g, w, h] = canvasFit($('aimView')), R = glassRect(w, h, 40, 30);
   g.strokeStyle = '#afb5a5'; g.lineWidth = 1; g.setLineDash([3, 4]); g.strokeRect(R.x, R.y, R.w, R.h); g.setLineDash([]);
   if (sh) {
-    for (const [, k, x, y, s, c] of sh.tg) mini(g, SPR[k] || SPR[0], R.x + x * R.w, R.y + y * R.h, Math.max(4, 8 * s), c, .9);
-    for (const [, k, x, y, , c] of sh.st) mini(g, k === 0 ? STUCK_CAT : SPR[k] || SPR[0], R.x + x * R.w, R.y + y * R.h, 9, c, .45);
+    for (const [, k, x, y, s, c] of sh.tg) mini(g, k, R.x + x * R.w, R.y + y * R.h, Math.max(6, 15 * s), c, .9);
+    for (const [, k, x, y, , c] of sh.st) mini(g, k, R.x + x * R.w, R.y + y * R.h, 15, c, .45, 'stuck');
     // level and score are on the laptop
   }
   // my crosshair, with a small kick on each shot
@@ -173,7 +170,7 @@ function drawWipe() {
   const [g, w, h] = canvasFit($('wipeView')), R = glassRect(w, h, 30, 26);
   g.fillStyle = '#ffffff66'; g.strokeStyle = '#afb5a5'; g.lineWidth = 1; g.beginPath(); g.roundRect ? g.roundRect(R.x, R.y, R.w, R.h, 8) : g.rect(R.x, R.y, R.w, R.h); g.fill(); g.stroke();
   const n = sh ? sh.st.length : 0;
-  if (sh) for (const [, k, x, y, hp, c] of sh.st) mini(g, k === 0 ? STUCK_CAT : SPR[k] || SPR[0], R.x + x * R.w, R.y + y * R.h, Math.max(7, R.w / 34), c, hp > 1 ? .95 : .8);
+  if (sh) for (const [, k, x, y, hp, c] of sh.st) mini(g, k, R.x + x * R.w, R.y + y * R.h, Math.max(12, R.w / 19), c, hp > 1 ? .95 : .8, 'stuck');
   // the blade: the laptop's sweep, or a quick local one right after a swipe
   const sweep = sh && sh.wipe ? sh.wipe : 0;
   if (sweep || wipeLocal) {

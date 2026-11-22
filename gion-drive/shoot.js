@@ -1,5 +1,5 @@
 /* Gion Taxi crew play: the shooter and the wipers (laptop side). Runs after drive.js, before mp.js.
-   Little ASCII creatures, flowers and shapes drift in from the street ahead and stick to the windshield unless the
+   Little paper-sticker visitors (cuties.js: cats, sparrows, blossoms, maple leaves, lanterns, ladybugs, mochi) drift in from the street ahead and stick to the windshield unless the
    shooter (phone gyro → crosshair, tap → shoot) pops them first. Whatever sticks, the wiper player sweeps off.
    The laptop is the authority, as for the rest of crew play: phones send aim/fire/wipe through mp.js
    (window.GionCrewExt.onPhone), this file runs the targets and sends phones a 10 Hz picture ('sh') plus events ('sx').
@@ -11,17 +11,10 @@ const crew = () => window.GionCrew;
 const holder = r => { const c = crew(); return c && c.holder ? c.holder(r) : null };
 const toPhones = m => { const c = crew(); if (c && c.toPhones) c.toPhones(m) };
 
-/* ---------- the characters (crisp monospace; every frame of a sprite has the same line count) ---------- */
-const SPR = {
-  cat:       { f: [[' /\\_/\\ ', '( o.o )', ' > ^ < '], [' /\\_/\\ ', '( -.- )', ' > ^ < ']], stuck: [' /\\_/\\ ', '( >.< )', ' > ^ < '], hit: [' /\\_/\\ ', '( O.O )', ' > ^ < '], move: 'hop' },
-  butterfly: { f: [['(\\ /)', ' )|( ', '(/ \\)'], [' \\ / ', ' )|( ', ' / \\ ']], move: 'flutter' },
-  daisy:     { f: [[' .o. ', 'o(@)o', " 'o' "], [' o.o ', '.(@).', " o'o "]], move: 'sway' },
-  star:      { f: [['\\ | /', '- * -', '/ | \\'], [' .|. ', '--*--', " '|' "]], move: 'twinkle' },
-  heart:     { f: [['/\\/\\', '\\  /', ' \\/ ']], hp: 2, move: 'beat' },
-  diamond:   { f: [[' /\\ ', '<  >', ' \\/ '], [' /\\ ', '|  |', ' \\/ ']], move: 'spin' },
-  hexagon:   { f: [[' __ ', '/  \\', '\\__/']], move: 'spin' },
-};
-const KINDS = Object.keys(SPR);
+/* ---------- the visitors: drawn by cuties.js, which the phone shares ---------- */
+const CU = window.GionCuties;
+if (!CU) return;
+const SPR = CU.META, KINDS = CU.KINDS;   // per kind: how it moves, and how many hits it takes (hp)
 // colours that sit in each season's scenery (soft inks, never neon); at night they become lit lantern tones
 const PALETTE = {
   spring: ['#d9738f', '#e79aac', '#7f9f5c', '#b98a2e', '#9a6fb0', '#c8513a'],
@@ -42,10 +35,10 @@ function scenery() {
 
 /* ---------- levels: gentle first, more and livelier with every fare delivered ---------- */
 const LV = [
-  { every: 3.4, approach: 6.6, live: 3, cap: 4, kinds: ['daisy', 'heart', 'cat'], moves: ['drift'], note: 'Level 1 · a few visitors' },
-  { every: 2.8, approach: 5.9, live: 4, cap: 4, kinds: ['daisy', 'heart', 'cat', 'butterfly'], moves: ['drift', 'wobble'], note: 'Level 2 · butterflies join in' },
-  { every: 2.3, approach: 5.3, live: 5, cap: 5, kinds: ['daisy', 'heart', 'cat', 'butterfly', 'star'], moves: ['drift', 'wobble', 'zigzag'], note: 'Level 3 · stars zigzag' },
-  { every: 1.9, approach: 4.7, live: 6, cap: 5, kinds: KINDS, moves: ['drift', 'wobble', 'zigzag', 'orbit'], note: 'Level 4 · shapes start to orbit' },
+  { every: 3.4, approach: 6.6, live: 3, cap: 4, kinds: ['blossom', 'lantern', 'neko'], moves: ['drift'], note: 'Level 1 · a few visitors' },
+  { every: 2.8, approach: 5.9, live: 4, cap: 4, kinds: ['blossom', 'lantern', 'neko', 'sparrow'], moves: ['drift', 'wobble'], note: 'Level 2 · sparrows join in' },
+  { every: 2.3, approach: 5.3, live: 5, cap: 5, kinds: ['blossom', 'lantern', 'neko', 'sparrow', 'leaf'], moves: ['drift', 'wobble', 'zigzag'], note: 'Level 3 · maple leaves zigzag' },
+  { every: 1.9, approach: 4.7, live: 6, cap: 5, kinds: KINDS, moves: ['drift', 'wobble', 'zigzag', 'orbit'], note: 'Level 4 · ladybugs and mochi circle in' },
   { every: 1.55, approach: 4.2, live: 7, cap: 6, kinds: KINDS, moves: ['wobble', 'zigzag', 'orbit', 'dart'], note: 'Level 5 · everything darts' },
 ];
 
@@ -59,7 +52,6 @@ function fit() {
   if (r.width && (Math.round(r.width * DPR) !== cv.width || Math.round(r.height * DPR) !== cv.height)) { cv.width = Math.round(r.width * DPR); cv.height = Math.round(r.height * DPR) }
   W = r.width; H = r.height;
 }
-const MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
 
 /* ---------- state ---------- */
 let on = false, level = 0, spawnT = 0, nextId = 1, targets = [], stuck = [], parts = [], fx = [];
@@ -118,16 +110,11 @@ function place(o) {
   if (k === 'beat') o.s *= 1 + .07 * Math.max(0, Math.sin(t * 6.5 + o.ph));
 }
 const fontPx = () => Math.max(13, Math.min(26, Math.min(W, H) * .03));
-function frameOf(o, stuckNow) {
-  const S = SPR[o.kind];
-  if (o.flash > 0 && S.hit) return S.hit;
-  if (stuckNow) return S.stuck || S.f[0];
-  const n = S.f.length; return S.f[Math.floor((o.t * (S.move === 'twinkle' ? 3 : 1.6) + o.ph) % n)];
+function box(o, scale) {   // the sticker's size on screen, in px (r is its radius)
+  const r = fontPx() * 1.55 * scale;
+  return { w: 2 * r, h: 2 * r, r };
 }
-function box(o, scale) {   // the sprite's size on screen, in px
-  const lines = SPR[o.kind].f[0], fs = fontPx() * scale;
-  return { w: Math.max(...lines.map(l => l.length)) * fs * .62, h: lines.length * fs * 1.08, fs };
-}
+const look = o => o.flash > 0 ? 'hit' : 'fly';
 
 /* ---------- the shooter ---------- */
 function fire(x, y, color) {
@@ -149,17 +136,12 @@ function fire(x, y, color) {
   fx.push({ x: hit.x * W, y: hit.y * H, t: 0, color: hit.color });
   toPhones({ t: 'sx', k: 'hit', kind: hit.kind, combo });
 }
-function burst(o, scale, power) {   // the sprite falls apart into its own characters, plus a few sparks
-  const b = box(o, scale), lines = frameOf(o, o.stuckAt != null), cx = o.x * W, cy = o.y * H;
-  lines.forEach((ln, r) => [...ln].forEach((ch, c) => {
-    if (ch === ' ') return;
-    const x = cx + (c - (ln.length - 1) / 2) * b.fs * .62, y = cy + (r - (lines.length - 1) / 2) * b.fs * 1.08;
-    const ang = Math.atan2(y - cy, x - cx) + (Math.random() - .5) * .9, sp = (90 + Math.random() * 160) * power * (.6 + scale * .6);
-    parts.push({ ch, x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 60 * power, r: 0, vr: (Math.random() - .5) * 8, life: .75 + Math.random() * .3, t: 0, fs: b.fs, color: o.color });
-  }));
-  for (let k = 0; k < 6; k++) {
-    const ang = Math.random() * 6.28, sp = 120 + Math.random() * 140;
-    parts.push({ ch: '.*+\'·'[k % 5], x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, r: 0, vr: 0, life: .5, t: 0, fs: b.fs * .8, color: o.color });
+function burst(o, scale, power) {   // the sticker pops into petals and confetti in its own colours
+  const b = box(o, scale), cx = o.x * W, cy = o.y * H;
+  for (const q of CU.confetti(o.color, 14)) {
+    const ang = Math.random() * 6.283, d = b.r * Math.random() * .6, sp = (90 + Math.random() * 170) * power * (.6 + scale * .6);
+    parts.push({ ...q, x: cx + Math.cos(ang) * d, y: cy + Math.sin(ang) * d, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 60 * power,
+      r: Math.random() * 6, vr: (Math.random() - .5) * 10, life: .7 + Math.random() * .35, t: 0, fs: b.r * .22 * q.size });
   }
 }
 
@@ -198,22 +180,12 @@ function stepWipe(dt) {
 }
 
 /* ---------- drawing ---------- */
-function drawSprite(lines, x, y, fs, color, alpha, sx = 1, sy = 1) {
-  g.save(); g.translate(x, y); g.scale(sx, sy); g.globalAlpha = alpha;
-  g.font = `600 ${fs.toFixed(1)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-  const night = pal === 'night', n = lines.length;
-  g.strokeStyle = night ? '#1d2b26cc' : '#fffcf3e6'; g.lineWidth = Math.max(2, fs * .16); g.fillStyle = color;
-  for (let r = 0; r < n; r++) { const yy = (r - (n - 1) / 2) * fs * 1.08; g.strokeText(lines[r], 0, yy) }
-  for (let r = 0; r < n; r++) { const yy = (r - (n - 1) / 2) * fs * 1.08; g.fillText(lines[r], 0, yy) }
-  g.restore();
-}
 function draw(dt) {
   fit(); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
-  const fs = fontPx();
   // flying ones, far to near
   for (const o of [...targets].sort((a, b) => a.s - b.s)) {
     const near = o.s, alpha = Math.min(1, .35 + o.t / o.T * 1.6);
-    drawSprite(frameOf(o, false), o.x * W, o.y * H, fs * near, o.color, alpha * (o.flash > 0 ? .6 : 1));
+    CU.draw(g, o.kind, o.x * W, o.y * H, box(o, near).r, o.color, { t: o.t, ph: o.ph, state: look(o), alpha: alpha * (o.flash > 0 ? .8 : 1), night: pal === 'night' });
     if (o.t / o.T > .78) {   // about to land: a small soft ring on the glass where it will stick
       const p = (o.t / o.T - .78) / .22; g.save(); g.globalAlpha = .25 * p; g.strokeStyle = o.color; g.lineWidth = 1.2;
       g.beginPath(); g.ellipse(o.fx * W, o.fy * H, 26 + 14 * (1 - p), 18 + 10 * (1 - p), 0, 0, 6.283); g.stroke(); g.restore();
@@ -222,7 +194,7 @@ function draw(dt) {
   // stuck to the glass: squashed a little, sliding slowly, smeared after a wiper pass
   for (const o of stuck) {
     const k = Math.min(1, o.stuckAt / .18), sq = 1 + .18 * Math.sin(Math.min(1, o.stuckAt / .25) * Math.PI);
-    drawSprite(frameOf(o, true), o.x * W, (o.y + o.slide) * H, fs * 1.45, o.color, (o.smear ? .62 : .9) * (.6 + .4 * k), sq * 1.06, 1 / sq * .94);
+    CU.draw(g, o.kind, o.x * W, (o.y + o.slide) * H, box(o, 1.45).r, o.color, { state: 'stuck', ph: o.ph, alpha: (o.smear ? .62 : .92) * (.6 + .4 * k), sx: sq * 1.06, sy: 1 / sq * .94, night: pal === 'night' });
   }
   // the wiper blade
   if (wipe) {
@@ -236,8 +208,7 @@ function draw(dt) {
   // particles
   for (const q of parts) {
     const a = Math.max(0, 1 - q.t / q.life);
-    g.save(); g.translate(q.x, q.y); g.rotate(q.r); g.globalAlpha = a; g.font = `600 ${q.fs.toFixed(1)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = q.color; g.fillText(q.ch, 0, 0); g.restore();
+    CU.drawBit(g, q, q.x, q.y, q.fs, q.r, a);
   }
   // hit rings and miss dots
   for (const f of fx) {

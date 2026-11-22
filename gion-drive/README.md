@@ -41,7 +41,7 @@ Node 18 or newer, no `npm install`. Then:
 - **Wheel:** drag the rim round to steer. Let go and it straightens.
 - **Pedals:** a touch is a full pedal; slide your thumb up to ease off. The **D / R** switch above the gas picks the
   direction: in R the gas pedal backs up. The brake pedal only ever brakes. (On the keyboard, holding ↓ still brakes, then reverses.)
-- **Shooter:** little ASCII cats, butterflies, daisies, stars, hearts and shapes fly at the taxi. Tilt the phone to move the
+- **Shooter:** little paper-sticker cats, sparrows, cherry blossoms, maple leaves, lanterns, ladybugs and mochi fly at the taxi. Tilt the phone to move the
   crosshair on the laptop (tap **Tilt to aim**, point at the middle of the screen, tap **Centre**), tap to shoot. Without
   tilt, drag on the panel to aim. More arrive, and they move more, with every fare delivered (5 levels).
 - **Wipers:** whatever the shooter misses sticks to the windshield. Swipe across the glass on your phone to sweep it off

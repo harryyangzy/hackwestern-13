@@ -195,8 +195,10 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 #toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:44;font:600 16px var(--serif);color:var(--rust);text-shadow:0 0 6px #fffcf3,0 0 3px #fffcf3;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 #toast.good{color:var(--green)}#toast.show{opacity:1}
 @media (max-height:340px){.hint{display:none}.bar{padding:3px 10px}#ready{width:96px;height:96px}.calls button{width:42px;height:42px}}
-</style></head>
-<body>
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body class="pad-ui">
 <div id="rotate"><svg viewBox="0 0 64 64" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="6" width="24" height="44" rx="4" fill="#fffcf3"/><path d="M28 44h8" /><path d="M50 52a22 22 0 0 1-14 8" stroke="#ac4931"/><path d="m34 57 2 3-3 2" stroke="#ac4931"/></svg><h2>Turn your phone sideways</h2><p>The taxi’s controls are made for landscape.</p></div>
 
 <section id="join" hidden><form class="card joincard" id="joinForm" autocomplete="off">
@@ -660,6 +662,7 @@ window.GionPad = { send, buzz, toast, get room() { return room }, get ctl() { re
 window.WTPadAPI = { send, buzz, toast, get screen() { return screen }, get roles() { return myRoles } };
 })();
 </script>
+<script src="cuties.js"></script>
 <script src="pad-shoot.js"></script>
 <script src="/wt-pad.js"></script>
 </body></html>

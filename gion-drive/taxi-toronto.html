@@ -2735,6 +2735,384 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 .wt-links{display:flex;justify-content:center;gap:16px;margin:0 0 8px;font-size:13px}
 .wt-links a{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.wt-card,.wt-card.imp{animation:wt-flip .01s var(--d) both}.wt-head,.wt-subhead,.wt-links,#wt-done{animation:none}}
+/* Shared desktop and controller UI. City artwork keeps its own palette. */
+@font-face {
+  font-family: Inter;
+  src: url("InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  /* BoardUI semantic tokens and button recipes, with a warm linen neutrals and terracotta accents. */
+  --color-background-full: #f6f3e9;
+  --color-background-primary-default: #fffcf3;
+  --color-background-primary-hover: #f8f4e9;
+  --color-background-secondary-default: #f0eadd;
+  --color-text-primary: #263c35;
+  --color-text-secondary: #626c60;
+  --color-text-white: #fff;
+  --color-border-button-default: #ded6c5;
+  --color-accent-50: #fcf7eb;
+  --color-accent-100: #efe4cf;
+  --color-accent-200: #e7d7b9;
+  --color-accent-300: #dcc6a2;
+  --color-accent-400: #ab4c35;
+  --color-accent-500: #a04631;
+  --color-accent-600: #913d2a;
+  --color-accent-700: #743121;
+  --color-border-focus-ring: var(--color-accent-500);
+  --color-button-ghost-background: var(--color-accent-100);
+  --color-button-ghost-hover: var(--color-accent-200);
+  --color-button-ghost-active: var(--color-accent-300);
+  --color-button-ghost-foreground: var(--color-accent-700);
+  --gradient-button-primary-default: linear-gradient(180deg, var(--color-accent-500), var(--color-accent-600));
+  --gradient-button-primary-hover: linear-gradient(180deg, var(--color-accent-400), var(--color-accent-500));
+  --gradient-button-primary-active: linear-gradient(180deg, var(--color-accent-600), var(--color-accent-700));
+
+  --sans: Inter, "Helvetica Neue", Arial, sans-serif;
+  --serif: var(--sans);
+  --mono: var(--sans);
+  --font-title-1-semibold: 600 1.5rem/2.125rem var(--sans);
+  --font-body-medium: 500 .875rem/1.25rem var(--sans);
+  --font-caption-1-semibold: 600 .75rem/1rem var(--sans);
+  --paper: var(--color-background-full);
+  --panel: var(--color-background-primary-default);
+  --ink: var(--color-text-primary);
+  --muted: var(--color-text-secondary);
+  --rule: var(--color-border-button-default);
+  --rust: #9b3c50;
+  --green: #24644e;
+  --well: var(--color-background-secondary-default);
+  --ice: var(--color-button-ghost-background);
+  --mint: linear-gradient(125deg, #f1faf2, #d8eee2);
+  --rose: linear-gradient(125deg, #fff5f6, #f9dce5);
+  --ticket: #ffeebc;
+  --ticket-ink: #5a3924;
+  --surface: 0 1px 1px rgb(0 0 0 / .05);
+  --dock-shadow: 0 2px 4px -1px rgb(0 0 0 / .06), 0 4px 6px -1px rgb(0 0 0 / .10);
+  --dialog: 0 20px 46px rgb(61 49 30 / .2), 0 2px 8px rgb(61 49 30 / .08);
+  --card-radius: 24px;
+  --key-radius: 12px;
+}
+
+body { background: var(--paper); }
+.top { background: #fffcf3; border-color: var(--rule); }
+.wordmark { font: 650 25px/1 var(--sans); letter-spacing: -.045em; }
+.workspace { background-image: radial-gradient(var(--color-accent-200) .72px, transparent 1px); }
+.info h1 { font: 580 39px/1.03 var(--sans); letter-spacing: -.055em; }
+.info .location { font: 500 13px/1.4 var(--sans); color: var(--muted); }
+.info .note, .key-help, .gesture { font-style: normal; }
+.stamp-line, .status, .subhead, .key-toggle { letter-spacing: .07em; }
+.paper, .gt-card, .pad-ui .card {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--card-radius);
+  box-shadow: var(--surface);
+}
+.field-key { background: var(--panel); }
+.info .season-box { border-color: var(--rule); }
+.chips { gap: 7px; }
+.button, .chip, .tool, .view-select, #gt-open, .gt-ghost {
+  background: var(--panel);
+  border-color: var(--rule);
+  border-radius: var(--key-radius);
+}
+.button:hover, .chip:hover, .tool:hover, .gt-ghost:hover { background: var(--well); }
+.chip[data-s] svg {
+  box-sizing: content-box;
+  padding: 3px;
+  margin-left: -3px;
+  border-radius: 7px;
+  background: var(--well);
+}
+.chip[data-s][aria-pressed=true] {
+  background: var(--ice);
+  color: var(--ink);
+  border-color: var(--color-accent-200);
+}
+.chip[data-s][aria-pressed=true] svg { background: #fff9; }
+.stage > .tools, #views {
+  padding: 6px;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 16px;
+  box-shadow: var(--dock-shadow);
+}
+.stage > .tools .tool {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+}
+#play { background: var(--ice); color: var(--ink); }
+.stage > .tools .divider { margin: 0 3px; background: var(--rule); }
+#play:not(.play) { background: var(--well); }
+#zoom { min-width: 43px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+#views button { border-radius: 10px; }
+#views button[aria-pressed=true] { background: var(--ice); color: var(--ink); }
+
+#gt-menu, #gt-lobby, #wt-panel, #wt-vote, .wt-sheet, .pad-ui .joincard {
+  border-color: var(--rule);
+  border-radius: 24px;
+  box-shadow: var(--dialog);
+}
+#gt-lobby {
+  background: radial-gradient(ellipse at 100% 0%, var(--color-accent-100), transparent 52%), var(--panel);
+}
+#gt-menu {
+  width: min(450px, calc(100% - 28px));
+  padding: clamp(18px, 3vh, 27px);
+  max-height: calc(100% - 24px);
+  overflow: auto;
+  text-align: left;
+}
+#gt-menu h2, #gt-lobby h2, #wt-panel h2, #wt-vote h2 {
+  font: 650 clamp(24px, 4vw, 33px)/1.1 var(--sans);
+  letter-spacing: -.045em;
+  margin-bottom: 9px;
+}
+#gt-lobby h2 span { font: 500 14px var(--sans); letter-spacing: 0; }
+#gt-menu p, #gt-lobby p { line-height: 1.5; }
+#gt-menu > .gt-keys:has(> kbd) {
+  padding: 9px 11px;
+  background: var(--well);
+  border-radius: var(--key-radius);
+}
+#gt-menu .gt-cities { justify-content: flex-start; }
+#gt-menu .gt-cities a { color: var(--color-button-ghost-foreground); }
+#gt-menu .gt-link { color: var(--color-button-ghost-foreground); }
+#gt-start, #gt-lstart, .pad-ui .pill {
+  background: var(--gradient-button-primary-default);
+  color: var(--color-text-white);
+  border: 1px solid transparent;
+  border-radius: var(--key-radius);
+  box-shadow: inset 0 1px 0 #fffd, 0 2px 0 #38577324;
+}
+#gt-start:hover, #gt-lstart:not(:disabled):hover, .pad-ui .pill:not(:disabled):hover { background: var(--gradient-button-primary-hover); filter: none; }
+#gt-start:active, #gt-lstart:not(:disabled):active, .pad-ui .pill:not(:disabled):active {
+  background: var(--gradient-button-primary-active);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / .15);
+}
+#gt-lstart:disabled, .pad-ui .pill:disabled {
+  background: var(--well);
+  color: var(--muted);
+  border-color: var(--rule);
+  box-shadow: none;
+  opacity: 1;
+}
+.gt-modes, .pad-ui .gear, .pad-ui .seg {
+  background: var(--well);
+  border: 1px solid var(--rule);
+  padding: 3px;
+  gap: 3px;
+  border-radius: 14px;
+}
+.gt-modes button, .pad-ui .gear button, .pad-ui .seg button { border-radius: 10px; }
+.gt-modes button[aria-pressed=true], .pad-ui .gear button.on, .pad-ui .seg button.on {
+  background: var(--ice);
+  box-shadow: inset 0 0 0 1px var(--color-accent-200);
+  color: var(--ink);
+}
+#gt-seats li {
+  background: #fffcf3;
+  border-color: var(--rule);
+  border-radius: var(--key-radius);
+  padding: 8px 11px;
+}
+#gt-seats li.ready { background: var(--mint); }
+#gt-seats li.empty { background: var(--color-background-primary-hover); }
+#gt-seats .st { font-style: normal; }
+#gt-qr { background: #fff; border-color: var(--rule); border-radius: 14px; }
+#gt-room, .gt-stats b, #wt-goal b, .gt-resrow b, .pad-ui .stats b {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.025em;
+}
+#gt-room { font-size: 28px; color: var(--color-button-ghost-foreground); }
+.gt-stats { background: #fffffff7; gap: 8px; }
+.gt-stats > div { padding: 4px; border-radius: 9px; }
+.gt-stats > div:nth-child(2) { background: var(--ice); }
+.gt-task, #gt-call { background: var(--ice); font-style: normal; }
+#gt-map { border-radius: 16px; }
+#wt-goal, .wt-switch.on { background: var(--rose); }
+.wt-switch { border-color: var(--rule); }
+.wt-switch.on { border-color: #dcafbc; }
+.wt-switch em, .wt-sub, .wt-subhead, .pad-ui #task { font-style: normal; }
+#wt-panel { background: linear-gradient(140deg, #fff, #fff4ed); }
+#wt-vote { background: linear-gradient(140deg, #fff, #f7f0e0); }
+.wt-face { background: #fffcf3; border-color: var(--rule); }
+.wt-card.imp .wt-back { background: var(--rose); border-color: #dcafbc; color: var(--ink); }
+.wt-card.imp .wt-back :is(.wt-role, small, em, .wt-votes) { color: var(--ink); }
+
+.pad-ui { background: radial-gradient(ellipse at 35% 0%, #fff, #edf3f6); }
+.pad-ui .joincard h1 { font: 650 27px/1.15 var(--sans); letter-spacing: -.035em; }
+.pad-ui #code { border-color: var(--rule); color: var(--color-button-ghost-foreground); }
+.pad-ui #ready {
+  background: var(--ice);
+  color: var(--ink);
+  border: 1px solid var(--color-accent-200);
+  border-radius: var(--card-radius);
+  box-shadow: var(--dock-shadow);
+}
+.pad-ui #ready.on { background: var(--mint); border-color: #98c4af; }
+.pad-ui .roles svg { background: var(--well); border-radius: 8px; padding: 3px; }
+.pad-ui #door, .pad-ui .calls button {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--card-radius);
+  box-shadow: var(--dock-shadow);
+}
+.pad-ui .calls button.flash { background: var(--ice); color: var(--ink); }
+.pad-ui .calls button.flash small { color: var(--muted); }
+.pad-ui .track { background: var(--well); border-color: var(--rule); }
+.pad-ui .pedal.brake { --pc: #a44c65; }
+.pad-ui .pedal.gas { --pc: #3a785c; }
+.pad-ui .pedal.brake .plate { background-image: repeating-linear-gradient(0deg, transparent 0 9px, #9b3c5025 9px 11px), var(--rose); }
+.pad-ui .pedal.gas .plate { background-image: repeating-linear-gradient(0deg, transparent 0 9px, #24644e25 9px 11px), var(--mint); }
+.pad-ui .plate span { color: var(--ink); background: #ffffffe6; text-shadow: none; }
+.pad-ui .flag span, .pad-ui :is(#wheel, #c-speedo) text, .pad-ui #spTicks { font-family: var(--sans); }
+
+:where(.top, .workspace, .pad-ui) :is(button, input, select, a):focus-visible {
+  outline: 2px solid var(--color-border-focus-ring);
+  outline-offset: 2px;
+}
+@media (max-width: 620px) {
+  .stage > .tools { padding: 4px; gap: 2px; }
+  .stage > .tools .tool { width: 33px; min-width: 33px; height: 33px; }
+  .gt-stats { gap: 3px; padding-inline: 6px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.gt-card, .wt-switch, .pad-ui .card) { animation-duration: .01ms; }
+}
+
+/* The shift selector uses a taxi ticket over the live city scene. */
+.gt-ticket {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 112px;
+  margin-bottom: 16px;
+  padding: 16px 48px 16px 20px;
+  border-radius: 16px;
+  color: var(--ticket-ink);
+  background: var(--ticket);
+}
+.gt-ticket::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 0 auto;
+  width: 108px;
+  background: repeating-conic-gradient(var(--ticket-ink) 0 25%, transparent 0 50%) 50% / 24px 24px;
+  mask-image: linear-gradient(90deg, transparent, black);
+  opacity: .13;
+}
+.gt-ticket-city {
+  font: var(--font-caption-1-semibold);
+  text-transform: uppercase;
+  letter-spacing: .11em;
+}
+#gt-menu .gt-ticket h2 {
+  margin: 2px 0 0;
+  font: 740 clamp(34px, 5vw, 52px)/1 var(--sans);
+  letter-spacing: -.075em;
+}
+.gt-ticket-sticker {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border: 3px solid var(--panel);
+  border-radius: 18px;
+  background: var(--color-accent-100);
+  box-shadow: var(--dock-shadow);
+  font-size: 36px;
+  transform: rotate(-10deg);
+}
+#gt-menu {
+  width: min(470px, calc(100% - 24px));
+  padding: 16px;
+}
+#gt-menu #gt-close {
+  top: 24px;
+  right: 24px;
+}
+.gt-x {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--panel);
+  line-height: 1;
+}
+.gt-x:hover { background: var(--color-background-primary-hover); }
+#gt-result:empty { display: none; }
+.gt-menu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.gt-menu-actions > button {
+  flex: 1 0 max-content;
+  min-height: 42px;
+  margin: 0 !important;
+  padding: 8px 12px;
+  font: var(--font-body-medium);
+}
+#gt-mp {
+  background: var(--color-button-ghost-background);
+  color: var(--color-button-ghost-foreground);
+  border-color: transparent;
+}
+#gt-mp:hover { background: var(--color-button-ghost-hover); }
+#gt-mp:active { background: var(--color-button-ghost-active); }
+.gt-instructions {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--rule);
+  border-radius: var(--key-radius);
+  background: var(--color-background-primary-hover);
+}
+.gt-instructions summary {
+  cursor: pointer;
+  font: var(--font-body-medium);
+}
+#gt-menu .gt-instructions p { margin: 8px 0 0; }
+#gt-menu .gt-bowlnote { margin: 12px 0 0; }
+#gt-menu .gt-cities { gap: 4px; }
+#gt-menu .gt-cities :is(a, b) {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--well);
+  font: var(--font-caption-1-semibold);
+  text-decoration: none;
+}
+#gt-menu .gt-cities a:hover { background: var(--color-button-ghost-hover); }
+#gt-menu .gt-cities b { background: var(--ticket); color: var(--ticket-ink); }
+.top .city-nav a[aria-current=page] { color: var(--color-button-ghost-foreground); }
+.top .city-nav a[aria-current=page]::after { background: var(--color-accent-500); }
+.top .city-nav a:hover { background: var(--color-background-primary-hover); }
+.foot, dialog { background: var(--panel); color: var(--muted); border-color: var(--rule); }
+dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
+.pad-ui { background: radial-gradient(ellipse at 35% 0%, var(--panel), var(--well)); }
+.pad-ui .joincard h1 { font: var(--font-title-1-semibold); }
+:where(.workspace, .pad-ui) summary:focus-visible {
+  outline: 2px solid var(--color-border-focus-ring);
+  outline-offset: 2px;
+}
+@media (max-height: 620px) {
+  .gt-ticket { min-height: 76px; padding-block: 8px; }
+  .gt-ticket-sticker { width: 48px; height: 48px; font-size: 28px; }
+}
 </style>
 <script>window.GT_CITY = {"name": "Toronto", "brand": "tandem", "bowl": "Square Bowling", "blurb": "Drive a taxi around Nathan Phillips Square and Toronto City Hall.", "drivePaths": false, "open": false, "id": "toronto", "cities": [{"id": "gion", "name": "Kyoto", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
 <script>
@@ -2985,14 +3363,19 @@ stage.insertAdjacentHTML('beforeend', `
   </div>
 </div>
 <div id="gt-menu" class="gt-card">
-  <h2>${CITYCFG.brand}</h2>
+  <div class="gt-ticket">
+    <div><span class="gt-ticket-city">${CITYCFG.name}</span><h2>${CITYCFG.brand}</h2></div>
+    <span class="gt-ticket-sticker" aria-hidden="true">🚕</span>
+  </div>
   <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
+  <p id="gt-result"></p>
+  <div class="gt-menu-actions"><button id="gt-start">Start driving</button></div>
+  <details class="gt-instructions"><summary>Driving controls</summary>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
   <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
   <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥.</p>
-  <p id="gt-result"></p>
-  <button id="gt-start">Start driving</button>
-  <p class="gt-keys gt-bowlnote">Bonus mode: <button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button>: 60 seconds to bowl over as many pedestrians as you can.</p>
+  </details>
+  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button> · Bowl over as many pedestrians as you can in 60 seconds.</p>
   ${CITYCFG.cities.length > 1 ? `<p class="gt-cities">${CITYCFG.cities.map(c => c.id === CITYCFG.id ? `<b>${c.name}</b>` : `<a href="${c.href}">${c.name}</a>`).join('')}</p>` : ''}
 </div>
 <button id="gt-open" class="gt-card" hidden>🚕 Drive</button>`);
@@ -3082,7 +3465,10 @@ $('gt-close').onclick = () => { $('gt-menu').hidden = true; $('gt-open').hidden 
 /* ---------- input ---------- */
 const KEYMAP = { ArrowUp: 'gas', w: 'gas', W: 'gas', ArrowDown: 'brake', s: 'brake', S: 'brake', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
 addEventListener('keydown', e => {
-  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu) start('taxi'); return }
+  if (!driving) {
+    if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu && !e.target.closest('button, a, summary, input, select, textarea')) start('taxi');
+    return;
+  }
   if (e.target.closest && e.target.closest('select,input,dialog')) return;
   if (KEYMAP[e.key]) { keys.add(KEYMAP[e.key]); e.preventDefault(); e.stopPropagation() }
   else if (e.key === 'c' || e.key === 'C') toggleCam();
@@ -3288,8 +3674,170 @@ const api = window.GionTaxi = {
 
 </script>
 <script>
+/* Gion Taxi crew play: the little visitors the shooter pops and the wipers sweep off, drawn as paper stickers.
+   Shared by the laptop (built into the page before shoot.js) and the phone (served as /cuties.js before pad-shoot.js),
+   so the phone's small picture of the glass matches the windshield.
+
+   GionCuties.draw(g, kind, x, y, r, color, { t, state, alpha, sx, sy, night, ph })
+     r      radius in px (the sticker is about 2r across)
+     color  the season's ink for this one (shoot.js PALETTE); faces and details stay in the map's dark ink
+     state  'fly' (blinks and flaps), 'hit' (wide eyes, flinch) or 'stuck' (squeezed shut against the glass)
+   Each sticker has a cream outline, like the map's paper cut-outs, so it reads on any street or sky. */
+(() => {
+const INK = '#263c35', CREAM = '#fffcf3', BLUSH = '#ee9a92', GOLD = '#f2c94c';
+const KINDS = ['neko', 'sparrow', 'blossom', 'leaf', 'lantern', 'ladybug', 'mochi'];
+// how each one moves on the way in (shoot.js), and how many hits it takes
+const META = {
+  neko: { move: 'hop' }, sparrow: { move: 'flutter' }, blossom: { move: 'sway' }, leaf: { move: 'tumble' },
+  lantern: { move: 'beat', hp: 2 }, ladybug: { move: 'wobble' }, mochi: { move: 'squish' },
+};
+
+// mix a #rrggbb colour toward white (k > 0) or toward ink (k < 0)
+function tint(hex, k) {
+  const n = parseInt(hex.slice(1, 7), 16), to = k > 0 ? 255 : 30, a = Math.abs(k);
+  const c = [n >> 16, n >> 8 & 255, n & 255].map(v => Math.round(v + (to - v) * a));
+  return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+}
+// draw a shape twice: a fat cream outline underneath, then the fill (the sticker look)
+function sticker(g, path, fill, night, lw = .26) {
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  path(); g.strokeStyle = night ? '#1d2b26cc' : CREAM; g.lineWidth = lw; g.stroke();
+  path(); g.fillStyle = fill; g.fill();
+}
+const ell = (g, x, y, rx, ry, rot = 0) => { g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, 6.2832) };
+const dot = (g, x, y, r, c) => { ell(g, x, y, r, r); g.fillStyle = c; g.fill() };
+function shine(g, x, y, rx, ry) { g.save(); g.globalAlpha *= .45; ell(g, x, y, rx, ry, -.5); g.fillStyle = '#ffffff'; g.fill(); g.restore() }
+
+// a face: eyes at ±dx, y; blush under them; a tiny mouth
+function face(g, o, y = 0, dx = .3, size = 1, mouth = true) {
+  const e = .075 * size, blink = o.state === 'fly' && ((o.t + o.ph) % 3.1) < .12;
+  g.strokeStyle = INK; g.fillStyle = INK; g.lineWidth = .07 * size; g.lineCap = 'round';
+  for (const s of [-1, 1]) {
+    const x = s * dx;
+    if (o.state === 'stuck') { g.beginPath(); g.moveTo(x - s * .09 * size, y - .07 * size); g.lineTo(x + s * .05 * size, y); g.lineTo(x - s * .09 * size, y + .07 * size); g.stroke() }   // > <
+    else if (o.state === 'hit') { dot(g, x, y, e * 1.6, INK); dot(g, x - e * .5, y - e * .6, e * .55, '#ffffff') }
+    else if (blink) { g.beginPath(); g.moveTo(x - .07 * size, y); g.lineTo(x + .07 * size, y); g.stroke() }
+    else { dot(g, x, y, e, INK); dot(g, x - e * .35, y - e * .4, e * .35, '#ffffff') }
+    g.save(); g.globalAlpha *= .75; ell(g, x + s * .07 * size, y + .16 * size, .11 * size, .065 * size); g.fillStyle = BLUSH; g.fill(); g.restore();
+  }
+  if (!mouth) return;
+  g.beginPath(); g.lineWidth = .055 * size;
+  if (o.state === 'hit') { ell(g, 0, y + .17 * size, .05 * size, .065 * size); g.fillStyle = INK; g.fill() }
+  else if (o.state === 'stuck') { g.moveTo(-.07 * size, y + .17 * size); g.quadraticCurveTo(0, y + .11 * size, .07 * size, y + .17 * size); g.stroke() }
+  else { g.moveTo(-.08 * size, y + .12 * size); g.quadraticCurveTo(-.04 * size, y + .18 * size, 0, y + .13 * size); g.quadraticCurveTo(.04 * size, y + .18 * size, .08 * size, y + .12 * size); g.stroke() }
+}
+
+const DRAW = {
+  neko(g, c, o) {   // a round cat face with tall ears
+    const ear = s => { const p = [[s * .78, -.12], [s * .6, -.92], [s * .12, -.58]]; if (s > 0) p.reverse(); g.moveTo(...p[0]); g.lineTo(...p[1]); g.lineTo(...p[2]); g.closePath() };   // same winding both sides, so the fill has no gap
+    sticker(g, () => { g.beginPath(); ear(-1); ear(1); g.moveTo(.84, .06); g.ellipse(0, .06, .84, .7, 0, 0, 6.2832) }, c, o.night);
+    g.fillStyle = tint(c, .45); for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * .62, -.28); g.lineTo(s * .56, -.72); g.lineTo(s * .27, -.5); g.closePath(); g.fill() }
+    shine(g, -.38, -.18, .2, .1);
+    face(g, o, .04, .32, 1.1);
+    g.fillStyle = BLUSH; g.beginPath(); g.moveTo(-.05, .12); g.lineTo(.05, .12); g.lineTo(0, .17); g.closePath(); g.fill();   // nose
+    g.strokeStyle = tint(c, -.35); g.lineWidth = .04;   // whiskers
+    for (const s of [-1, 1]) for (const k of [-1, 1]) { g.beginPath(); g.moveTo(s * .58, .2 + k * .03); g.lineTo(s * .92, .16 + k * .1); g.stroke() }
+  },
+  sparrow(g, c, o) {   // a puffed-up round bird, wing flapping on the way in
+    const flap = o.state === 'fly' ? Math.sin(o.t * 14 + o.ph) : o.state === 'hit' ? 1 : -.3;
+    sticker(g, () => { g.beginPath(); g.moveTo(-.68, .05); g.lineTo(-1.02, -.18); g.lineTo(-.95, .22); g.closePath(); g.ellipse(0, .04, .76, .7, 0, 0, 6.2832) }, c, o.night);
+    sticker(g, () => { g.beginPath(); g.moveTo(.7, -.04); g.lineTo(1.0, .06); g.lineTo(.7, .17); g.closePath() }, GOLD, o.night, .16);   // beak
+    ell(g, .08, .34, .5, .32); g.fillStyle = tint(c, .6); g.fill();   // belly
+    g.save(); g.translate(-.18, .06); g.scale(1, .55 + .45 * flap); ell(g, 0, 0, .38, .26, -.35); g.fillStyle = tint(c, -.2); g.fill(); g.restore();   // wing
+    shine(g, -.25, -.38, .2, .09);
+    g.save(); g.translate(.3, 0); face(g, o, -.12, .17, .8, false); g.restore();   // it looks the way it flies
+  },
+  blossom(g, c, o) {   // five round petals, a little face in the middle
+    const turn = o.state === 'fly' ? Math.sin(o.t * 1.3 + o.ph) * .35 : 0;
+    const petals = () => { g.beginPath(); for (let i = 0; i < 5; i++) { const a = turn + i * 1.2566 - 1.5708; g.moveTo(Math.cos(a) * .95, Math.sin(a) * .95); g.ellipse(Math.cos(a) * .55, Math.sin(a) * .55, .4, .36, a, 0, 6.2832) } };
+    sticker(g, petals, c, o.night);
+    for (let i = 0; i < 5; i++) { const a = turn + i * 1.2566 - 1.5708; g.save(); g.globalAlpha *= .35; ell(g, Math.cos(a) * .62, Math.sin(a) * .62, .2, .12, a); g.fillStyle = '#ffffff'; g.fill(); g.restore() }   // soft petal light
+    ell(g, 0, 0, .36, .36); g.fillStyle = GOLD; g.fill();
+    face(g, o, -.02, .14, .75);
+  },
+  leaf(g, c, o) {   // a maple leaf, tumbling
+    const spin = o.state === 'fly' ? Math.sin(o.t * 2.4 + o.ph) * .6 : .15;
+    g.rotate(spin);
+    const path = () => {
+      g.beginPath();
+      const tips = [[0, -1], [.62, -.66], [1, -.12], [.56, .36], [0, .22], [-.56, .36], [-1, -.12], [-.62, -.66]];
+      const dips = [[.26, -.6], [.6, -.36], [.62, .12], [.2, .4], [-.2, .4], [-.62, .12], [-.6, -.36], [-.26, -.6]];   // plump lobes, so it reads as a leaf when small
+      g.moveTo(...tips[0]);
+      for (let i = 0; i < 8; i++) { g.lineTo(...dips[i]); g.lineTo(...tips[(i + 1) % 8]) }
+      g.closePath();
+    };
+    sticker(g, path, c, o.night);
+    g.strokeStyle = tint(c, -.3); g.lineWidth = .05;
+    g.beginPath(); for (const [x, y] of [[0, -.8], [.75, -.2], [-.75, -.2], [.45, -.5], [-.45, -.5]]) { g.moveTo(0, .1); g.lineTo(x, y) } g.moveTo(0, .1); g.lineTo(.05, .82); g.stroke();   // veins + stem
+    face(g, o, -.12, .2, .7);
+  },
+  lantern(g, c, o) {   // a paper chōchin, like the ones the fares wait at; it glows as it pulses
+    if (o.state === 'fly') {   // a soft glow that pulses with it
+      const p = .5 + .5 * Math.sin(o.t * 6.5 + o.ph), gr = g.createRadialGradient(0, 0, .3, 0, 0, 1.3);
+      gr.addColorStop(0, '#ffd98acc'); gr.addColorStop(1, '#ffd98a00');
+      g.save(); g.globalAlpha *= .35 + .35 * p; ell(g, 0, 0, 1.3, 1.3); g.fillStyle = gr; g.fill(); g.restore();
+    }
+    g.strokeStyle = INK; g.lineWidth = .06; g.beginPath(); g.moveTo(0, -.92); g.lineTo(0, -1.1); g.stroke();
+    sticker(g, () => { g.beginPath(); g.ellipse(0, 0, .66, .78, 0, 0, 6.2832) }, c, o.night);
+    g.strokeStyle = tint(c, -.22); g.lineWidth = .04;
+    for (const y of [-.45, -.15, .15, .45]) { g.beginPath(); g.ellipse(0, y, .62 * Math.sqrt(1 - (y / .8) ** 2), .07, 0, 0, Math.PI); g.stroke() }   // ribs
+    g.fillStyle = INK; for (const y of [-.92, .78]) { g.beginPath(); g.roundRect ? g.roundRect(-.34, y, .68, .15, .05) : g.rect(-.34, y, .68, .15); g.fill() }
+    shine(g, -.3, -.3, .14, .22);
+    face(g, o, .02, .24, .95);
+  },
+  ladybug(g, c, o) {   // a round beetle with a dark head and spots
+    sticker(g, () => { g.beginPath(); g.ellipse(0, .12, .78, .74, 0, 0, 6.2832); g.moveTo(.42, -.5); g.ellipse(0, -.5, .42, .36, 0, 0, 6.2832) }, c, o.night);
+    ell(g, 0, -.5, .42, .36); g.fillStyle = INK; g.fill();
+    g.strokeStyle = INK; g.lineWidth = .06; g.beginPath(); g.moveTo(0, -.18); g.lineTo(0, .84); g.stroke();
+    for (const s of [-1, 1]) { g.beginPath(); g.moveTo(s * .15, -.8); g.quadraticCurveTo(s * .25, -1.05, s * .42, -1.02); g.stroke(); dot(g, s * .43, -1.02, .06, INK) }   // antennae
+    for (const [x, y, r] of [[-.42, .02, .13], [.42, .02, .13], [-.36, .48, .11], [.36, .48, .11]]) dot(g, x, y, r, INK);
+    shine(g, -.4, -.12, .15, .07);
+    for (const s of [-1, 1]) {   // white eyes, so they read on the dark head
+      const x = s * .16, y = -.52;
+      if (o.state === 'stuck') { g.strokeStyle = '#ffffff'; g.lineWidth = .05; g.beginPath(); g.moveTo(x - s * .07, y - .06); g.lineTo(x + s * .04, y); g.lineTo(x - s * .07, y + .06); g.stroke() }
+      else { const big = o.state === 'hit' ? 1.35 : 1; dot(g, x, y, .085 * big, '#ffffff'); dot(g, x + s * .015, y + .01, .045 * big, INK) }
+    }
+  },
+  mochi(g, c, o) {   // a soft round mochi that squishes as it bounces
+    const sq = o.state === 'fly' ? 1 + .08 * Math.sin(o.t * 7 + o.ph) : 1;
+    g.save(); g.scale(sq, 1 / sq);
+    sticker(g, () => { g.beginPath(); g.moveTo(-.9, .45); g.bezierCurveTo(-1.0, -.55, -.5, -.78, 0, -.78); g.bezierCurveTo(.5, -.78, 1.0, -.55, .9, .45); g.quadraticCurveTo(0, .7, -.9, .45); g.closePath() }, tint(c, .55), o.night);
+    ell(g, 0, .38, .7, .14); g.fillStyle = tint(c, .2); g.fill();   // the darker base
+    g.beginPath(); g.moveTo(-.22, -.78); g.quadraticCurveTo(0, -.62, .22, -.78); g.strokeStyle = c; g.lineWidth = .1; g.stroke();   // a leaf ribbon on top
+    shine(g, -.45, -.4, .2, .1);
+    face(g, o, .0, .3, 1.05);
+    g.restore();
+  },
+};
+
+function draw(g, kind, x, y, r, color, o = {}) {
+  const f = DRAW[kind] || DRAW.neko;
+  const opt = { t: o.t || 0, ph: o.ph || 0, state: o.state || 'fly', night: !!o.night };
+  g.save(); g.translate(x, y); g.scale(r * (o.sx || 1), r * (o.sy || 1)); g.globalAlpha = o.alpha == null ? 1 : o.alpha;
+  if (opt.state === 'hit') g.rotate(Math.sin((opt.t + opt.ph) * 40) * .12);   // a flinch
+  f(g, color, opt);
+  g.restore();
+}
+
+// a pop: petals and confetti in the sticker's colours (the caller moves them)
+function confetti(color, n = 12) {
+  const cols = [color, tint(color, .5), CREAM, GOLD];
+  return Array.from({ length: n }, (_, i) => ({ shape: i % 3 ? 'petal' : 'dot', color: cols[i % cols.length], size: .5 + Math.random() * .6 }));
+}
+function drawBit(g, q, x, y, s, rot, alpha) {
+  g.save(); g.translate(x, y); g.rotate(rot); g.globalAlpha = alpha; g.fillStyle = q.color;
+  if (q.shape === 'petal') { g.beginPath(); g.ellipse(0, 0, s, s * .55, 0, 0, 6.2832); g.fill() }
+  else { g.beginPath(); g.arc(0, 0, s * .6, 0, 6.2832); g.fill() }
+  g.restore();
+}
+
+window.GionCuties = { KINDS, META, draw, confetti, drawBit, tint };
+})();
+
+</script>
+<script>
 /* Gion Taxi crew play: the shooter and the wipers (laptop side). Runs after drive.js, before mp.js.
-   Little ASCII creatures, flowers and shapes drift in from the street ahead and stick to the windshield unless the
+   Little paper-sticker visitors (cuties.js: cats, sparrows, blossoms, maple leaves, lanterns, ladybugs, mochi) drift in from the street ahead and stick to the windshield unless the
    shooter (phone gyro → crosshair, tap → shoot) pops them first. Whatever sticks, the wiper player sweeps off.
    The laptop is the authority, as for the rest of crew play: phones send aim/fire/wipe through mp.js
    (window.GionCrewExt.onPhone), this file runs the targets and sends phones a 10 Hz picture ('sh') plus events ('sx').
@@ -3301,17 +3849,10 @@ const crew = () => window.GionCrew;
 const holder = r => { const c = crew(); return c && c.holder ? c.holder(r) : null };
 const toPhones = m => { const c = crew(); if (c && c.toPhones) c.toPhones(m) };
 
-/* ---------- the characters (crisp monospace; every frame of a sprite has the same line count) ---------- */
-const SPR = {
-  cat:       { f: [[' /\\_/\\ ', '( o.o )', ' > ^ < '], [' /\\_/\\ ', '( -.- )', ' > ^ < ']], stuck: [' /\\_/\\ ', '( >.< )', ' > ^ < '], hit: [' /\\_/\\ ', '( O.O )', ' > ^ < '], move: 'hop' },
-  butterfly: { f: [['(\\ /)', ' )|( ', '(/ \\)'], [' \\ / ', ' )|( ', ' / \\ ']], move: 'flutter' },
-  daisy:     { f: [[' .o. ', 'o(@)o', " 'o' "], [' o.o ', '.(@).', " o'o "]], move: 'sway' },
-  star:      { f: [['\\ | /', '- * -', '/ | \\'], [' .|. ', '--*--', " '|' "]], move: 'twinkle' },
-  heart:     { f: [['/\\/\\', '\\  /', ' \\/ ']], hp: 2, move: 'beat' },
-  diamond:   { f: [[' /\\ ', '<  >', ' \\/ '], [' /\\ ', '|  |', ' \\/ ']], move: 'spin' },
-  hexagon:   { f: [[' __ ', '/  \\', '\\__/']], move: 'spin' },
-};
-const KINDS = Object.keys(SPR);
+/* ---------- the visitors: drawn by cuties.js, which the phone shares ---------- */
+const CU = window.GionCuties;
+if (!CU) return;
+const SPR = CU.META, KINDS = CU.KINDS;   // per kind: how it moves, and how many hits it takes (hp)
 // colours that sit in each season's scenery (soft inks, never neon); at night they become lit lantern tones
 const PALETTE = {
   spring: ['#d9738f', '#e79aac', '#7f9f5c', '#b98a2e', '#9a6fb0', '#c8513a'],
@@ -3332,10 +3873,10 @@ function scenery() {
 
 /* ---------- levels: gentle first, more and livelier with every fare delivered ---------- */
 const LV = [
-  { every: 3.4, approach: 6.6, live: 3, cap: 4, kinds: ['daisy', 'heart', 'cat'], moves: ['drift'], note: 'Level 1 · a few visitors' },
-  { every: 2.8, approach: 5.9, live: 4, cap: 4, kinds: ['daisy', 'heart', 'cat', 'butterfly'], moves: ['drift', 'wobble'], note: 'Level 2 · butterflies join in' },
-  { every: 2.3, approach: 5.3, live: 5, cap: 5, kinds: ['daisy', 'heart', 'cat', 'butterfly', 'star'], moves: ['drift', 'wobble', 'zigzag'], note: 'Level 3 · stars zigzag' },
-  { every: 1.9, approach: 4.7, live: 6, cap: 5, kinds: KINDS, moves: ['drift', 'wobble', 'zigzag', 'orbit'], note: 'Level 4 · shapes start to orbit' },
+  { every: 3.4, approach: 6.6, live: 3, cap: 4, kinds: ['blossom', 'lantern', 'neko'], moves: ['drift'], note: 'Level 1 · a few visitors' },
+  { every: 2.8, approach: 5.9, live: 4, cap: 4, kinds: ['blossom', 'lantern', 'neko', 'sparrow'], moves: ['drift', 'wobble'], note: 'Level 2 · sparrows join in' },
+  { every: 2.3, approach: 5.3, live: 5, cap: 5, kinds: ['blossom', 'lantern', 'neko', 'sparrow', 'leaf'], moves: ['drift', 'wobble', 'zigzag'], note: 'Level 3 · maple leaves zigzag' },
+  { every: 1.9, approach: 4.7, live: 6, cap: 5, kinds: KINDS, moves: ['drift', 'wobble', 'zigzag', 'orbit'], note: 'Level 4 · ladybugs and mochi circle in' },
   { every: 1.55, approach: 4.2, live: 7, cap: 6, kinds: KINDS, moves: ['wobble', 'zigzag', 'orbit', 'dart'], note: 'Level 5 · everything darts' },
 ];
 
@@ -3349,7 +3890,6 @@ function fit() {
   if (r.width && (Math.round(r.width * DPR) !== cv.width || Math.round(r.height * DPR) !== cv.height)) { cv.width = Math.round(r.width * DPR); cv.height = Math.round(r.height * DPR) }
   W = r.width; H = r.height;
 }
-const MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
 
 /* ---------- state ---------- */
 let on = false, level = 0, spawnT = 0, nextId = 1, targets = [], stuck = [], parts = [], fx = [];
@@ -3408,16 +3948,11 @@ function place(o) {
   if (k === 'beat') o.s *= 1 + .07 * Math.max(0, Math.sin(t * 6.5 + o.ph));
 }
 const fontPx = () => Math.max(13, Math.min(26, Math.min(W, H) * .03));
-function frameOf(o, stuckNow) {
-  const S = SPR[o.kind];
-  if (o.flash > 0 && S.hit) return S.hit;
-  if (stuckNow) return S.stuck || S.f[0];
-  const n = S.f.length; return S.f[Math.floor((o.t * (S.move === 'twinkle' ? 3 : 1.6) + o.ph) % n)];
+function box(o, scale) {   // the sticker's size on screen, in px (r is its radius)
+  const r = fontPx() * 1.55 * scale;
+  return { w: 2 * r, h: 2 * r, r };
 }
-function box(o, scale) {   // the sprite's size on screen, in px
-  const lines = SPR[o.kind].f[0], fs = fontPx() * scale;
-  return { w: Math.max(...lines.map(l => l.length)) * fs * .62, h: lines.length * fs * 1.08, fs };
-}
+const look = o => o.flash > 0 ? 'hit' : 'fly';
 
 /* ---------- the shooter ---------- */
 function fire(x, y, color) {
@@ -3439,17 +3974,12 @@ function fire(x, y, color) {
   fx.push({ x: hit.x * W, y: hit.y * H, t: 0, color: hit.color });
   toPhones({ t: 'sx', k: 'hit', kind: hit.kind, combo });
 }
-function burst(o, scale, power) {   // the sprite falls apart into its own characters, plus a few sparks
-  const b = box(o, scale), lines = frameOf(o, o.stuckAt != null), cx = o.x * W, cy = o.y * H;
-  lines.forEach((ln, r) => [...ln].forEach((ch, c) => {
-    if (ch === ' ') return;
-    const x = cx + (c - (ln.length - 1) / 2) * b.fs * .62, y = cy + (r - (lines.length - 1) / 2) * b.fs * 1.08;
-    const ang = Math.atan2(y - cy, x - cx) + (Math.random() - .5) * .9, sp = (90 + Math.random() * 160) * power * (.6 + scale * .6);
-    parts.push({ ch, x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 60 * power, r: 0, vr: (Math.random() - .5) * 8, life: .75 + Math.random() * .3, t: 0, fs: b.fs, color: o.color });
-  }));
-  for (let k = 0; k < 6; k++) {
-    const ang = Math.random() * 6.28, sp = 120 + Math.random() * 140;
-    parts.push({ ch: '.*+\'·'[k % 5], x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, r: 0, vr: 0, life: .5, t: 0, fs: b.fs * .8, color: o.color });
+function burst(o, scale, power) {   // the sticker pops into petals and confetti in its own colours
+  const b = box(o, scale), cx = o.x * W, cy = o.y * H;
+  for (const q of CU.confetti(o.color, 14)) {
+    const ang = Math.random() * 6.283, d = b.r * Math.random() * .6, sp = (90 + Math.random() * 170) * power * (.6 + scale * .6);
+    parts.push({ ...q, x: cx + Math.cos(ang) * d, y: cy + Math.sin(ang) * d, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 60 * power,
+      r: Math.random() * 6, vr: (Math.random() - .5) * 10, life: .7 + Math.random() * .35, t: 0, fs: b.r * .22 * q.size });
   }
 }
 
@@ -3488,22 +4018,12 @@ function stepWipe(dt) {
 }
 
 /* ---------- drawing ---------- */
-function drawSprite(lines, x, y, fs, color, alpha, sx = 1, sy = 1) {
-  g.save(); g.translate(x, y); g.scale(sx, sy); g.globalAlpha = alpha;
-  g.font = `600 ${fs.toFixed(1)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-  const night = pal === 'night', n = lines.length;
-  g.strokeStyle = night ? '#1d2b26cc' : '#fffcf3e6'; g.lineWidth = Math.max(2, fs * .16); g.fillStyle = color;
-  for (let r = 0; r < n; r++) { const yy = (r - (n - 1) / 2) * fs * 1.08; g.strokeText(lines[r], 0, yy) }
-  for (let r = 0; r < n; r++) { const yy = (r - (n - 1) / 2) * fs * 1.08; g.fillText(lines[r], 0, yy) }
-  g.restore();
-}
 function draw(dt) {
   fit(); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
-  const fs = fontPx();
   // flying ones, far to near
   for (const o of [...targets].sort((a, b) => a.s - b.s)) {
     const near = o.s, alpha = Math.min(1, .35 + o.t / o.T * 1.6);
-    drawSprite(frameOf(o, false), o.x * W, o.y * H, fs * near, o.color, alpha * (o.flash > 0 ? .6 : 1));
+    CU.draw(g, o.kind, o.x * W, o.y * H, box(o, near).r, o.color, { t: o.t, ph: o.ph, state: look(o), alpha: alpha * (o.flash > 0 ? .8 : 1), night: pal === 'night' });
     if (o.t / o.T > .78) {   // about to land: a small soft ring on the glass where it will stick
       const p = (o.t / o.T - .78) / .22; g.save(); g.globalAlpha = .25 * p; g.strokeStyle = o.color; g.lineWidth = 1.2;
       g.beginPath(); g.ellipse(o.fx * W, o.fy * H, 26 + 14 * (1 - p), 18 + 10 * (1 - p), 0, 0, 6.283); g.stroke(); g.restore();
@@ -3512,7 +4032,7 @@ function draw(dt) {
   // stuck to the glass: squashed a little, sliding slowly, smeared after a wiper pass
   for (const o of stuck) {
     const k = Math.min(1, o.stuckAt / .18), sq = 1 + .18 * Math.sin(Math.min(1, o.stuckAt / .25) * Math.PI);
-    drawSprite(frameOf(o, true), o.x * W, (o.y + o.slide) * H, fs * 1.45, o.color, (o.smear ? .62 : .9) * (.6 + .4 * k), sq * 1.06, 1 / sq * .94);
+    CU.draw(g, o.kind, o.x * W, (o.y + o.slide) * H, box(o, 1.45).r, o.color, { state: 'stuck', ph: o.ph, alpha: (o.smear ? .62 : .92) * (.6 + .4 * k), sx: sq * 1.06, sy: 1 / sq * .94, night: pal === 'night' });
   }
   // the wiper blade
   if (wipe) {
@@ -3526,8 +4046,7 @@ function draw(dt) {
   // particles
   for (const q of parts) {
     const a = Math.max(0, 1 - q.t / q.life);
-    g.save(); g.translate(q.x, q.y); g.rotate(q.r); g.globalAlpha = a; g.font = `600 ${q.fs.toFixed(1)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillStyle = q.color; g.fillText(q.ch, 0, 0); g.restore();
+    CU.drawBit(g, q, q.x, q.y, q.fs, q.r, a);
   }
   // hit rings and miss dots
   for (const f of fx) {
@@ -3694,8 +4213,9 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 
 /* ---------- UI: a menu button, the lobby card, the crew strip and the navigator's callouts ---------- */
 const menu = $('gt-menu');
-$('gt-start').insertAdjacentHTML('afterend', served
-  ? '<button id="gt-mp" class="gt-ghost">Play with phones</button><p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
+if (served) $('gt-start').insertAdjacentHTML('afterend', '<button id="gt-mp" class="gt-ghost">Play with phones</button>');
+menu.querySelector('.gt-menu-actions').insertAdjacentHTML('afterend', served
+  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
   : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>

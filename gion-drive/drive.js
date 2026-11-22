@@ -139,14 +139,19 @@ stage.insertAdjacentHTML('beforeend', `
   </div>
 </div>
 <div id="gt-menu" class="gt-card">
-  <h2>${CITYCFG.brand}</h2>
+  <div class="gt-ticket">
+    <div><span class="gt-ticket-city">${CITYCFG.name}</span><h2>${CITYCFG.brand}</h2></div>
+    <span class="gt-ticket-sticker" aria-hidden="true">🚕</span>
+  </div>
   <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
+  <p id="gt-result"></p>
+  <div class="gt-menu-actions"><button id="gt-start">Start driving</button></div>
+  <details class="gt-instructions"><summary>Driving controls</summary>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
   <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
   <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥.</p>
-  <p id="gt-result"></p>
-  <button id="gt-start">Start driving</button>
-  <p class="gt-keys gt-bowlnote">Bonus mode: <button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button>: 60 seconds to bowl over as many pedestrians as you can.</p>
+  </details>
+  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button> · Bowl over as many pedestrians as you can in 60 seconds.</p>
   ${CITYCFG.cities.length > 1 ? `<p class="gt-cities">${CITYCFG.cities.map(c => c.id === CITYCFG.id ? `<b>${c.name}</b>` : `<a href="${c.href}">${c.name}</a>`).join('')}</p>` : ''}
 </div>
 <button id="gt-open" class="gt-card" hidden>🚕 Drive</button>`);
@@ -236,7 +241,10 @@ $('gt-close').onclick = () => { $('gt-menu').hidden = true; $('gt-open').hidden 
 /* ---------- input ---------- */
 const KEYMAP = { ArrowUp: 'gas', w: 'gas', W: 'gas', ArrowDown: 'brake', s: 'brake', S: 'brake', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
 addEventListener('keydown', e => {
-  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu) start('taxi'); return }
+  if (!driving) {
+    if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu && !e.target.closest('button, a, summary, input, select, textarea')) start('taxi');
+    return;
+  }
   if (e.target.closest && e.target.closest('select,input,dialog')) return;
   if (KEYMAP[e.key]) { keys.add(KEYMAP[e.key]); e.preventDefault(); e.stopPropagation() }
   else if (e.key === 'c' || e.key === 'C') toggleCam();

@@ -37,8 +37,9 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 
 /* ---------- UI: a menu button, the lobby card, the crew strip and the navigator's callouts ---------- */
 const menu = $('gt-menu');
-$('gt-start').insertAdjacentHTML('afterend', served
-  ? '<button id="gt-mp" class="gt-ghost">Play with phones</button><p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
+if (served) $('gt-start').insertAdjacentHTML('afterend', '<button id="gt-mp" class="gt-ghost">Play with phones</button>');
+menu.querySelector('.gt-menu-actions').insertAdjacentHTML('afterend', served
+  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
   : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>
