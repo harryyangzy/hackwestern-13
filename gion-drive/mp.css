@@ -69,9 +69,20 @@
 #gt-lobby.has-result .gt-lsub{display:none}
 #gt-lobby.has-result #gt-qr{width:150px;height:150px}
 #gt-lobby.has-result .gt-res{margin-bottom:10px}
-.gt-modes{display:flex;justify-content:center;margin:0 auto 12px;border:1px solid var(--rule);border-radius:999px;width:max-content;overflow:hidden;background:#fff9}
-.gt-modes button{padding:7px 18px;font-weight:600;font-size:14px;color:var(--muted)}
-.gt-modes button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
+/* Taxi / Joyride tabs: the selected tab sits on a terracotta clay pill that slides across when the tab changes. */
+.gt-modes{position:relative;display:grid;grid-template-columns:1fr 1fr;margin:0 auto 12px;padding:4px;width:max-content;
+  border-radius:999px;background:var(--color-accent-100,#efe4cf);box-shadow:inset 0 2px 4px #5a3a2026,inset 0 -1px 0 #fff8}
+.gt-modes button{position:relative;z-index:1;padding:8px 20px;font-weight:700;font-size:14px;color:var(--muted);
+  transition:color .15s;-webkit-tap-highlight-color:transparent}
+.gt-modes button:hover{color:var(--ink)}
+.gt-modes button:active{transform:translateY(1px)}
+.gt-modes button[aria-pressed="true"]{color:#fff8ec;text-shadow:0 1px 0 #5b231680}
+.gt-clay{position:absolute;z-index:0;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);pointer-events:none;
+  background:radial-gradient(120% 90% at 32% 22%,#d0735a 0%,var(--color-accent-500,#a04631) 55%,var(--color-accent-600,#913d2a) 100%);
+  box-shadow:inset 0 3px 2px #ffffff40,inset 0 -3px 3px #00000038,0 3px 5px #5a2a1a40,0 1px 1px #5a2a1a40;
+  border-radius:999px;transition:transform .25s cubic-bezier(.3,.7,.3,1)}
+.gt-modes:has([data-game="bowling"][aria-pressed="true"]) .gt-clay{transform:translateX(100%)}
+@media (prefers-reduced-motion:reduce){.gt-clay{transition:none}}
 @media (max-width:620px){.gt-lgrid{grid-template-columns:1fr;justify-items:center}#gt-seats{width:100%}}
 
 /* the lobby, pared down: mode tabs on top, the QR code and room on the left, the seats and Start on the right */
@@ -86,3 +97,41 @@
 #gt-seats+.gt-lnote,#gt-seats+#gt-lstart{margin-top:12px}
 .gt-lnote[hidden]{display:none}
 .gt-lnote{color:var(--rust);margin:10px 0 10px}
+
+/* results: the shift's route on the city map, glow-in-the-dark style. The route draws itself in rust, then the "lights
+   go off" (the map dusks over), the route and the numbers glow pale, and the glow settles as the ink loses its charge */
+#gt-lresult .gt-glow{position:relative;margin:0 0 16px;padding:0;border:0;border-radius:18px;overflow:hidden;text-align:left;
+  background:#263c35;color:#fff6e2;box-shadow:0 10px 26px #263c3540,0 1px 2px #263c3530}
+.gt-rmap{display:block;width:100%;height:190px}
+.gt-rdusk{fill:#1c2d28;opacity:0;animation:gt-rdusk .8s ease 1.7s forwards}
+.gt-rline,.gt-rglow{fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1}
+.gt-rline{stroke:#c8513a;animation:gt-rdraw 1.7s cubic-bezier(.45,0,.25,1) .2s forwards,gt-rline .8s ease 1.7s forwards}
+.gt-rglow{stroke:#ffd98a;opacity:0;filter:url(#gt-rblur);stroke-dashoffset:0;animation:gt-rcharge 3.4s ease 1.7s forwards}
+.gt-rm{opacity:0;transform-box:fill-box;transform-origin:center;animation:gt-rpop .35s cubic-bezier(.3,1.6,.6,1) forwards}
+.gt-rm-p{fill:#f26a2e}.gt-rm-d{fill:#f2c94c}.gt-rm-b{fill:#e9a3b4}.gt-rm-h{fill:#c8513a}
+.gt-rstart{fill:#fff6e2;stroke:#263c35}
+.gt-rend{fill:#c8513a;stroke:#fff6e2;animation:gt-rendglow 3.4s ease 1.7s forwards}
+.gt-rhead{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:8px;padding:6px 12px 6px 14px;border-radius:999px;
+  background:#fffcf3e6;color:#263c35;box-shadow:0 2px 8px #263c3526;backdrop-filter:blur(4px)}
+.gt-rhead b{font:500 19px/1 var(--display)}
+#gt-lresult .gt-stars{margin:0;color:#c9932c;font-size:14px;letter-spacing:.08em}
+.gt-stars i{font-style:normal;opacity:.45}
+.gt-rstats{display:flex;align-items:flex-end;gap:18px;padding:14px 20px 16px;border-top:1px solid #fff6e21a}
+.gt-rbig{display:flex;flex-direction:column;min-width:0}
+.gt-rstats small{font:600 10.5px var(--sans);letter-spacing:.09em;text-transform:uppercase;color:#fff6e2a0}
+.gt-rbig b{font:500 40px/1.05 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;animation:gt-rtext 3.4s ease 1.7s both}
+.gt-rbig em{font:italic 12px var(--sans);color:#fff6e28c}
+.gt-rrow{flex:1;display:flex;justify-content:flex-end;gap:6px}
+.gt-rrow div{display:flex;flex-direction:column-reverse;align-items:center;gap:2px;min-width:62px;padding:8px 8px 7px;border-radius:12px;background:#fff6e20f;border:1px solid #fff6e21a}
+.gt-rrow b{font:500 22px/1 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;animation:gt-rtext 3.4s ease 1.9s both}
+.gt-rstats u{text-decoration:none;font-size:.6em;margin-left:2px;opacity:.7}
+.gt-glow.nomap .gt-rhead{position:static;margin:14px 0 0 16px;width:max-content}
+@keyframes gt-rdraw{to{stroke-dashoffset:0}}
+@keyframes gt-rline{to{stroke:#fff3cf}}
+@keyframes gt-rdusk{to{opacity:.45}}
+@keyframes gt-rcharge{0%{opacity:0}25%{opacity:.95}100%{opacity:.5}}
+@keyframes gt-rendglow{0%{fill:#c8513a}25%{fill:#ffd98a}100%{fill:#f2c94c}}
+@keyframes gt-rpop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:scale(1)}}
+@keyframes gt-rtext{0%{color:#fff6e2;text-shadow:none}25%{color:#fff9e8;text-shadow:0 0 6px #ffd98acc,0 0 18px #ffd98a99}100%{color:#fff3d6;text-shadow:0 0 4px #ffd98a59,0 0 12px #ffd98a33}}
+@media (max-width:560px){.gt-rstats{flex-direction:column;align-items:stretch}.gt-rrow{justify-content:space-between}.gt-rrow div{min-width:0;flex:1}}
+@media (prefers-reduced-motion:reduce){.gt-rline,.gt-rglow,.gt-rdusk,.gt-rm,.gt-rend,.gt-rbig b,.gt-rrow b{animation-duration:.01s;animation-delay:0s}}

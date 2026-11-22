@@ -181,15 +181,15 @@ body { background: var(--paper); }
   box-shadow: none;
   opacity: 1;
 }
-.gt-modes, .pad-ui .gear, .pad-ui .seg {
+.pad-ui .gear, .pad-ui .seg {
   background: var(--well);
   border: 1px solid var(--rule);
   padding: 3px;
   gap: 3px;
   border-radius: 14px;
 }
-.gt-modes button, .pad-ui .gear button, .pad-ui .seg button { border-radius: 10px; }
-.gt-modes button[aria-pressed=true], .pad-ui .gear button.on, .pad-ui .seg button.on {
+.pad-ui .gear button, .pad-ui .seg button { border-radius: 10px; }
+.pad-ui .gear button.on, .pad-ui .seg button.on {
   background: var(--ice);
   box-shadow: inset 0 0 0 1px var(--color-accent-200);
   color: var(--ink);
@@ -205,41 +205,47 @@ body { background: var(--paper); }
 #gt-seats .st { font-style: normal; }
 #gt-qr { background: #fff; border-color: var(--rule); border-radius: 14px; }
 
-/* The QR sits in a kerb: the map's red and cream road edge, with the cuties' cream sticker rim. The fare lantern hangs
-   over it and a maple leaf is stuck on a corner; both stay on the kerb, clear of the code's quiet zone. */
+/* The QR sits in a flat taxi like the tandem logo: red body, the red-and-cream kerb stripe with cream-and-gold
+   headlights at the bottom, a gold roof light on a dark green base. No bevels or drop shadows, and the white quiet zone stays clear. */
 #gt-qr:has(> svg) {
   box-sizing: content-box;
   position: relative;
-  margin: 20px 0 10px;
-  padding: 8px;
+  margin: 18px 0 6px;
+  padding: 10px 10px 30px;
   overflow: visible;
-  border: 9px solid transparent;
-  border-radius: 22px;
+  border: 0;
+  border-radius: 26px 26px 20px 20px;
   background:
-    linear-gradient(#fff, #fff) padding-box,
-    repeating-conic-gradient(#c8402f 0 25%, #fffcf3 0 50%) 0 0 / 18px 18px border-box;
-  box-shadow: 0 0 0 3px #fffcf3, 0 6px 14px #3d311e2e;
+    radial-gradient(circle at 22px calc(100% - 15px), #f2c94c 0 3.5px, #fffcf3 4px 8px, transparent 8.5px),
+    radial-gradient(circle at calc(100% - 22px) calc(100% - 15px), #f2c94c 0 3.5px, #fffcf3 4px 8px, transparent 8.5px),
+    repeating-linear-gradient(90deg, #fffcf3 0 9px, #c8402f 9px 18px) 0 calc(100% - 11px) / 100% 8px no-repeat,
+    #c8402f;
+  color: var(--ink);
+  box-shadow: none;
 }
 #gt-qr:has(> svg)::before {
   content: "";
   position: absolute;
-  top: -34px;
+  top: -15px;
   left: 50%;
   transform: translateX(-50%);
-  width: 34px;
-  height: 41px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M20 0v6' stroke='%23263c35' stroke-width='2'/%3E%3Crect x='13' y='5' width='14' height='5' rx='2' fill='%23263c35' stroke='%23fffcf3' stroke-width='2.5' paint-order='stroke'/%3E%3Cellipse cx='20' cy='24' rx='16' ry='13' fill='%23f2c94c' stroke='%23fffcf3' stroke-width='3.5' paint-order='stroke'/%3E%3Cpath d='M6 20.5h28M5.5 27.5h29' stroke='%23d9a72e' stroke-width='1.6'/%3E%3Crect x='13' y='36' width='14' height='5' rx='2' fill='%23263c35' stroke='%23fffcf3' stroke-width='2.5' paint-order='stroke'/%3E%3C/svg%3E") center / contain no-repeat;
+  width: 46px;
+  height: 11px;
+  border-radius: 12px 12px 0 0;
+  background: #f2c94c;
+  border-bottom: 4px solid #263c35;
 }
 #gt-qr:has(> svg)::after {
   content: "";
   position: absolute;
-  right: -20px;
-  bottom: -18px;
-  width: 38px;
-  height: 38px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-24 -24 48 48'%3E%3Cpath transform='rotate%2824%29' d='M0 -20L5 -9L15 -13L11 -2L20 2L9 6L11 14L2 9L0 20L-2 9L-11 14L-9 6L-20 2L-11 -2L-15 -13L-5 -9Z' fill='%23c9782e' stroke='%23fffcf3' stroke-width='3.5' stroke-linejoin='round' paint-order='stroke'/%3E%3C/svg%3E") center / contain no-repeat;
+  bottom: -9px;
+  left: 18px;
+  right: 18px;
+  height: 9px;
+  background: linear-gradient(90deg, #263c35 0 30px, transparent 30px calc(100% - 30px), #263c35 calc(100% - 30px));
+  border-radius: 0 0 4px 4px;
 }
-#gt-qr > svg { border-radius: 8px; }
+#gt-qr > svg { border-radius: 14px; }
 #gt-room, .gt-stats b, #wt-goal b, .gt-resrow b, .pad-ui .stats b {
   font-variant-numeric: tabular-nums;
   letter-spacing: -.025em;
@@ -264,14 +270,6 @@ body { background: var(--paper); }
 .pad-ui { background: radial-gradient(ellipse at 35% 0%, #fff, #edf3f6); }
 .dialog-head h2, .pad-ui h1, .pad-ui h2 { font-family: var(--display); font-weight: 500; }
 .pad-ui #code { border-color: var(--rule); color: var(--color-button-ghost-foreground); }
-.pad-ui #ready {
-  background: var(--ice);
-  color: var(--ink);
-  border: 1px solid var(--color-accent-200);
-  border-radius: var(--card-radius);
-  box-shadow: var(--dock-shadow);
-}
-.pad-ui #ready.on { background: var(--mint); border-color: #98c4af; }
 .pad-ui .roles svg { background: var(--well); border-radius: 8px; padding: 3px; }
 .pad-ui #door, .pad-ui .calls button {
   background: var(--panel);
@@ -413,4 +411,21 @@ dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
 }
 @media (max-height: 620px) {
   .gt-ticket { min-height: 76px; padding-block: 8px; }
-  }
+}
+
+/* back buttons: a real ghost pill with an arrow, always in the flow of the card so nothing sits on top of it */
+.gt-backbtn {
+  display: inline-flex; align-items: center; gap: 6px; width: max-content;
+  padding: 7px 14px 7px 10px; border: 1px solid var(--rule); border-radius: 999px;
+  background: var(--color-button-ghost-background); color: var(--color-button-ghost-foreground);
+  font: 600 14px/1 var(--sans); text-decoration: none; cursor: pointer;
+  transition: background .15s, transform .15s;
+}
+.gt-backbtn::before {
+  content: ""; width: 14px; height: 14px; flex: none; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 7H2M6.5 2.5 2 7l4.5 4.5'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 7H2M6.5 2.5 2 7l4.5 4.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.gt-backbtn:hover { background: var(--color-button-ghost-hover); }
+.gt-backbtn:active { background: var(--color-button-ghost-active); transform: translateY(1px); }
+.gt-backbtn:focus-visible { outline: 2px solid var(--color-border-focus-ring); outline-offset: 2px; }
