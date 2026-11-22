@@ -272,7 +272,7 @@ server.on('error', e => {
 });
 server.listen(PORT, '0.0.0.0', () => {
   const ips = lanIPs();
-  console.log('\n  GION TAXI · crew server');
+  console.log('\n  tandem · crew server');
   console.log(`  Laptop (the game):  http://localhost:${PORT}`);
   console.log(`  Phones join at:     ${ips.length ? ips.map(ip => `http://${ip}:${PORT}/join`).join('  or  ') : '(no network found: connect to Wi-Fi or a hotspot)'}`);
   console.log('  Open the game, press "Play with phones" and scan the QR code.');

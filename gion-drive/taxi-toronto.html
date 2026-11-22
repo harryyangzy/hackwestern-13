@@ -1,6 +1,6 @@
 <!doctype html>
-<!-- Toronto Taxi. The city, its drawing engine and the street simulation are Pocket City by April Zhu (MIT licence, https://april-zhu.com/pocketcity). Map data © OpenStreetMap contributors (ODbL). -->
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f8f5eb"><meta name="description" content="Toronto Taxi: Drive a taxi around Nathan Phillips Square and Toronto City Hall. Alone or with a crew of phones."><title>Toronto Taxi</title>
+<!-- tandem. The city, its drawing engine and the street simulation are Pocket City by April Zhu (MIT licence, https://april-zhu.com/pocketcity). Map data © OpenStreetMap contributors (ODbL). -->
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f8f5eb"><meta name="description" content="tandem: Drive a taxi around Nathan Phillips Square and Toronto City Hall. Alone or with a crew of phones."><title>tandem</title>
 <style>
 :root{--paper:#f6f3e9;--panel:#fffcf3;--ink:#263c35;--muted:#626c60;--rule:#cfcfc0;--rust:#ac4931;--green:#36594b;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}body{color:var(--ink);font:14px/1.4 var(--sans);background:var(--paper)}button,select,input{font:inherit;color:inherit}button,select{cursor:pointer}button{background:none;border:0}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--rust);outline-offset:3px}button:disabled{opacity:.35;cursor:default}svg{display:block}button svg,.tool svg,.symbol{width:17px;height:17px;flex:none}button{touch-action:manipulation}a{color:var(--green);text-underline-offset:2px}[hidden]{display:none!important}
@@ -43,7 +43,7 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid #afb5a5;border-
 </style></head><body>
 
 
-<header class="top"><div class="identity"><span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round"><g stroke="#507968" stroke-width="1.25"><path d="m2.7 28.8 11.5-5.4 12.3 2.7 10.6-4.4 8.2 10.6-12.6 7.2-12.3-2.7-10.2 4Z" fill="#a9ccaa"/><path d="m14.2 23.4 6.2 13.4 12.3 2.7-6.2-13.4Z" fill="#e9ddad"/><path d="m5.5 33.4 10.1-4.1 11.8 2.2 13.8-5.6" stroke="#6a9d95" stroke-width="2.3"/></g><g stroke="#774638" stroke-width="1.25"><path d="m24.8 30.9 8.9-4.8V13.8l-8.9 3.4Z" fill="#c98353"/><path d="m15.2 27.7 9.6 3.2V17.2l-2-.7v-2.3l-2-.7v-2.2l-2.7-.9v2.1l-1.9-.6v2.5l-1-.3Z" fill="#e8ac68"/><path d="m24.8 17.2 8.9-3.4-5.9-5.7-7 3.2 1 2.2 2 .7v2.3Z" fill="#985b49"/><path d="m11.6 32.8 8.9 3.6V17.7l-2.1-.8v-2.6l-2.2-.8v-2.7l-2.8-1.1v2.6l-2-.8v2.8l-1.8-.6v2.8l-1.4-.6v15.6Z" fill="#db7153"/><path d="m20.5 17.7 5.7-3-6-7.7-4 3.8v2.7l2.2.8v2.6Z" fill="#b35545"/><path d="m20.5 36.4 5.7-3.3V14.7l-5.7 3Z" fill="#a65548"/></g><g fill="#fceac8"><path d="m10.4 18.8 2.1.8v3.6l-2.1-.8Zm5 1.9 2.2.9v3.5l-2.2-.8Zm-5 4.4 2.1.8v3.6l-2.1-.8Z"/></g><path d="m15.4 33.9 2.2.8v-6.4l-2.2-.8Z" fill="#41584f"/><path d="m28.4 17 .1 3.3m2.6-4.6v3.2" stroke="#fcdfaa" stroke-width="1.65"/></svg></span><span class="wordmark">Toronto Taxi</span></div><nav class="city-nav" aria-label="Place"><a aria-current="page" id="placeTab" href="#"></a></nav><div class="topnav"><div class="status" id="status"><i></i><span>Simulation live</span></div><button id="notesBtn" aria-label="Field notes" class="button" aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-2-5-3-9-2v15c4-1 7 0 9 2 2-2 5-3 9-2V4c-4-1-7 0-9 2v15"/></svg><span>Field notes</span></button></div></header>
+<header class="top"><div class="identity"><span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round"><g stroke="#507968" stroke-width="1.25"><path d="m2.7 28.8 11.5-5.4 12.3 2.7 10.6-4.4 8.2 10.6-12.6 7.2-12.3-2.7-10.2 4Z" fill="#a9ccaa"/><path d="m14.2 23.4 6.2 13.4 12.3 2.7-6.2-13.4Z" fill="#e9ddad"/><path d="m5.5 33.4 10.1-4.1 11.8 2.2 13.8-5.6" stroke="#6a9d95" stroke-width="2.3"/></g><g stroke="#774638" stroke-width="1.25"><path d="m24.8 30.9 8.9-4.8V13.8l-8.9 3.4Z" fill="#c98353"/><path d="m15.2 27.7 9.6 3.2V17.2l-2-.7v-2.3l-2-.7v-2.2l-2.7-.9v2.1l-1.9-.6v2.5l-1-.3Z" fill="#e8ac68"/><path d="m24.8 17.2 8.9-3.4-5.9-5.7-7 3.2 1 2.2 2 .7v2.3Z" fill="#985b49"/><path d="m11.6 32.8 8.9 3.6V17.7l-2.1-.8v-2.6l-2.2-.8v-2.7l-2.8-1.1v2.6l-2-.8v2.8l-1.8-.6v2.8l-1.4-.6v15.6Z" fill="#db7153"/><path d="m20.5 17.7 5.7-3-6-7.7-4 3.8v2.7l2.2.8v2.6Z" fill="#b35545"/><path d="m20.5 36.4 5.7-3.3V14.7l-5.7 3Z" fill="#a65548"/></g><g fill="#fceac8"><path d="m10.4 18.8 2.1.8v3.6l-2.1-.8Zm5 1.9 2.2.9v3.5l-2.2-.8Zm-5 4.4 2.1.8v3.6l-2.1-.8Z"/></g><path d="m15.4 33.9 2.2.8v-6.4l-2.2-.8Z" fill="#41584f"/><path d="m28.4 17 .1 3.3m2.6-4.6v3.2" stroke="#fcdfaa" stroke-width="1.65"/></svg></span><span class="wordmark">tandem</span></div><nav class="city-nav" aria-label="Place"><a aria-current="page" id="placeTab" href="#"></a></nav><div class="topnav"><div class="status" id="status"><i></i><span>Simulation live</span></div><button id="notesBtn" aria-label="Field notes" class="button" aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-2-5-3-9-2v15c4-1 7 0 9 2 2-2 5-3 9-2V4c-4-1-7 0-9 2v15"/></svg><span>Field notes</span></button></div></header>
 <main class="workspace">
 <aside class="rail" aria-label="Street atlas controls"><section class="paper info"><div class="stamp-line"><span>The Netherlands</span><i class="flag" aria-hidden="true"></i></div><h1 id="cityName">Amsterdam</h1><p class="location">Reguliersgracht × Keizersgracht</p><div class="coords"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.2"/></svg> 52.36345° N &nbsp; 4.89598° E</div>
 <div class="season-box"><h2 class="subhead">Season</h2><div class="season-scroll"><div id="chips" class="chips" role="group" aria-label="Season"><button class="chip" data-s="spring"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10m0 6c-5 0-6-3-6-5 4 0 6 2 6 5m0-2c4 0 6-2 6-4-3 0-6 1-6 4"/><path d="M12 9c-5 1-7-3-4-4-1-3 3-5 4-2 2-3 5-1 4 2 3 1 1 5-4 4Z" fill="#e8c5b1"/></svg> Spring</button><button class="chip" data-s="summer"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.1" fill="#f3d492"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/></svg> Summer</button><button class="chip" data-s="autumn"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3C9 3 3 7 5 14c2 7 13 4 15-11Z" fill="#eac29b"/><path d="M3 21 15 9m-5 5v-4"/></svg> Autumn</button><button class="chip" data-s="winter"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M3.5 7l17 10m-17 0 17-10M9 4l3 2 3-2M9 20l3-2 3 2M4 10l3-1V6m10 12v-3l3-1M4 14l3 1v3M17 6v3l3 1"/></svg> Winter</button></div><div class="events"><div class="select-wrap"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4c5-4 8 4 14 0v10c-6 4-9-4-14 0"/></svg><select id="event" aria-label="Special scenes"><option value="">Special scenes</option><option value="kings">King’s Day</option><option value="frozen">Frozen canals</option></select><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 9 7 7 7-7"/></svg></div><button class="chip" id="snow" hidden>+ Snow</button></div></div><div class="note" id="note" aria-live="polite"></div></div></section>
@@ -2330,7 +2330,7 @@ const link=(label,url)=>url?'<a href="'+esc(url)+'" target="_blank" rel="noopene
 
 /* ---------- the place ---------- */
 const size=Math.round(META.size),fmt=(v,p,n)=>Math.abs(v).toFixed(5)+'° '+(v>=0?p:n);
-document.title='Toronto Taxi · '+(CITY.title||CITY.name);
+document.title='tandem · '+(CITY.title||CITY.name);
 $('cityName').textContent=CITY.name;$('placeTab').textContent=CITY.name;
 document.querySelector('.stamp-line span').textContent=CITY.region||'';
 const flag=document.querySelector('.flag');
@@ -2562,6 +2562,13 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 .gt-cities b{color:var(--ink)}
 .gt-cities a{color:var(--rust);font-weight:600}
 .gt-link{color:var(--rust);font-weight:600;text-decoration:underline;font-size:inherit}
+/* a cleaner game page: no view bar, no "Simulation live", no view-name label, no season picker (always autumn) */
+.control-area,#status,.map-code,.season-box,.view-select{display:none!important}
+.stage{bottom:12px}
+/* while driving: the map takes the whole window */
+body.gt-driving .top,body.gt-driving .foot,body.gt-driving .rail,body.gt-driving .tools,body.gt-driving .compass,body.gt-driving .stage>.mark{display:none!important}
+body.gt-driving .workspace{height:100%}
+body.gt-driving .stage{left:0;right:0;top:0;bottom:0}
 /* Gion Taxi crew play: the lobby card, the countdown, the navigator's callout and the crew strip.
    Same cards, inks and type as drive.css (Pocket City's :root tokens), nothing new in the palette. */
 .gt-ghost{margin:8px 0 0 8px;background:transparent;color:var(--ink);border:1px solid var(--rust);border-radius:999px;padding:9px 20px;font-weight:600;font-size:15px}
@@ -2713,7 +2720,7 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 .wt-links a{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.wt-card,.wt-card.imp{animation:wt-flip .01s var(--d) both}.wt-head,.wt-subhead,.wt-links,#wt-done{animation:none}}
 </style>
-<script>window.GT_CITY = {"name": "Toronto", "brand": "Toronto Taxi", "bowl": "Square Bowling", "blurb": "Drive a taxi around Nathan Phillips Square and Toronto City Hall.", "drivePaths": false, "open": false, "id": "toronto", "cities": [{"id": "gion", "name": "Gion", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
+<script>window.GT_CITY = {"name": "Toronto", "brand": "tandem", "bowl": "Square Bowling", "blurb": "Drive a taxi around Nathan Phillips Square and Toronto City Hall.", "drivePaths": false, "open": false, "id": "toronto", "cities": [{"id": "gion", "name": "Gion", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
 <script>
 /* Gion Taxi: a small QR code encoder for the crew lobby (byte mode, error correction level M, versions 1–6,
    i.e. up to 106 bytes, which is plenty for a join URL). Follows ISO/IEC 18004; the structure mirrors
@@ -2830,9 +2837,11 @@ else window.GTQR = GTQR;
 (() => {
 const $ = id => document.getElementById(id);
 const SC = new Function($('data').textContent + ';return SCENE;')();
+// always autumn: the season picker is hidden (drive.css); every city has an 'autumn' season
+if (typeof selectSeason === 'function') { try { selectSeason('autumn') } catch (e) { console.error(e) } }
 const HALF = SC.meta.half;
 // the city's settings, written by build.py (window.GT_CITY); Gion's are the defaults
-const CITYCFG = Object.assign({ id: 'gion', name: 'Gion', brand: 'Gion Taxi', bowl: 'Gion Bowling', drivePaths: false, cities: [],
+const CITYCFG = Object.assign({ id: 'gion', name: 'Gion', brand: 'tandem', bowl: 'Gion Bowling', drivePaths: false, cities: [],
   blurb: 'Drive a taxi through the lanes of Gion, Kyoto.' }, window.GT_CITY || {});
 document.title = CITYCFG.brand + ' · ' + document.title.replace(/^[^·]*·\s*/, '');
 
@@ -2964,7 +2973,7 @@ stage.insertAdjacentHTML('beforeend', `
   <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
   <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
-  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥. Change the season on the left, even mid-ride.</p>
+  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥.</p>
   <p id="gt-result"></p>
   <button id="gt-start">Start driving</button>
   <p class="gt-keys gt-bowlnote">Bonus mode: <button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button>: 60 seconds to bowl over as many pedestrians as you can.</p>
@@ -3027,13 +3036,14 @@ function start(m) {
   $('gt-l1').textContent = mode === 'bowling' ? 'Pins' : 'Fares'; $('gt-l2').textContent = mode === 'bowling' ? 'Score' : 'Yen';
   $('gt-arrow').hidden = mode === 'bowling'; $('gt-mt').style.display = mode === 'bowling' ? 'none' : '';
   driving = true; $('gt-menu').hidden = true; $('gt-open').hidden = true; $('gt-hud').hidden = false;
+  document.body.classList.add('gt-driving');   // the map takes the whole window (drive.css)
   if (!playing) setPlay(true);
   stage.querySelector('canvas').focus?.();
   emit('start', mode);
 }
 function stop(result) {
   const was = driving;
-  driving = false; window.PLAYER = null; keys.clear(); clearRemote(); ping = null;
+  driving = false; window.PLAYER = null; document.body.classList.remove('gt-driving'); keys.clear(); clearRemote(); ping = null;
   $('gt-hud').hidden = true; $('gt-menu').hidden = false;
   if (result) {
     if (mode === 'bowling') { saveBest(score); $('gt-result').innerHTML = `<b>Time!</b> ${pins} pin${pins === 1 ? '' : 's'}, ${score.toLocaleString()} points · best ${best().toLocaleString()}` }
@@ -3095,13 +3105,14 @@ for (const b of document.querySelectorAll('#gt-pad button')) {
 /* ---------- physics ---------- */
 // Arcade handling tuned for Gion's narrow lanes: quick reverse, a tight turning circle at walking pace, and walls you
 // slide along instead of bouncing off. A full pedal is 1 (keyboard); phones send anything in between.
-const MAX = 11, REV = 5.5, WHEELBASE = 2.7;
+const MAX = 17, REV = 5.5, WHEELBASE = 2.7;   // ~61 km/h flat out
 // how many of the car's 8 outline points are on the road (8 = it fits)
 const onCount = (x, y, h) => { let n = 0; for (const c of corners(x, y, h)) if (onRoad(c)) n++; return n };
 function step(dt) {
   const { gas, back, brake, stopper, turn } = readInput();
   const coast = -Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
-  if (gas > 0) car.v += gas * (car.v < 0 ? 16 : 6.2 * (1 - car.v / MAX)) * dt + (1 - gas) * coast;
+  // the pull fades only near top speed (not linearly), so holding the gas keeps building speed; a lighter pedal settles lower
+  if (gas > 0) car.v += gas * (car.v < 0 ? 16 : 8 * (1 - Math.pow(Math.max(0, car.v) / MAX, 1.7))) * dt + (1 - gas) * coast * 1.4;
   else if (back > 0) car.v -= back * (car.v > .05 ? 16 : 7 * (1 + car.v / REV)) * dt - (1 - back) * coast;   // gas in R: brake, then reverse
   else if (brake > 0) car.v -= brake * (car.v > .05 ? 16 : 7) * dt - (1 - brake) * coast;   // keyboard ↓: hard brake, then a brisk reverse
   else if (stopper > 0) car.v -= Math.sign(car.v) * Math.min(Math.abs(car.v), (stopper * 16 + (1 - stopper) * 2.2) * dt);   // phone brake: to a stop
@@ -3215,7 +3226,7 @@ function frame(now) {
   const C = CAMS[cam], want = cam === 'top' ? iso.yaw : car.h * 180 / Math.PI + 180;
   let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * C.rate);
   shake = Math.max(0, shake - dt);
-  const zoom = iso.zoom * C.zoom * (1 - Math.abs(car.v) / MAX * .12);
+  const zoom = iso.zoom * C.zoom * (1 - Math.abs(car.v) / MAX * .22);   // pulls back with speed, for a sense of it
   // push the view centre up the road so the taxi sits `low` of the screen height below the middle
   const vbH = stage.clientHeight / (Math.min(stage.clientWidth / 302, stage.clientHeight / 202) * zoom || 1);
   const j = shake > 0 ? (Math.random() - .5) * shake * 2 : 0, ahead = Math.max(0, car.v) * .5 + C.low * vbH / Math.sin(C.pitch * Math.PI / 180);

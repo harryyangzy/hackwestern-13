@@ -1,4 +1,4 @@
-# Gion Taxi (and London, Toronto, Amsterdam)
+# tandem
 
 Four cities, one game: `gion-taxi.html` (Gion Shirakawa, Kyoto), `taxi-london.html` (Western University's main campus
 in London, Ontario, from University College to Middlesex College across UC Hill: the campus paths are drivable), `taxi-toronto.html` (Nathan Phillips

@@ -7,9 +7,11 @@
 (() => {
 const $ = id => document.getElementById(id);
 const SC = new Function($('data').textContent + ';return SCENE;')();
+// always autumn: the season picker is hidden (drive.css); every city has an 'autumn' season
+if (typeof selectSeason === 'function') { try { selectSeason('autumn') } catch (e) { console.error(e) } }
 const HALF = SC.meta.half;
 // the city's settings, written by build.py (window.GT_CITY); Gion's are the defaults
-const CITYCFG = Object.assign({ id: 'gion', name: 'Gion', brand: 'Gion Taxi', bowl: 'Gion Bowling', drivePaths: false, cities: [],
+const CITYCFG = Object.assign({ id: 'gion', name: 'Gion', brand: 'tandem', bowl: 'Gion Bowling', drivePaths: false, cities: [],
   blurb: 'Drive a taxi through the lanes of Gion, Kyoto.' }, window.GT_CITY || {});
 document.title = CITYCFG.brand + ' · ' + document.title.replace(/^[^·]*·\s*/, '');
 
@@ -141,7 +143,7 @@ stage.insertAdjacentHTML('beforeend', `
   <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
   <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
-  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥. Change the season on the left, even mid-ride.</p>
+  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥.</p>
   <p id="gt-result"></p>
   <button id="gt-start">Start driving</button>
   <p class="gt-keys gt-bowlnote">Bonus mode: <button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button>: 60 seconds to bowl over as many pedestrians as you can.</p>
@@ -204,13 +206,14 @@ function start(m) {
   $('gt-l1').textContent = mode === 'bowling' ? 'Pins' : 'Fares'; $('gt-l2').textContent = mode === 'bowling' ? 'Score' : 'Yen';
   $('gt-arrow').hidden = mode === 'bowling'; $('gt-mt').style.display = mode === 'bowling' ? 'none' : '';
   driving = true; $('gt-menu').hidden = true; $('gt-open').hidden = true; $('gt-hud').hidden = false;
+  document.body.classList.add('gt-driving');   // the map takes the whole window (drive.css)
   if (!playing) setPlay(true);
   stage.querySelector('canvas').focus?.();
   emit('start', mode);
 }
 function stop(result) {
   const was = driving;
-  driving = false; window.PLAYER = null; keys.clear(); clearRemote(); ping = null;
+  driving = false; window.PLAYER = null; document.body.classList.remove('gt-driving'); keys.clear(); clearRemote(); ping = null;
   $('gt-hud').hidden = true; $('gt-menu').hidden = false;
   if (result) {
     if (mode === 'bowling') { saveBest(score); $('gt-result').innerHTML = `<b>Time!</b> ${pins} pin${pins === 1 ? '' : 's'}, ${score.toLocaleString()} points · best ${best().toLocaleString()}` }
@@ -272,13 +275,14 @@ for (const b of document.querySelectorAll('#gt-pad button')) {
 /* ---------- physics ---------- */
 // Arcade handling tuned for Gion's narrow lanes: quick reverse, a tight turning circle at walking pace, and walls you
 // slide along instead of bouncing off. A full pedal is 1 (keyboard); phones send anything in between.
-const MAX = 11, REV = 5.5, WHEELBASE = 2.7;
+const MAX = 17, REV = 5.5, WHEELBASE = 2.7;   // ~61 km/h flat out
 // how many of the car's 8 outline points are on the road (8 = it fits)
 const onCount = (x, y, h) => { let n = 0; for (const c of corners(x, y, h)) if (onRoad(c)) n++; return n };
 function step(dt) {
   const { gas, back, brake, stopper, turn } = readInput();
   const coast = -Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
-  if (gas > 0) car.v += gas * (car.v < 0 ? 16 : 6.2 * (1 - car.v / MAX)) * dt + (1 - gas) * coast;
+  // the pull fades only near top speed (not linearly), so holding the gas keeps building speed; a lighter pedal settles lower
+  if (gas > 0) car.v += gas * (car.v < 0 ? 16 : 8 * (1 - Math.pow(Math.max(0, car.v) / MAX, 1.7))) * dt + (1 - gas) * coast * 1.4;
   else if (back > 0) car.v -= back * (car.v > .05 ? 16 : 7 * (1 + car.v / REV)) * dt - (1 - back) * coast;   // gas in R: brake, then reverse
   else if (brake > 0) car.v -= brake * (car.v > .05 ? 16 : 7) * dt - (1 - brake) * coast;   // keyboard ↓: hard brake, then a brisk reverse
   else if (stopper > 0) car.v -= Math.sign(car.v) * Math.min(Math.abs(car.v), (stopper * 16 + (1 - stopper) * 2.2) * dt);   // phone brake: to a stop
@@ -392,7 +396,7 @@ function frame(now) {
   const C = CAMS[cam], want = cam === 'top' ? iso.yaw : car.h * 180 / Math.PI + 180;
   let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * C.rate);
   shake = Math.max(0, shake - dt);
-  const zoom = iso.zoom * C.zoom * (1 - Math.abs(car.v) / MAX * .12);
+  const zoom = iso.zoom * C.zoom * (1 - Math.abs(car.v) / MAX * .22);   // pulls back with speed, for a sense of it
   // push the view centre up the road so the taxi sits `low` of the screen height below the middle
   const vbH = stage.clientHeight / (Math.min(stage.clientWidth / 302, stage.clientHeight / 202) * zoom || 1);
   const j = shake > 0 ? (Math.random() - .5) * shake * 2 : 0, ahead = Math.max(0, car.v) * .5 + C.low * vbH / Math.sin(C.pitch * Math.PI / 180);
