@@ -11,8 +11,9 @@ Two ways to build, same result:
     isn't installed; the base scene stays exactly as it was last built.
 
 Wiring: the page sends window.PLAYER to the render worker with each frame, and the worker sends back the traffic near
-the taxi. The game files (drive.css, mp.css, qr.js, drive.js, mp.js) go in before </body>. pad.html (the phone
-controller) and server.js are served beside the page by `node server.js`; they aren't part of the build.
+the taxi. The game files (drive.css, mp.css, shoot.css, qr.js, drive.js, shoot.js, mp.js) go in before </body>.
+pad.html and pad-shoot.js (the phone controller) and server.js are served beside the page by `node server.js`; they
+aren't part of the build.
 """
 import argparse, os, re, subprocess, sys, tempfile
 
@@ -74,8 +75,9 @@ for old, new in PATCHES:
     html = html.replace(old, new)
 
 script = lambda name: '<script>\n' + src(name).replace('</script', '<\\/script') + '\n</script>\n'
-game = (G_OPEN + '<style>\n' + src('drive.css') + src('mp.css') + '</style>\n'
-        + script('qr.js') + script('drive.js') + script('mp.js') + G_CLOSE)
+# shoot.js goes before mp.js so it hears the 'stop' event first and can add the shooter's stats to the results
+game = (G_OPEN + '<style>\n' + src('drive.css') + src('mp.css') + src('shoot.css') + '</style>\n'
+        + script('qr.js') + script('drive.js') + script('shoot.js') + script('mp.js') + G_CLOSE)
 if html.count('</body></html>') != 1: sys.exit('</body></html> not found exactly once')
 html = html.replace('</body></html>', game + '</body></html>')
 open(a.out, 'w', encoding='utf-8').write(html)

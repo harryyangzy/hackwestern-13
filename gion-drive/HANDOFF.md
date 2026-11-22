@@ -1,6 +1,7 @@
 # Gion Taxi: handoff for the next development session
 
-Last updated 2026-11-21, after adding crew (QR-code multiplayer) play on branch `gion-multiplayer`. Covers only
+Last updated 2026-11-21, after adding the shooter and wipers roles on branch `gion-shooter` (§11); crew play itself
+came in on `gion-multiplayer`. Covers only
 `gion-drive/`. The repo-level [`../HANDOFF.md`](../HANDOFF.md) is the team status doc for every project.
 Player-facing instructions: [`README.md`](README.md).
 
@@ -110,12 +111,12 @@ and best score (`localStorage.gionTaxiBest`).
 - **Lobby:** a QR code of `http://<LAN-IP>:<port>/join?r=ROOM` (never localhost; the address list from `/info`
   refreshes every 5 s), the room code as text, four seats (colour, name, roles, ready or reconnecting), ⇅ to swap
   roles, × to kick, and **Start shift** (enabled only when every phone is connected and ready).
-- **Roles by crew size:** `ROLE_SETS` in `mp.js` (1: steer+pedals+ops, 2: steer+ops / pedals+nav,
-  3: steer / pedals / nav+ops, 4: one each). Roles follow seat order and are recomputed when the crew changes.
+- **Roles by crew size:** `ROLE_SETS` in `mp.js` (1: steer+pedals+ops, 2: steer+ops+wipe / pedals+shoot,
+  3: steer / pedals / shoot+ops+wipe, 4: steer / pedals / shoot / ops+wipe). The shooter replaced the navigator (§11). Roles follow seat order and are recomputed when the crew changes.
 - **Doors:** `GionTaxi.doorNeeded` is true while a connected phone holds `ops`. At a lantern (within 3.2 m and
   below 2.5 m/s) the fare then waits (`fare.atDoor`) until `openDoor()`, which opens a 1.2 s window. With no
   operator connected it's automatic, as in solo.
-- **Navigator:** `route()` runs a BFS over 2 m road cells (each cell checks the car's width at 5 points), then
+- **Navigator (no longer handed out; the code is kept):** `route()` runs a BFS over 2 m road cells (each cell checks the car's width at 5 points), then
   tightens the path with line-of-sight checks. It's sent about every 400 ms with its length. Calls appear on the
   laptop (`#gt-call`) and on the other phones; a map tap → `setPing` → a lantern in the scene (player.js) plus a
   pulse on the minimap.
@@ -148,7 +149,9 @@ and best score (`localStorage.gionTaxiBest`).
   back its room with the key in `sessionStorage` (the server keeps an empty room for 120 s). Silent sockets close
   after 15 s. Messages are capped at 4 KB from phones and 256 KB from the laptop (the map is about 20 KB). A
   socket can't change role, and a phone can't spoof another id.
-- **HTTP only:** the controllers use touch, not motion sensors, so no certificate is needed (unlike Laptop Shooter).
+- **HTTP, plus HTTPS for the shooter:** touch controls need nothing more than HTTP. The shooter's tilt aiming needs a
+  secure page, so the server also listens on `HTTPS_PORT` (8490) with a self-signed certificate (`.cert/`, made with
+  `openssl`, gitignored; `NO_HTTPS=1` turns it off). `/info` reports `httpsPort`. Same handler and WebSocket relay.
 - **Public tunnel:** `node server.js --tunnel` runs `ssh -R 80:localhost:PORT nokey@localhost.run`, reads the
   `https://….lhr.life` address it prints, and reconnects if it drops. `PUBLIC_URL=…` sets the address by hand.
   `/info` and the `room` message carry `publicUrl`; `mp.js` `joinURL()` prefers it over LAN addresses, and the
@@ -191,3 +194,37 @@ and best score (`localStorage.gionTaxiBest`).
 - Player names typed on the phone (seats are "Player 1–4" now).
 - A navigator-only mode that hides the laptop's guide arrow for a harder co-op challenge.
 - A committed test suite: turn the throwaway CDP scripts into `npm test`-free Node scripts under `gion-drive/test/`.
+
+## 11. Shooter and wipers (branch `gion-shooter`)
+
+**Files:** `shoot.js` + `shoot.css` (laptop, built in before `mp.js` so its `stop` handler adds stats to the results
+first) and `pad-shoot.js` (phone, served by `server.js`, loaded at the end of `pad.html`). The edits to `mp.js` and
+`pad.html` are small hooks on purpose, so other modes can merge beside them:
+- `mp.js`: `ROLE_SETS`/`ROLE_NAMES`; a `default:` case in `onPhone` that calls `window.GionCrewExt.onPhone(p, m, roles, phase)`;
+  `GionCrew.toPhones` and `GionCrew.holder`; one line on the results card.
+- `pad.html`: `ROLE_INFO` entries; `#c-aim` and `#c-wipe` in `#parts`; `layout()` places them; a `default:` case in
+  `onMsg` that calls `window.GionPadExt(m)`; `GionPad.send/buzz/toast/room`; a `pid` link parameter so a phone that
+  moves to the https address keeps its seat.
+
+**Messages:** phone → laptop `aim` {x, y} (≤30 Hz, −1…1 from the screen centre), `fire` {x, y}, `wipe` {d: ±1}, each
+checked for role and phase. Laptop → phones `sh` (10 Hz: level, hits, shots, flying `tg` and stuck `st` lists,
+blade progress, screen aspect) and `sx` events (`hit`, `nick`, `miss`, `stick`, `bounce`, `wipe`, `wiped`, `level`).
+
+**Rules:** targets only spawn in a crew shift while a phone holds `shoot`. They grow from a vanishing point above the
+taxi to a spot on the glass chosen outside the taxi/road ellipse and the HUD cards. Five levels (one per fare):
+spawn rate, approach time, how many fly at once, how many may stick (4–6) and the movement patterns (drift, wobble,
+zigzag, orbit, dart) all step up. At the stuck cap new arrivals bounce off, so the road stays drivable. Stuck ones
+can't be shot; one wiper sweep clears what it passes (hearts need two). With nobody on `wipe`, the glass clears itself
+after 10 s. Colours come from the page's `season` id via SEASONS/OCCASIONS (`night` → lantern tones).
+
+**Aiming (pad-shoot.js):** `deviceorientation` → the direction out of the phone's back (rotation matrix, so no gimbal
+issues) → heading/pitch relative to a centre the player sets; ±24° and ±15° span the laptop screen; One Euro filter on
+both axes. iOS asks permission on the button tap. Without a gyro or https, the panel is a trackpad (a short tap
+shoots).
+
+**Verified (headless Chrome, 1 laptop + 4 emulated phones, 34/34):** role sets and layouts; targets reach phones; a
+phone shot pops a target; misses count; only the shooter shoots and only the wiper wipes; targets stick outside the
+taxi zone; a real swipe on the wiper panel clears the glass; pedals still drive; night and autumn palettes; the
+results line; the layer clears after a shift; the https switch keeps the seat; solo has no targets; no page errors.
+The tilt maths was checked on known poses (portrait and landscape). **Not tried on real phones yet**, including the
+certificate prompt and how the gyro aim feels.
