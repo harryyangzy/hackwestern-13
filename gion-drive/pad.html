@@ -135,6 +135,18 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 .seg{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff9;flex:none}
 .seg button{padding:8px 16px;font-size:14px;font-weight:600;color:var(--muted)}
 .seg button.on{background:var(--ink);color:var(--panel)}
+/* shooter + wipers (pad-shoot.js) */
+#c-aim{flex:1.6;border-radius:12px;border:1px solid var(--line);background:#fff9;overflow:hidden;justify-content:flex-end;box-shadow:inset 0 2px 8px #263c3514}
+#c-wipe{flex:1;border-radius:12px;border:1px solid var(--line);background:linear-gradient(170deg,#f4f7f4,#e3ebe8);overflow:hidden;justify-content:flex-end;box-shadow:inset 0 2px 8px #263c3514}
+#aimView,#wipeView{position:absolute;inset:0;width:100%;height:100%}
+.aimbar{position:absolute;top:6px;right:6px;display:flex;gap:6px}
+.aimbar button{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;box-shadow:0 3px 8px #263c3518}
+.aimbar button.go{background:var(--rust);border-color:var(--rust);color:#fff}
+#c-aim .hint,#c-wipe .hint{position:relative;margin-bottom:6px;text-shadow:0 0 4px #fffcf3}
+#c-aim.shot,#c-wipe.shot{animation:shot .18s ease-out}
+@keyframes shot{from{box-shadow:inset 0 0 0 3px var(--me)}to{box-shadow:inset 0 2px 8px #263c3514}}
+#wipeCount{position:absolute;top:6px;right:10px;font:600 15px var(--serif)}
+#wipeCount.full{color:var(--rust)}
 /* countdown + banner */
 #count{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:600 34vh var(--serif);color:var(--ink);text-shadow:0 0 30px #fffcf3;z-index:40;pointer-events:none}
 #count.pop{animation:pop .9s ease-out}
@@ -229,6 +241,15 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
     <div class="seg" id="cam"><button data-chase="1" class="on">Chase</button><button data-chase="0">Overhead</button></div>
     <p class="hint" id="opsHint">Open the door when the taxi stops at a lantern</p>
   </div>
+  <div class="comp" id="c-aim"><span class="cap">Shooter</span>
+    <canvas id="aimView"></canvas>
+    <div class="aimbar"><button id="aimTilt" class="go">Tilt to aim</button><button id="aimCentre">◎ Centre</button></div>
+    <p class="hint" id="aimHint">Tap anywhere here to shoot</p>
+  </div>
+  <div class="comp" id="c-wipe"><span class="cap">Wipers</span><b id="wipeCount">Glass clear</b>
+    <canvas id="wipeView"></canvas>
+    <p class="hint" id="wipeHint">Swipe across the glass to wipe</p>
+  </div>
 </div>
 <div id="count" hidden></div>
 <div id="banner" class="card" hidden></div>
@@ -241,12 +262,14 @@ const ROLE_INFO = {
   steer: ['Wheel', 'Steer the taxi through the lanes. Drag the wheel round; let go and it straightens.', '<circle cx="15" cy="15" r="11" stroke-width="3"/><path d="M4 16h7m8 0h7M15 19v7" stroke-width="3"/><circle cx="15" cy="15" r="3.5"/>'],
   pedals: ['Pedals', 'Gas and brake. Keep holding brake to reverse. Stop gently at the lanterns.', '<rect x="4" y="6" width="9" height="19" rx="2.5"/><rect x="17" y="10" width="9" height="15" rx="2.5"/><path d="M6 11h5M6 15h5M6 19h5M19 15h5M19 19h5"/>'],
   nav: ['Navigator', 'Read the map, call the turns, tap the map to mark a spot on the laptop.', '<path d="m3 8 8-3 8 3 8-3v17l-8 3-8-3-8 3Z"/><path d="M11 5v17M19 8v17"/><circle cx="15" cy="13" r="2.4" fill="#ac4931" stroke="none"/>'],
+  shoot: ['Shooter', 'Tilt the phone to move the crosshair on the laptop, tap to pop whatever flies at the taxi before it sticks to the glass.', '<circle cx="15" cy="15" r="9"/><path d="M15 2v7M15 21v7M2 15h7M21 15h7"/><circle cx="15" cy="15" r="1.6" fill="#ac4931" stroke="none"/>'],
+  wipe: ['Wipers', 'Whatever gets past the shooter sticks to the windshield. Swipe across the glass to clear the driver’s view.', '<path d="M4 25h22"/><path d="M15 25 6 9" stroke-width="3"/><path d="M8 7c4-3 10-3 14 0"/>'],
   ops: ['Doors & camera', 'Open the door when the taxi stops at a lantern, so passengers can get in and out. Switch the laptop’s camera.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
 };
 const CALL_TEXT = { left: 'Turn left', right: 'Turn right', straight: 'Straight on', uturn: 'Turn around', stop: 'Stop here' };
 const params = new URLSearchParams(location.search);
 let room = (params.get('r') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
-let pid; try { pid = localStorage.getItem('gtPid') } catch {}
+let pid = params.get('pid'); if (pid && /^[a-z0-9]{8,32}$/.test(pid)) { try { localStorage.setItem('gtPid', pid) } catch {} history.replaceState(null, '', '?r=' + room) } else { pid = null; try { pid = localStorage.getItem('gtPid') } catch {} }
 if (!pid || !/^[a-z0-9]{8,32}$/.test(pid)) { pid = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join(''); try { localStorage.setItem('gtPid', pid) } catch {} }
 
 /* ---------- screens ---------- */
@@ -308,6 +331,7 @@ function onMsg(m) {
     case 'route': route = m; drawRoute(); break;
     case 'count': countdown(m.n); break;
     case 'ev': onEvent(m); break;
+    default: if (window.GionPadExt) window.GionPadExt(m);
   }
 }
 
@@ -358,6 +382,8 @@ function layout() {
   if (has('pedals') && has('steer')) order.push('wheel', ...(has('ops') ? ['ops'] : []), 'brake', 'gas');   // one phone does it all
   else if (has('pedals')) { order.push('brake'); if (has('nav')) order.push('map'); if (has('ops')) order.push('ops'); if (!has('nav') && !has('ops')) order.push('speedo'); order.push('gas') }
   else { if (has('steer')) order.push('wheel'); if (has('nav')) order.push('map'); if (has('ops')) order.push('ops') }
+  if (has('shoot')) { const i = order.indexOf('gas'); i >= 0 ? order.splice(i, 0, 'aim') : order.splice(has('steer') ? 1 : 0, 0, 'aim'); const sp = order.indexOf('speedo'); if (sp >= 0) order.splice(sp, 1) }
+  if (has('wipe')) { const i = order.indexOf('ops'); i >= 0 ? order.splice(i + 1, 0, 'wipe') : order.push('wipe') }
   const P = $('panels'), parts = $('parts');
   for (const c of [...P.children]) parts.appendChild(c);
   for (const id of order) P.appendChild(comp(id));
@@ -525,7 +551,8 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 show('wait'); connect();
-window.GionPad = { get ctl() { return ctl }, get roles() { return myRoles }, get phase() { return phase }, get screen() { return screen }, pid };
+window.GionPad = { send, buzz, toast, get room() { return room }, get ctl() { return ctl }, get roles() { return myRoles }, get phase() { return phase }, get screen() { return screen }, pid };
 })();
 </script>
+<script src="pad-shoot.js"></script>
 </body></html>

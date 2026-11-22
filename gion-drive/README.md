@@ -24,13 +24,17 @@ Node 18 or newer, no `npm install`. Then:
 | Phones | Roles |
 |---|---|
 | 1 | wheel + pedals + doors |
-| 2 | wheel + doors · pedals + navigator |
-| 3 | wheel · pedals · navigator + doors |
-| 4 | wheel · pedals · navigator · doors & camera |
+| 2 | wheel + doors + wipers · pedals + shooter |
+| 3 | wheel · pedals · shooter + doors + wipers |
+| 4 | wheel · pedals · shooter · doors & camera + wipers |
 
 - **Wheel:** drag the rim round to steer. Let go and it straightens.
 - **Pedals:** hold gas or brake; slide your thumb down to press harder. Keep holding brake to reverse.
-- **Navigator:** a heading-up map with the route to the lantern. Call turns, or tap the map to drop a marker in the laptop's scene.
+- **Shooter:** little ASCII cats, butterflies, daisies, stars, hearts and shapes fly at the taxi. Tilt the phone to move the
+  crosshair on the laptop (tap **Tilt to aim**, point at the middle of the screen, tap **Centre**), tap to shoot. Without
+  tilt, drag on the panel to aim. More arrive, and they move more, with every fare delivered (5 levels).
+- **Wipers:** whatever the shooter misses sticks to the windshield. Swipe across the glass on your phone to sweep it off
+  (hearts take two passes). The taxi and the road ahead are always left clear.
 - **Doors & camera:** when the taxi stops at a lantern, the passenger waits until you open the door. You also switch the laptop's camera.
 
 The host can swap roles (⇅) or remove a phone (×) in the lobby. After a shift, **Start next shift** keeps the same room and crew.
@@ -54,7 +58,10 @@ Without a tunnel:
   other (client isolation). Fix: turn on one phone's **Personal Hotspot**, then join it with the laptop and the other phones.
   The QR code follows the laptop's current network, so it updates by itself. If the laptop has several networks, use **Other network ›** under the code.
 - To force the address in the QR code: `HOST_IP=192.168.1.20 node gion-drive/server.js`. Use another port with `PORT=8091`.
-- Plain `http` is enough, so there's no certificate warning. The controllers use touch only, not motion sensors.
+- Plain `http` is enough for every role except the shooter's tilt aiming: browsers only give motion sensors to https
+  pages. The server also listens on https port 8490 with a self-signed certificate (made with `openssl` on first run,
+  kept in `gion-drive/.cert`). **Tilt to aim** moves the shooter's phone there and keeps its seat; accept the certificate
+  warning once. With `--tunnel` the address is already https. Drag-to-aim works everywhere.
 
 ## Building
 
