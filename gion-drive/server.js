@@ -69,7 +69,7 @@ process.on('exit', () => { if (tunnelProc) tunnelProc.kill() });
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(0));
 
 // ---------- static files ----------
-const FILES = { '/': 'index.html', '/index.html': 'index.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/cuties.js': 'cuties.js', '/wt-pad.js': 'wt-pad.js', '/theme.css': 'theme.css', '/InterVariable.woff2': 'InterVariable.woff2' };
+const FILES = { '/': 'index.html', '/index.html': 'index.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/cuties.js': 'cuties.js', '/wt-pad.js': 'wt-pad.js', '/theme.css': 'theme.css', '/InterVariable.woff2': 'InterVariable.woff2', '/SuisseIntl-Regular.woff2': 'SuisseIntl-Regular.woff2', '/ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf': 'ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf' };
 function handler(req, res) {
   const url = req.url.split('?')[0];
   if (url === '/info') {
@@ -79,8 +79,8 @@ function handler(req, res) {
   const file = FILES[url] || (/^\/(gion-taxi|taxi-[a-z]+)\.html$/.test(url) ? url.slice(1) : /^\/(london|toronto|amsterdam|gion)$/.test(url) ? (url === '/gion' ? 'gion-taxi.html' : 'taxi' + url.replace('/', '-') + '.html') : null);
   if (!file) { res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('Not found. The game is at / and phones join at /join'); }
   fs.readFile(path.join(__dirname, file), (err, data) => {
-    if (err) { res.writeHead(500); return res.end('Could not read ' + file); }
-    const mime = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : 'text/html';
+    if (err) { res.writeHead(err.code === 'ENOENT' && file.endsWith('.otf') ? 404 : 500); return res.end('Could not read ' + file); }
+    const mime = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : file.endsWith('.otf') ? 'font/otf' : 'text/html';
     res.writeHead(200, { 'Content-Type': mime.startsWith('text/') ? mime + '; charset=utf-8' : mime, 'Cache-Control': 'no-store' });
     res.end(data);
   });

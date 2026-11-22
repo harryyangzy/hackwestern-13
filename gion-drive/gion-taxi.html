@@ -2847,6 +2847,21 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Suisse Intl";
+  src: url("SuisseIntl-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Zimula InkSpot Display";
+  src: local("Zimula InkSpot Medium InkSpot"), local("Zimula InkSpot Medium"),
+       local("ZimulaInkSpot-Medium"), url("ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf") format("opentype");
+  font-weight: 500;
+  font-display: swap;
+}
+
 :root {
   /* BoardUI semantic tokens and button recipes, with a warm linen neutrals and terracotta accents. */
   --color-background-full: #f6f3e9;
@@ -2874,10 +2889,11 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
   --gradient-button-primary-hover: linear-gradient(180deg, var(--color-accent-400), var(--color-accent-500));
   --gradient-button-primary-active: linear-gradient(180deg, var(--color-accent-600), var(--color-accent-700));
 
-  --sans: Inter, "Helvetica Neue", Arial, sans-serif;
+  --sans: "Suisse Intl", "Suisse Int’l", "Suisse International", Inter, "Helvetica Neue", Arial, sans-serif;
+  --display: "Zimula InkSpot Display", "Zimula InkSpot", var(--sans);
   --serif: var(--sans);
   --mono: var(--sans);
-  --font-title-1-semibold: 600 1.5rem/2.125rem var(--sans);
+  --font-title-1: 500 1.5rem/2.125rem var(--display);
   --font-body-medium: 500 .875rem/1.25rem var(--sans);
   --font-caption-1-semibold: 600 .75rem/1rem var(--sans);
   --paper: var(--color-background-full);
@@ -2902,9 +2918,9 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 
 body { background: var(--paper); }
 .top { background: #fffcf3; border-color: var(--rule); }
-.wordmark { font: 650 25px/1 var(--sans); letter-spacing: -.045em; }
+.wordmark { font: 500 25px/1 var(--display); }
 .workspace { background-image: radial-gradient(var(--color-accent-200) .72px, transparent 1px); }
-.info h1 { font: 580 39px/1.03 var(--sans); letter-spacing: -.055em; }
+.info h1 { font: 500 39px/1.03 var(--display); }
 .info .location { font: 500 13px/1.4 var(--sans); color: var(--muted); }
 .info .note, .key-help, .gesture { font-style: normal; }
 .stamp-line, .status, .subhead, .key-toggle { letter-spacing: .07em; }
@@ -2972,9 +2988,9 @@ body { background: var(--paper); }
   overflow: auto;
   text-align: left;
 }
-#gt-menu h2, #gt-lobby h2, #wt-panel h2, #wt-vote h2 {
-  font: 650 clamp(24px, 4vw, 33px)/1.1 var(--sans);
-  letter-spacing: -.045em;
+#gt-menu h2, #gt-lobby h2, #wt-panel h2, #wt-vote h2, #gt-brief h2 {
+  font: 500 clamp(24px, 4vw, 33px)/1.1 var(--display);
+  letter-spacing: normal;
   margin-bottom: 9px;
 }
 #gt-lobby h2 span { font: 500 14px var(--sans); letter-spacing: 0; }
@@ -3050,7 +3066,7 @@ body { background: var(--paper); }
 .wt-card.imp .wt-back :is(.wt-role, small, em, .wt-votes) { color: var(--ink); }
 
 .pad-ui { background: radial-gradient(ellipse at 35% 0%, #fff, #edf3f6); }
-.pad-ui .joincard h1 { font: 650 27px/1.15 var(--sans); letter-spacing: -.035em; }
+.dialog-head h2, .pad-ui h1, .pad-ui h2 { font-family: var(--display); font-weight: 500; }
 .pad-ui #code { border-color: var(--rule); color: var(--color-button-ghost-foreground); }
 .pad-ui #ready {
   background: var(--ice);
@@ -3123,8 +3139,7 @@ body { background: var(--paper); }
 }
 #gt-menu .gt-ticket h2 {
   margin: 2px 0 0;
-  font: 740 clamp(34px, 5vw, 52px)/1 var(--sans);
-  letter-spacing: -.075em;
+  font: 500 clamp(34px, 5vw, 52px)/1 var(--display);
 }
 .gt-ticket-sticker {
   display: grid;
@@ -3208,7 +3223,7 @@ body { background: var(--paper); }
 .foot, dialog { background: var(--panel); color: var(--muted); border-color: var(--rule); }
 dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
 .pad-ui { background: radial-gradient(ellipse at 35% 0%, var(--panel), var(--well)); }
-.pad-ui .joincard h1 { font: var(--font-title-1-semibold); }
+.pad-ui .joincard h1 { font: var(--font-title-1); }
 :where(.workspace, .pad-ui) summary:focus-visible {
   outline: 2px solid var(--color-border-focus-ring);
   outline-offset: 2px;
