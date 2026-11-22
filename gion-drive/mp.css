@@ -37,7 +37,8 @@
 #gt-seats li button{width:28px;height:28px;border-radius:50%;color:var(--muted);font-size:16px;flex:none}
 #gt-seats li button:hover{background:#263c350d;color:var(--ink)}
 .gt-lnote{margin:10px 0 0;font:italic 14px var(--serif);color:var(--muted)}
-#gt-lstart{display:block;margin:14px auto 0;background:var(--rust);color:#fff;border-radius:999px;padding:10px 30px;font-weight:600;font-size:15px}
+/* the lobby scrolls on short screens (results + Wrong Turn make it tall): Start stays pinned at the bottom */
+#gt-lstart{position:sticky;bottom:6px;z-index:3;box-shadow:0 6px 18px #263c3533;display:block;margin:14px auto 0;background:var(--rust);color:#fff;border-radius:999px;padding:10px 30px;font-weight:600;font-size:15px}
 #gt-lstart:disabled{background:#cfcfc0;color:#fffcf3;cursor:default}
 #gt-lstart:not(:disabled):hover{filter:brightness(1.08)}
 #gt-lobby .gt-lhelp{margin:10px 0 0;font-size:12px;color:var(--muted);text-align:center}

@@ -19,8 +19,14 @@ function inside(p, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.l
 const inRings = (p, groups) => groups.some(rs => { let c = false; for (const r of rs) if (inside(p, r)) c = !c; return c });
 // where the taxi may drive: the roads, plus the footpaths in a city that allows them (Western's campus)
 const DRIVE = SC.roads.concat(CITYCFG.drivePaths ? (SC.paths || []) : []);
-const onRoad = p => inRings(p, DRIVE);
-const CAR = { L: 4.5, W: 1.75 };
+// an open city (London): anywhere on the plot that isn't inside a building (each building's box is checked first)
+const BLDG = SC.buildings.map(b => { const xs = b.ring.map(p => p[0]), ys = b.ring.map(p => p[1]);
+  return { ring: b.ring, x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) } });
+const inBuilding = p => BLDG.some(b => p[0] >= b.x0 && p[0] <= b.x1 && p[1] >= b.y0 && p[1] <= b.y1 && inside(p, b.ring));
+const onRoad = CITYCFG.open ? p => Math.abs(p[0]) < HALF - .8 && Math.abs(p[1]) < HALF - .8 && !inBuilding(p) : p => inRings(p, DRIVE);
+// the collision box is a little smaller than the drawn taxi (4.5 × 1.75 m), so it doesn't snag on kerb corners it
+// visibly clears: on Amsterdam's narrow quays the full box failed at 18% of the points traffic drives through, this 2%
+const CAR = { L: 3.8, W: 1.4 };
 function corners(x, y, h, grow = 0) {
   const d = [Math.cos(h), Math.sin(h)], n = [-d[1], d[0]], hl = CAR.L / 2 + grow, hw = CAR.W / 2 + grow;
   return [[1, 1], [1, -1], [-1, -1], [-1, 1], [1, 0], [-1, 0], [0, 1], [0, -1]]
@@ -42,7 +48,7 @@ const START = SPOTS.find(s => fits(s.x, s.y, s.h)) || { x: 0, y: 0, h: 0 };
 /* ---------- the road grid: which spots connect, and the navigator's route (a breadth-first distance field over road
    cells, rebuilt per fare stage, the path pulled tight with line-of-sight checks) ---------- */
 // 2 m cells; 1 m where footpaths are drivable (Western's paths are 2-3 m wide)
-const CELL = CITYCFG.drivePaths ? 1 : 2, N = Math.ceil(2 * HALF / CELL), CLEAR = CITYCFG.drivePaths ? .6 : .8;
+const CELL = CITYCFG.drivePaths && !CITYCFG.open ? 1 : 2, N = Math.ceil(2 * HALF / CELL), CLEAR = CITYCFG.drivePaths ? .6 : .8;
 let walk = null;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const cx = i => -HALF + (i + .5) * CELL;
@@ -135,7 +141,7 @@ stage.insertAdjacentHTML('beforeend', `
   <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
   <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
-  <p class="gt-keys">Mind the people, bikes and cars: a bump costs ¥ and time. Change the season on the left, even mid-ride.</p>
+  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥. Change the season on the left, even mid-ride.</p>
   <p id="gt-result"></p>
   <button id="gt-start">Start driving</button>
   <p class="gt-keys gt-bowlnote">Bonus mode: <button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button>: 60 seconds to bowl over as many pedestrians as you can.</p>
@@ -191,7 +197,7 @@ function newFare() {
 function start(m) {
   mode = m === 'bowling' ? 'bowling' : 'taxi';
   car = { x: START.x, y: START.y, h: START.h, v: 0, steer: 0 };
-  yen = 0; fares = 0; clock = mode === 'bowling' ? 60 : 90; finished = false; camYaw = car.h * 180 / Math.PI + 180;
+  yen = 0; fares = 0; clock = mode === 'bowling' ? 60 : 120; finished = false; camYaw = car.h * 180 / Math.PI + 180;
   pins = 0; score = 0; combo = 0; comboT = 0; hit = new Set(); pops = [];
   bumpCount = 0; penaltyYen = 0; penaltyTime = 0; fareTimes = []; doorOpen = 0; bumpCool = 0; ping = null; keys.clear(); clearRemote();
   if (mode === 'taxi') newFare(); else { fare = null; $('gt-task').textContent = CITYCFG.bowl + ': knock over as many pedestrians as you can' }
@@ -306,6 +312,14 @@ function move(dt) {
   // the steering, so it can turn away from a wall without backing up first.
   if (Math.abs(car.v) > 4) { toast('Scrape!'); shake = .25; emit('scrape') }
   if (Math.abs(car.steer) > .05) { const ph = car.h + Math.sign(car.steer) * Math.sign(car.v) * 1.1 * dt; if (ok(car.x, car.y, ph)) car.h = ph }
+  else {
+    // no steering: turn toward whichever side opens up first, so a nose-on wall becomes a turn instead of a dead stop
+    const step = 1.6 * dt;
+    for (let k = 1; k <= 12; k++) for (const sg of [1, -1]) {
+      const th = car.h + sg * k * .12, q = at(th, Math.sign(car.v) * .6);
+      if (ok(q[0], q[1], th)) { const ph = car.h + sg * step; if (ok(car.x, car.y, ph)) car.h = ph; k = 99; break }
+    }
+  }
   car.v = 0;
 }
 function bumps(dt) {
@@ -314,9 +328,13 @@ function bumps(dt) {
   if (!near) return;
   const d = [Math.cos(car.h), Math.sin(car.h)], n = [-d[1], d[0]];
   for (const a of near) {
+    // An easy, flowing drive: in a taxi shift people and cyclists step aside (the worker fades them as the taxi comes
+    // near, see player.js), so only cars can be bumped, with a forgiving box and only above walking pace.
+    if (mode === 'taxi' && (a.k !== 'car' || Math.abs(car.v) < 3)) continue;
     const rx = a.x - car.x, ry = a.y - car.y, along = rx * d[0] + ry * d[1], side = rx * n[0] + ry * n[1];
-    const reach = a.k === 'car' ? Math.max(a.L, a.W) * .8 : a.k === 'bike' ? .8 : .35;
-    if (Math.abs(along) < CAR.L / 2 + reach && Math.abs(side) < CAR.W / 2 + reach * .6) {
+    const reach = a.k === 'car' ? Math.max(a.L, a.W) * (mode === 'taxi' ? .5 : .8) : a.k === 'bike' ? .8 : .35;
+    const shrink = mode === 'taxi' ? .8 : 1;
+    if (Math.abs(along) < CAR.L / 2 * shrink + reach && Math.abs(side) < CAR.W / 2 * shrink + reach * .6) {
       if (mode === 'bowling' && a.k !== 'car') {   // a pin! each person or cyclist counts once a round
         if (hit.has(a.k + a.id)) continue;
         hit.add(a.k + a.id); pins++; combo++; comboT = 2.2;
@@ -327,9 +345,10 @@ function bumps(dt) {
         continue;
       }
       if (bumpCool > 0) return;
-      const cost = a.k === 'ped' ? 600 : a.k === 'bike' ? 400 : 300;
-      penaltyYen += Math.min(yen, cost); penaltyTime += Math.min(clock, 3); bumpCount++;
-      yen = Math.max(0, yen - cost); clock = Math.max(0, clock - 3); car.v *= .3; bumpCool = 1.2; shake = .3;
+      // a car bump: a small fee and a nudge, no time lost (bowling keeps its 3 s)
+      const cost = mode === 'taxi' ? 200 : a.k === 'ped' ? 600 : a.k === 'bike' ? 400 : 300, lost = mode === 'taxi' ? 0 : 3;
+      penaltyYen += Math.min(yen, cost); penaltyTime += Math.min(clock, lost); bumpCount++;
+      yen = Math.max(0, yen - cost); clock = Math.max(0, clock - lost); car.v *= mode === 'taxi' ? .75 : .3; bumpCool = mode === 'taxi' ? 2 : 1.2; shake = .2;
       emit('bump', { kind: a.k, cost });
       toast(a.k === 'ped' ? 'Watch the pedestrians! −¥' + cost : a.k === 'bike' ? 'You clipped a bike! −¥' + cost : 'Fender bender! −¥' + cost);
       return;
@@ -339,7 +358,7 @@ function bumps(dt) {
 function fareLogic() {
   if (!fare) return null;
   const target = fare.mode === 'pickup' ? fare.p : fare.d, dist = Math.hypot(target.x - car.x, target.y - car.y);
-  if (dist < 3.2 && Math.abs(car.v) < 2.5) {
+  if (dist < 4.5 && Math.abs(car.v) < 4) {   // a generous stop: near the lantern and slowing down
     if (doorNeeded && doorOpen <= 0) {   // crew play: wait at the lantern until the operator opens the door
       if (!fare.atDoor) { fare.atDoor = true; setTask(); emit('atdoor', fare.mode) }
       return target;
@@ -367,7 +386,7 @@ function frame(now) {
   if (clock <= 0) { clock = 0; stop(true); return }
   if (ping && now > ping.until) ping = null;
   pops = pops.filter(p => now - p.t < 900);
-  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, cut: true, cy: camYaw, cp: CAMS[cam].pitch, ...(target ? { tx: target.x, ty: target.y, mode: fare.mode } : {}),
+  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, cut: true, ghost: mode === 'taxi', cy: camYaw, cp: CAMS[cam].pitch, ...(target ? { tx: target.x, ty: target.y, mode: fare.mode } : {}),
     ...(ping ? { px: ping.x, py: ping.y, pc: ping.color } : {}), ...(mode === 'bowling' ? { hit: [...hit], pops: pops.map(p => [p.x, p.y, (now - p.t) / 900]) } : {}) };
   // camera: kart (low, close, taxi in the lower third), chase (the original), or overhead at the plot's iso angle
   const C = CAMS[cam], want = cam === 'top' ? iso.yaw : car.h * 180 / Math.PI + 180;

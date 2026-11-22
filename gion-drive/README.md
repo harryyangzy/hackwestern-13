@@ -7,7 +7,7 @@ from the menu; with the server running they're also at `/gion`, `/london`, `/tor
 its room when the host switches city.
 
 Drive a taxi through the lanes of Gion Shirakawa, Kyoto. Pick up at the orange lantern, drop off at the gold one,
-and do as many fares as you can before the 90-second shift ends. Play solo on the keyboard, or as a crew of 2–4
+and do as many fares as you can before the 120-second shift ends. Play solo on the keyboard, or as a crew of 2–4
 phones sharing one taxi.
 
 ## Solo
@@ -46,7 +46,7 @@ Node 18 or newer, no `npm install`. Then:
   tilt, drag on the panel to aim. More arrive, and they move more, with every fare delivered (5 levels).
 - **Wipers:** whatever the shooter misses sticks to the windshield. Swipe across the glass on your phone to sweep it off
   (hearts take two passes). The taxi and the road ahead are always left clear.
-- **Doors & camera:** when the taxi stops at a lantern, the passenger waits until you open the door. You also switch the laptop's camera (kart, chase, overhead).
+- **Doors:** when the taxi stops at a lantern, the passenger waits until you open the door. (The laptop's `C` key switches the camera.)
 
 **Full screen on phones:** Android goes full screen on the first tap. iPhone Safari can't go full screen from a web page,
 so the controller asks for one swipe up, which makes Safari hide its bars in landscape.
