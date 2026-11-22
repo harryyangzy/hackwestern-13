@@ -29,3 +29,10 @@
 .gt-cities b{color:var(--ink)}
 .gt-cities a{color:var(--rust);font-weight:600}
 .gt-link{color:var(--rust);font-weight:600;text-decoration:underline;font-size:inherit}
+/* a cleaner game page: no view bar, no "Simulation live", no view-name label, no season picker (always autumn) */
+.control-area,#status,.map-code,.season-box,.view-select{display:none!important}
+.stage{bottom:12px}
+/* while driving: the map takes the whole window */
+body.gt-driving .top,body.gt-driving .foot,body.gt-driving .rail,body.gt-driving .tools,body.gt-driving .compass,body.gt-driving .stage>.mark{display:none!important}
+body.gt-driving .workspace{height:100%}
+body.gt-driving .stage{left:0;right:0;top:0;bottom:0}

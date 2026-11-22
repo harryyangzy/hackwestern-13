@@ -43,6 +43,15 @@ chip (seat colour, name, connection light), the Ready button with one line per r
 (reconnecting, rotate, swipe-up full screen, tilt-aim errors). Most of it is one CSS block in pad.html
 ("simplified controller"); the hidden elements are still updated, so it's easy to bring one back.
 
+**Cleaner page and more speed (2026-11-22):**
+- Always autumn: `drive.js` calls the page's `selectSeason('autumn')`; the season picker, the bottom view bar, "Simulation
+  live" and the view-name label are hidden in `drive.css`.
+- While driving, `body.gt-driving` hides the header, sidebar, footer, zoom tools and compass, and the map fills the window;
+  they return at the end of the shift.
+- Top speed 17 m/s (~61 km/h, was 40); the throttle's pull fades as `1 − (v/MAX)^1.7`, so holding the gas keeps building
+  speed (about 26, 38, 50 km/h after 1, 2, 3 s); a lighter pedal settles at a lower cruise; the camera pulls back up to
+  22% with speed.
+
 **Easier driving (2026-11-22, after playtesting):**
 - A taxi shift lasts 120 s. People and cyclists step aside: they can't be bumped, and the worker fades them to
   see-through near the taxi (`hideHit` in player.js sets their alpha). Only cars bump, and only above walking pace:

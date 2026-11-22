@@ -30,17 +30,17 @@ a = ap.parse_args()
 read = lambda p: open(p, encoding='utf-8').read()
 src = lambda name: read(os.path.join(HERE, name))
 
-# brand: the game's name in that city; bowl: the bonus mode's name; drivePaths: the taxi may also use footpaths
+# brand: the game's name (tandem, in every city); bowl: the bonus mode's name; drivePaths: the taxi may also use footpaths
 # (Western's main campus is almost all paths); open: drive anywhere on the plot except through buildings (London: the
 # paths are only ~2.6 m wide, too skinny to be fun); blurb: the menu's first line.
 CITIES = {
-    'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Gion', brand='Gion Taxi',
+    'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Gion', brand='tandem',
                  bowl='Gion Bowling', blurb='Drive a taxi through the lanes of Gion, Kyoto.', drivePaths=False),
-    'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', brand='London Taxi',
+    'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', brand='tandem',
                    bowl='Campus Bowling', blurb='Drive a taxi across Western University’s main campus in London, Ontario: the whole campus is open, just not through the buildings.', drivePaths=True, open=True),
-    'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', brand='Toronto Taxi',
+    'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', brand='tandem',
                     bowl='Square Bowling', blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False),
-    'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', brand='Amsterdam Taxi',
+    'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', brand='tandem',
                       bowl='Canal Bowling', blurb='Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.', drivePaths=False),
 }
 P_OPEN, P_CLOSE = '/* <gion-taxi player.js> */\n', '\n/* </gion-taxi player.js> */'
