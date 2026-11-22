@@ -15,6 +15,10 @@
 #wt-panel,#wt-vote{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 28px));padding:20px 26px 18px;z-index:7;text-align:center}
 #wt-panel[hidden],#wt-vote[hidden],#wt-reveal[hidden],#wt-goal[hidden]{display:none}
 #wt-panel h2,#wt-vote h2{font:600 26px var(--serif);margin:4px 0 8px}
+#wt-panel{padding-top:16px}
+.wt-art{display:block;width:200px;height:auto;margin:0 auto 6px}
+#wt-panel h2{font:500 28px/1.1 var(--display);margin:2px 0 4px}
+#wt-panel .wt-sub{font:13px var(--sans);color:var(--muted);margin-bottom:12px}
 #wt-panel p,#wt-vote p{margin:0 0 10px;color:var(--muted)}
 .wt-dots{display:flex;justify-content:center;gap:10px;margin:14px 0 8px}
 .wt-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--rule);transition:background .3s,border-color .3s}

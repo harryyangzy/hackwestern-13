@@ -2777,6 +2777,10 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 #wt-panel,#wt-vote{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100% - 28px));padding:20px 26px 18px;z-index:7;text-align:center}
 #wt-panel[hidden],#wt-vote[hidden],#wt-reveal[hidden],#wt-goal[hidden]{display:none}
 #wt-panel h2,#wt-vote h2{font:600 26px var(--serif);margin:4px 0 8px}
+#wt-panel{padding-top:16px}
+.wt-art{display:block;width:200px;height:auto;margin:0 auto 6px}
+#wt-panel h2{font:500 28px/1.1 var(--display);margin:2px 0 4px}
+#wt-panel .wt-sub{font:13px var(--sans);color:var(--muted);margin-bottom:12px}
 #wt-panel p,#wt-vote p{margin:0 0 10px;color:var(--muted)}
 .wt-dots{display:flex;justify-content:center;gap:10px;margin:14px 0 8px}
 .wt-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--rule);transition:background .3s,border-color .3s}
@@ -5029,15 +5033,32 @@ C.beforeStart = () => {
   renderPanel({ phase: 'setup', msg: 'Opening the escrow on Solana devnet…', n: C.crew.length, committed: 0 });
   return true;
 };
+// the wager panel's picture: a corner of the city map (same paper, roads, canal and buildings as the map) with a phone
+// showing a sealed role card and a stack of coins for the wager
+const WT_ART = `<svg class="wt-art" viewBox="0 0 240 150" aria-hidden="true">
+  <ellipse cx="120" cy="140" rx="98" ry="6" fill="#4a4f8a" opacity=".16"/>
+  <rect x="18" y="22" width="204" height="112" rx="10" fill="#efe7d4"/>
+  <path d="M18 92H222V104H18Z" fill="#9cc3c4"/><path d="M86 22H100V134H86ZM18 56H222V66H18Z" fill="#cbbab3"/>
+  <g fill="#d9c7a8" stroke="#a89a85"><rect x="28" y="30" width="22" height="18" rx="1.5"/><rect x="56" y="30" width="22" height="18" rx="1.5"/>
+    <rect x="28" y="72" width="50" height="14" rx="1.5"/><rect x="180" y="30" width="32" height="18" rx="1.5"/><rect x="186" y="72" width="26" height="14" rx="1.5"/>
+    <rect x="28" y="110" width="22" height="16" rx="1.5"/><rect x="180" y="110" width="32" height="16" rx="1.5"/></g>
+  <circle cx="44" cy="61" r="9" fill="#f9cf7a" opacity=".45"/><rect x="40" y="55" width="8" height="12" rx="3.5" fill="#c8513a"/>
+  <g transform="rotate(-6 132 78)">
+    <rect x="108" y="14" width="56" height="112" rx="10" fill="#263c35"/><rect x="112" y="22" width="48" height="96" rx="6" fill="#fffcf3"/>
+    <rect x="128" y="17" width="16" height="2.5" rx="1.25" fill="#3d554c"/>
+    <rect x="120" y="32" width="32" height="42" rx="4" fill="#9b3c50"/><path d="M120 40L136 54L152 40" fill="none" stroke="#7d2f40" stroke-width="1.5"/>
+    <circle cx="136" cy="56" r="6" fill="#e3a83b"/><circle cx="136" cy="56" r="2.6" fill="#c98f2a"/>
+    <g fill="#e3a83b" stroke="#c98f2a" stroke-width="1.2"><rect x="124" y="98" width="24" height="7" rx="3.5"/><rect x="124" y="91" width="24" height="7" rx="3.5"/><rect x="124" y="84" width="24" height="7" rx="3.5"/></g>
+  </g>
+</svg>`;
 function renderPanel(st, err) {
   lastStatus = st || lastStatus; const s = lastStatus || {};
   panel.hidden = false;
   const dots = Array.from({ length: s.n || 0 }, (_, i) => `<i class="${i < (s.committed || 0) ? 'on' : ''}"></i>`).join('');
-  panel.innerHTML = `<small class="wt-cap">Wrong Turn · Solana devnet</small>
-    <h2>${err ? 'Something went wrong' : s.phase === 'locked' ? 'Sealed. Get in the taxi.' : 'Check your phone. Quietly.'}</h2>
-    <p>${err ? esc(err) : s.phase === 'locked' ? 'The imposter and every wager are committed on-chain. Nobody can change them now.'
-      : 'Everyone has a secret role. Hold your phone close, read it, and lock in a wager: everyone deposits the same stake, so nobody can tell how much you bet.'}</p>
-    ${err ? '' : `<div class="wt-dots">${dots}</div><p class="wt-sub">${s.msg ? esc(s.msg) : `${s.committed || 0} of ${s.n} wagers locked in · stake ${s.stakeSol ?? ''} SOL each`}</p>`}
+  const sealed = s.phase === 'locked';
+  panel.innerHTML = `${err ? '' : WT_ART}<small class="wt-cap">Wrong Turn</small>
+    <h2>${err ? 'Something went wrong' : sealed ? 'Wagers locked. Get in the taxi.' : 'Check your role and wager.'}</h2>
+    ${err ? `<p>${esc(err)}</p>` : `<div class="wt-dots">${dots}</div><p class="wt-sub">${s.msg ? esc(s.msg) : `${s.committed || 0} of ${s.n} locked in`}</p>`}
     <button class="gt-ghost" id="wt-cancel">${err ? 'Back to the lobby' : 'Cancel and refund'}</button>`;
   $('wt-cancel').onclick = () => { C.send({ t: 'dx-abort' }); if (err) { panel.hidden = true; phase = 'off' } };
 }

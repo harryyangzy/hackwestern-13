@@ -44,33 +44,37 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .wt-box p{margin:0;color:var(--muted);font-size:14px}
 /* the role card: the player's character on the back; holding it flips it over to the role */
 #wt-box-role{padding:10px}
-#wt-peek{flex:1;min-height:0;perspective:1100px;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}
-.wt-flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.3,1.25,.45,1)}
-#wt-peek.show .wt-flip{transform:rotateY(180deg)}
-.wt-face{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center}
+#wt-peek{flex:1;min-height:0;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}
+.wt-flip{position:relative;width:100%;height:100%}
+/* a flat card turn: the back squashes to an edge, then the front opens out (no 3D, which phones sometimes fail to draw) */
+.wt-back{transform:scaleX(1);transition:transform .16s ease-in .16s}
+.wt-front{transform:scaleX(0);transition:transform .16s ease-in}
+#wt-peek.show .wt-back{transform:scaleX(0);transition:transform .16s ease-in}
+#wt-peek.show .wt-front{transform:scaleX(1);transition:transform .2s cubic-bezier(.3,1.4,.5,1) .16s}
+.wt-face{position:absolute;inset:0;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center}
 .wt-back{background:radial-gradient(120% 90% at 70% 10%,#fffdf6 0,#f6efe0 55%,#ece3cf 100%);border:1px solid var(--rule);box-shadow:inset 0 1px 0 #fff,0 6px 18px #263c3514}
-.wt-back .gc-char{animation:wt-breathe 2.6s ease-in-out infinite;filter:drop-shadow(0 6px 10px #4a4f8a22)}
+.wt-mascot{display:block;line-height:0;animation:wt-breathe 2.6s ease-in-out infinite}
 .wt-back b{font:500 24px/1.1 var(--display,var(--serif));color:var(--ink)}
 @keyframes wt-breathe{50%{transform:translateY(-4px) scale(1.03)}}
-.wt-front{transform:rotateY(180deg);background:var(--mint,#e3f1e7);border:1px solid #b9dcc6;color:var(--ink)}
+.wt-front{background:var(--mint,#e3f1e7);border:1px solid #b9dcc6;color:var(--ink)}
 .wt-front.imp{background:var(--rose,#f9dce5);border-color:#dcafbc}
 .wt-front b{font:500 40px/1 var(--display,var(--serif));color:var(--green)}
 .wt-front.imp b{color:var(--rust)}
 .wt-front p{margin:0;font:500 15px/1.35 var(--sans);color:var(--ink);max-width:260px}
 .wt-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .wt-chips i{font:600 12px var(--sans);font-style:normal;padding:5px 11px;border-radius:999px;background:#fffcf3;border:1px solid #dcafbc;color:var(--rust)}
-@media (prefers-reduced-motion:reduce){.wt-flip{transition:none}.wt-back .gc-char{animation:none}}
+@media (prefers-reduced-motion:reduce){.wt-face{transition:none!important}.wt-mascot{animation:none}}
 .wt-amt{font:500 40px/1 var(--display,var(--serif));font-variant-numeric:tabular-nums;color:var(--rust);display:flex;align-items:baseline;gap:8px}
 .wt-amt small{font:600 13px var(--sans);color:var(--muted);text-transform:none;letter-spacing:0}
 /* the wager: a shuttle slider, pushed from left to right; the chevrons light up the further it goes */
 .wt-shuttle{position:relative;height:60px;border-radius:999px;background:#ece4d1;box-shadow:inset 0 1px 3px #263c3524,inset 0 -1px 0 #fff8;touch-action:none;cursor:grab;outline:none;-webkit-user-select:none;user-select:none;margin:6px 0 4px}
 .wt-shuttle:focus-visible .wt-knob{box-shadow:0 0 0 3px #fffcf3,0 0 0 5px var(--rust)}
 .wt-shuttle.drag{cursor:grabbing}
-.wt-trail{position:absolute;left:5px;top:5px;bottom:5px;border-radius:999px;background:linear-gradient(90deg,#ac493110,#ac49314d);pointer-events:none}
-.wt-chev{position:absolute;left:64px;right:22px;top:0;bottom:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.wt-trail{position:absolute;left:5px;top:5px;bottom:5px;border-radius:999px;background:var(--rust);pointer-events:none}
+.wt-chev{z-index:1;position:absolute;left:64px;right:22px;top:0;bottom:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
 .wt-chev svg{width:11px;height:16px;stroke:#263c35;opacity:.18;transition:opacity .18s,transform .25s cubic-bezier(.3,1.6,.5,1),stroke .18s}
-.wt-chev svg.on{stroke:var(--rust);opacity:1;transform:scale(1.18)}
-.wt-knob{position:absolute;top:5px;left:5px;width:50px;height:50px;border-radius:50%;background:var(--ink);display:grid;place-items:center;box-shadow:0 3px 10px #263c3540;pointer-events:none;transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.wt-chev svg.on{stroke:#fffcf3;opacity:.9;transform:scale(1.18)}
+.wt-knob{position:absolute;top:5px;left:5px;width:50px;height:50px;border-radius:50%;background:var(--rust);display:grid;place-items:center;border:3px solid #fffcf3;box-sizing:border-box;box-shadow:0 0 0 1px #ac493340,0 4px 12px #263c3540;pointer-events:none;z-index:2;transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
 .wt-shuttle.drag .wt-knob{transform:scale(1.08)}
 .wt-knob svg{width:22px;height:22px;stroke:#fffcf3}
 .wt-fine{font-size:12px!important}
@@ -130,9 +134,11 @@ function shuttle(el, onChange) {
     if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick) }
   }
   function tick(now) {
-    const dt = Math.min(.032, (now - last) / 1000); last = now;
+    const dt = Math.max(0, Math.min(.032, (now - last) / 1000)); last = now;
     const k = 520, c = 26;   // stiff and a little under-damped: a small overshoot, then it settles
-    vel += ((target - pos) * k - vel * c) * dt; pos += vel * dt; paint();
+    vel += ((target - pos) * k - vel * c) * dt; pos += vel * dt;
+    if (!Number.isFinite(pos) || !Number.isFinite(vel)) { pos = target; vel = 0 }   // never lose the knob to a bad frame
+    paint();
     if (Math.abs(target - pos) < .0005 && Math.abs(vel) < .002) { pos = target; paint(); raf = 0; return }
     raf = requestAnimationFrame(tick);
   }
@@ -155,13 +161,13 @@ function showRole() {
   const front = imp
     ? `<b>Imposter</b><p>Keep the fare under ${yen}. Don’t get caught.</p><div class="wt-chips">${r.kinds.map(k => `<i>${KIND[k][0]}</i>`).join('')}</div>`
     : `<b>Crew</b><p>Reach ${yen}. Find the imposter.</p>`;
-  const me = A.me, face = me && window.GionCrew ? GionCrew.svg(me.color, { size: 104 }) : '';
+  const me = A.me, face = window.GionCrew ? GionCrew.svg(me && me.color || '#c8513a', { size: 104 }) : '';
   layer.hidden = false;
   const chev = '<svg viewBox="0 0 11 16" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l6 6-6 6"/></svg>';
   layer.innerHTML = `<div class="wt-grid">
     <div class="card wt-box" id="wt-box-role">
       <div id="wt-peek"><div class="wt-flip">
-        <div class="wt-face wt-back">${face}<b>Hold to reveal</b></div>
+        <div class="wt-face wt-back">${face ? `<span class="wt-mascot">${face}</span>` : ''}<b>Hold to reveal</b></div>
         <div class="wt-face wt-front ${imp ? 'imp' : ''}">${front}</div></div></div></div>
     <div class="card wt-box">
       <div class="wt-amt" id="wt-amt"></div>
