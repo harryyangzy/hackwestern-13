@@ -209,10 +209,10 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 <link rel="stylesheet" href="theme.css">
 </head>
 <body class="pad-ui">
-<div id="rotate"><svg viewBox="0 0 64 64" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="6" width="24" height="44" rx="4" fill="#fffcf3"/><path d="M28 44h8" /><path d="M50 52a22 22 0 0 1-14 8" stroke="#ac4931"/><path d="m34 57 2 3-3 2" stroke="#ac4931"/></svg><h2>Turn your phone sideways</h2><p>The taxi’s controls are made for landscape.</p></div>
+<div id="rotate"><svg viewBox="0 0 64 64" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="20" y="6" width="24" height="44" rx="4" fill="#fffcf3"/><path d="M28 44h8" /><path d="M50 52a22 22 0 0 1-14 8" stroke="#ac4931"/><path d="m34 57 2 3-3 2" stroke="#ac4931"/></svg><h2>Turn your phone sideways</h2></div>
 
 <section id="join" hidden><form class="card joincard" id="joinForm" autocomplete="off">
-  <h1>tandem</h1><p>Enter the room code shown on the laptop.</p>
+  <h1>tandem</h1><p>Room code from the laptop</p>
   <input id="code" maxlength="4" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="ABCD" aria-label="Room code">
   <p id="joinErr" role="alert"></p>
   <button class="pill" type="submit">Join the crew</button>
@@ -306,7 +306,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
     <p class="hint" id="wipeHint">Swipe across the glass to wipe</p>
   </div>
 </div>
-<div id="swipe" aria-live="polite"><svg viewBox="0 0 48 48" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 40V10m-9 9 9-9 9 9"/></svg><h2>Swipe up for full screen</h2><p>One swipe up hides Safari’s bars so the controls fill the screen. If the bars come back, swipe up again.</p><button id="swipeSkip">Not now</button></div>
+<div id="swipe" aria-live="polite"><svg viewBox="0 0 48 48" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 40V10m-9 9 9-9 9 9"/></svg><h2>Swipe up for full screen</h2><button id="swipeSkip">Not now</button></div>
 <div id="brief" hidden><small>Your job</small><h2 id="briefRole"></h2><p id="briefText"></p></div>
 <div id="count" hidden></div>
 <div id="banner" class="card" hidden></div>
@@ -317,13 +317,13 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 (() => {
 const $ = id => document.getElementById(id);
 const ROLE_INFO = {
-  steer: ['Wheel', 'Turn the wheel to steer.', '<circle cx="15" cy="15" r="11" stroke-width="3"/><path d="M4 16h7m8 0h7M15 19v7" stroke-width="3"/><circle cx="15" cy="15" r="3.5"/>'],
-  pedals: ['Pedals', 'Gas, brake, and D/R to reverse.', '<rect x="4" y="6" width="9" height="19" rx="2.5"/><rect x="17" y="10" width="9" height="15" rx="2.5"/><path d="M6 11h5M6 15h5M6 19h5M19 15h5M19 19h5"/>'],
-  nav: ['Navigator', 'Read the map, call the turns, tap the map to mark a spot on the laptop.', '<path d="m3 8 8-3 8 3 8-3v17l-8 3-8-3-8 3Z"/><path d="M11 5v17M19 8v17"/><circle cx="15" cy="13" r="2.4" fill="#ac4931" stroke="none"/>'],
-  shoot: ['Shooter', 'Aim on the laptop, tap to shoot.', '<circle cx="15" cy="15" r="9"/><path d="M15 2v7M15 21v7M2 15h7M21 15h7"/><circle cx="15" cy="15" r="1.6" fill="#ac4931" stroke="none"/>'],
-  wipe: ['Wipers', 'Swipe to clear the windshield.', '<path d="M4 25h22"/><path d="M15 25 6 9" stroke-width="3"/><path d="M8 7c4-3 10-3 14 0"/>'],
-  fog: ['Fog', 'Rub the fog off the glass so the driver can see.', '<path d="M4 12h15a4 4 0 1 0-4-4"/><path d="M4 17h20a3 3 0 1 1-3 3"/><path d="M4 22h9"/>'],
-  ops: ['Doors', 'Open the door at the lantern.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
+  steer: ['Wheel', 'Steer.', '<circle cx="15" cy="15" r="11" stroke-width="3"/><path d="M4 16h7m8 0h7M15 19v7" stroke-width="3"/><circle cx="15" cy="15" r="3.5"/>'],
+  pedals: ['Pedals', 'Gas and brake.', '<rect x="4" y="6" width="9" height="19" rx="2.5"/><rect x="17" y="10" width="9" height="15" rx="2.5"/><path d="M6 11h5M6 15h5M6 19h5M19 15h5M19 19h5"/>'],
+  nav: ['Navigator', 'Call the turns.', '<path d="m3 8 8-3 8 3 8-3v17l-8 3-8-3-8 3Z"/><path d="M11 5v17M19 8v17"/><circle cx="15" cy="13" r="2.4" fill="#ac4931" stroke="none"/>'],
+  shoot: ['Shooter', 'Aim and tap.', '<circle cx="15" cy="15" r="9"/><path d="M15 2v7M15 21v7M2 15h7M21 15h7"/><circle cx="15" cy="15" r="1.6" fill="#ac4931" stroke="none"/>'],
+  wipe: ['Wipers', 'Swipe the glass.', '<path d="M4 25h22"/><path d="M15 25 6 9" stroke-width="3"/><path d="M8 7c4-3 10-3 14 0"/>'],
+  fog: ['Fog', 'Rub the glass clear.', '<path d="M4 12h15a4 4 0 1 0-4-4"/><path d="M4 17h20a3 3 0 1 1-3 3"/><path d="M4 22h9"/>'],
+  ops: ['Doors', 'Open at the lantern.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
 };
 const CALL_TEXT = { left: 'Turn left', right: 'Turn right', straight: 'Straight on', uturn: 'Turn around', stop: 'Stop here' };
 const params = new URLSearchParams(location.search);
@@ -379,7 +379,7 @@ function connect() {
   s.onclose = () => {
     if (ws !== s) return; ws = null; joined = false; setConn();
     if (fatal) return;
-    if (screen === 'wait') waitMsg('Can’t reach the laptop', 'Trying again… Make sure this phone is on the same Wi-Fi or hotspot as the laptop.');
+    if (screen === 'wait') waitMsg('Can’t reach the laptop', 'Same Wi-Fi as the laptop?');
     setTimeout(connect, Math.min(3000, 400 * 2 ** retry++));
   };
 }
@@ -428,7 +428,7 @@ function onLobby(m) {
   $('ready').classList.toggle('on', ready); $('ready').setAttribute('aria-pressed', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
   const waiting = m.seats.filter(s => !s.ready || !s.on).length;
   $('lobbyMsg').textContent = !me ? 'Finding you a seat…' : !ready ? '' : waiting ? `Waiting for ${waiting} more…` : 'Starting soon…';
-  $('mates').innerHTML = (m.seats.length > 1 ? '<small>Roles · tap one to take it</small>' : '') + m.seats.map((s, i) => `<button data-seat="${i}" class="${s.pid === pid ? 'mine' : ''}">${window.GionCrew ? GionCrew.icon(s.color, 26) : `<i style="background:${s.color}"></i>`}<b>${s.roles.map(r => ROLE_INFO[r][0]).join(' + ')}</b><span>${s.pid === pid ? 'You' : s.name}${s.on && s.ready ? ' ✓' : ''}</span></button>`).join('');
+  $('mates').innerHTML = (m.seats.length > 1 ? '<small>Tap a role</small>' : '') + m.seats.map((s, i) => `<button data-seat="${i}" class="${s.pid === pid ? 'mine' : ''}">${window.GionCrew ? GionCrew.icon(s.color, 26) : `<i style="background:${s.color}"></i>`}<b>${s.roles.map(r => ROLE_INFO[r][0]).join(' + ')}</b><span>${s.pid === pid ? 'You' : s.name}${s.on && s.ready ? ' ✓' : ''}</span></button>`).join('');
   $('result').innerHTML = '';   // results are on the laptop
   if (phase === 'driving' || phase === 'count') { if (screen !== 'drive') show('drive') }
   else if (screen !== 'lobby') { show('lobby'); release() }

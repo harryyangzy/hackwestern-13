@@ -210,10 +210,10 @@ setInterval(() => { if (role && role.imposter) { const want = A.screen === 'driv
 function showVote(m) {
   layer.hidden = false; voted = false;
   const yen = v => window.GionMoney ? window.GionMoney(v) : '¥' + v.toLocaleString();
-  layer.innerHTML = `<div class="card wt-box wt-center"><small>${m.success ? `The trip made it: ${yen(m.yen)} of ${yen(m.goal)}` : `The trip fell short: ${yen(m.yen)} of ${yen(m.goal)}`}</small>
+  layer.innerHTML = `<div class="card wt-box wt-center"><small>${m.success ? `Made it: ${yen(m.yen)} of ${yen(m.goal)}` : `Fell short: ${yen(m.yen)} of ${yen(m.goal)}`}</small>
     <h2>Who took the wrong turn?</h2>
     <div class="wt-votes">${m.seats.filter(s => s.pid !== myPid()).map(s => `<button data-pid="${s.pid}"><i style="background:${s.color}"></i>${esc(s.name)}</button>`).join('')}<button class="skip" data-pid="">Not sure</button></div>
-    <p>${m.success ? 'The crew already won; name the imposter anyway.' : 'A majority on the imposter wins it for the crew.'}</p></div>`;
+    </div>`;
   for (const b of layer.querySelectorAll('.wt-votes button')) b.onclick = () => {
     if (voted) return; voted = true; A.send({ t: 'dx-vote-for', pid: b.dataset.pid || null }); A.buzz(20);
     layer.innerHTML = `<div class="card wt-box wt-center"><h2>Vote in.</h2><p>Waiting for the others…</p></div>`;
@@ -224,10 +224,10 @@ function doReveal() {
   if (!role || revealSent) return;
   const s = store(role);
   layer.hidden = false;
-  if (!s) { layer.innerHTML = `<div class="card wt-box wt-center"><h2>Your wager's secret isn't on this phone.</h2><p>Without it the reveal can't be checked, so your stake goes to the winners.</p></div>`; return }
+  if (!s) { layer.innerHTML = `<div class="card wt-box wt-center"><h2>Wager not on this phone.</h2></div>`; return }
   revealSent = true;
   A.send({ t: 'dx-reveal-v', wager: s.wager, salt: s.salt });
-  layer.innerHTML = `<div class="card wt-box wt-center"><h2>Revealing your wager…</h2><p>The program checks it against the fingerprint you locked in before the trip.</p></div>`;
+  layer.innerHTML = `<div class="card wt-box wt-center"><h2>Revealing your wager…</h2></div>`;
 }
 function showFinal(f) {
   const me = f.players.find(p => p.pid === myPid());

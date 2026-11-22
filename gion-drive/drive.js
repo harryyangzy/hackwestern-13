@@ -144,20 +144,17 @@ stage.insertAdjacentHTML('beforeend', `
 <div id="gt-menu" class="gt-card">
   <div class="gt-ticket">
     <div><span class="gt-ticket-city">${CITYCFG.name}</span><h2>${CITYCFG.brand}</h2></div>
-    <span class="gt-ticket-sticker" aria-hidden="true">🚕</span>
   </div>
-  <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
+  <p>${CITYCFG.blurb}</p>
   <p id="gt-result"></p>
   <div class="gt-menu-actions"><button id="gt-start">Start driving</button></div>
   <details class="gt-instructions"><summary>Driving controls</summary>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
-  <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
-  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little.</p>
   </details>
-  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button> · Knock over as many pedestrians as you can in 60 seconds.</p>
+  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button></p>
   ${CITYCFG.cities.length > 1 ? `<p class="gt-cities">${CITYCFG.cities.map(c => c.id === CITYCFG.id ? `<b>${c.name}</b>` : `<a href="${c.href}">${c.name}</a>`).join('')}</p>` : ''}
 </div>
-<button id="gt-open" class="gt-card" hidden>🚕 Drive</button>`);
+<button id="gt-open" class="gt-card" hidden>Drive</button>`);
 const map = $('gt-map');
 const ringPath = groups => groups.map(rs => rs.map(r => 'M' + r.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z').join('')).join('');
 // the minimap is in plan coordinates with y up, so flip it; north is roughly up (the plot is turned only a few degrees)

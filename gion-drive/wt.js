@@ -9,6 +9,8 @@ const GOAL = 3000;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sol = l => (l / 1e9).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
 const yen = v => GT.money ? GT.money(v) : '¥' + Math.round(v).toLocaleString();   // the city's currency
+const flaps = t => [...t].map(c => /[\d]/.test(c) ? `<i>${c}</i>` : `<u>${c}</u>`).join('');   // split-flap digits
+const LANTERN = '<svg viewBox="0 0 12 16" aria-hidden="true"><rect x="4" y="0" width="4" height="2" rx="1" fill="#263c35"/><rect x="1" y="2" width="10" height="12" rx="4" fill="#f2c94c" stroke="#263c35" stroke-width="1.4"/><path d="M1.7 8h8.6" stroke="#d9a72e" stroke-width="1.4"/><rect x="4" y="14" width="4" height="2" rx="1" fill="#263c35"/></svg>';
 
 let on = true, avail = null, phase = 'off', withBots = false;   // off | setup | driving | vote | final
 let goal = GOAL, lastStatus = null;
@@ -98,7 +100,7 @@ setInterval(() => {
   // the door opens by itself after a while: holding it shut only buys a few seconds
   atDoorT = st.atDoor ? atDoorT + dt : 0;
   if (atDoorT > 4.5) { atDoorT = 2.5; GT.openDoor() }
-  goalEl.innerHTML = `<small>Trip goal</small><b class="${st.yen >= goal ? 'ok' : ''}">${yen(st.yen)}</b><span>of ${yen(goal)}</span><em>Someone in this taxi is lying.</em>`;
+  goalEl.innerHTML = `<small>${LANTERN}Fare</small><b class="${st.yen >= goal ? 'ok' : ''}">${flaps(yen(st.yen))}</b><span>of ${yen(goal)}</span><em>Someone is lying.</em>`;
 }, 100);
 
 // a glitch looks like bad luck or bad driving; the server never says whose phone sent it
@@ -127,8 +129,7 @@ function renderVote(m, st) {
   const s = st || {}, left = Math.max(0, Math.ceil((m.until - Date.now()) / 1000));
   voteEl.innerHTML = `<small class="wt-cap">Shift over</small>
     <h2>Who took the wrong turn?</h2>
-    <p class="wt-tripline ${m.success ? 'ok' : 'bad'}">${m.success ? `The trip made it: ${yen(m.yen)} of ${yen(m.goal)}.` : `The trip fell short: ${yen(m.yen)} of ${yen(m.goal)}.`}</p>
-    <p>${m.success ? 'The crew already won, but name the imposter anyway.' : 'Vote on your phones. A majority on the imposter still wins it for the crew.'}</p>
+    <p class="wt-tripline ${m.success ? 'ok' : 'bad'}">${m.success ? `Made it: ${yen(m.yen)} of ${yen(m.goal)}` : `Fell short: ${yen(m.yen)} of ${yen(m.goal)}`}</p>
     <ul class="wt-seats">${m.seats.map(p => `<li style="--c:${p.color}"><i></i>${esc(p.name)}</li>`).join('')}</ul>
     <p class="wt-sub">${s.voted ?? 0} of ${m.seats.length} voted · ${left} s</p>`;
 }

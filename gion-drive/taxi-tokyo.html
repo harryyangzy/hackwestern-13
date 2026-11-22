@@ -2718,12 +2718,15 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 .wt-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--rule);transition:background .3s,border-color .3s}
 .wt-dots i.on{background:var(--green);border-color:var(--green)}
 .wt-sub{font:italic 14px var(--serif)}
-#wt-goal{position:absolute;left:14px;top:14px;padding:8px 14px;display:flex;flex-direction:column;z-index:4;max-width:190px}
-#wt-goal small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-#wt-goal b{font:600 22px var(--serif);font-variant-numeric:tabular-nums}
-#wt-goal b.ok{color:var(--green)}
-#wt-goal span{font-size:12px;color:var(--muted)}
-#wt-goal em{margin-top:6px;padding-top:6px;border-top:1px solid var(--rule);font:italic 13px var(--serif);color:var(--rust)}
+#wt-goal{position:absolute;left:14px;top:14px;z-index:4;display:flex;flex-direction:column;gap:6px;padding:14px 16px 13px;min-width:150px;max-width:220px}
+#wt-goal small{display:flex;align-items:center;gap:6px;font:700 14px var(--sans);color:#c8402f}
+#wt-goal small svg{width:11px;height:15px}
+#wt-goal b{display:flex;gap:3px;align-items:flex-end;font:700 30px/1 var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
+#wt-goal b i{position:relative;font-style:normal;min-width:26px;padding:7px 3px 6px;text-align:center;background:linear-gradient(#efe4cf 0 calc(50% - 1px),#fffcf3 0 calc(50% + 1px),#e9dcc3 0);border-radius:7px;box-shadow:0 2px 0 #dcc6a2}
+#wt-goal b u{text-decoration:none;font-size:18px;padding-bottom:5px;color:var(--muted)}
+#wt-goal b.ok i{background:linear-gradient(#dcebd5 0 calc(50% - 1px),#fffcf3 0 calc(50% + 1px),#cfe2c6 0);box-shadow:0 2px 0 #a9c79e;color:#24644e}
+#wt-goal span{font:500 13px var(--sans);color:var(--muted)}
+#wt-goal em{font:600 13px var(--sans);font-style:normal;color:#c8402f}
 .wt-tripline{font:600 17px var(--serif)!important}
 .wt-tripline.ok{color:var(--green)!important}.wt-tripline.bad{color:var(--rust)!important}
 .wt-seats{list-style:none;padding:0;margin:12px 0;display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px}
@@ -2972,44 +2975,41 @@ body { background: var(--paper); }
 #gt-seats .st { font-style: normal; }
 #gt-qr { background: #fff; border-color: var(--rule); border-radius: 14px; }
 
-/* The taxi silhouette frames the QR without covering its quiet zone. */
+/* The QR sits in a kerb: the map's red and cream road edge, with the cuties' cream sticker rim. The fare lantern hangs
+   over it and a maple leaf is stuck on a corner; both stay on the kerb, clear of the code's quiet zone. */
 #gt-qr:has(> svg) {
   box-sizing: content-box;
   position: relative;
-  margin: 16px 0 9px;
-  padding: 8px 8px 16px;
+  margin: 20px 0 10px;
+  padding: 8px;
   overflow: visible;
-  border: 3px solid #fff;
-  border-radius: 30px 30px 24px 24px;
-  background: #f9ca65;
-  color: var(--ink);
-  box-shadow: 0 3px 0 #d3a34a, 0 7px 13px #263c3524;
+  border: 9px solid transparent;
+  border-radius: 22px;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    repeating-conic-gradient(#c8402f 0 25%, #fffcf3 0 50%) 0 0 / 18px 18px border-box;
+  box-shadow: 0 0 0 3px #fffcf3, 0 6px 14px #3d311e2e;
 }
 #gt-qr:has(> svg)::before {
   content: "";
   position: absolute;
-  top: -16px;
+  top: -34px;
   left: 50%;
   transform: translateX(-50%);
-  width: 66px;
-  height: 13px;
-  border: 3px solid #fff;
-  border-bottom: 0;
-  border-radius: 14px 14px 0 0;
-  background: #f9ca65;
+  width: 34px;
+  height: 41px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M20 0v6' stroke='%23263c35' stroke-width='2'/%3E%3Crect x='13' y='5' width='14' height='5' rx='2' fill='%23263c35' stroke='%23fffcf3' stroke-width='2.5' paint-order='stroke'/%3E%3Cellipse cx='20' cy='24' rx='16' ry='13' fill='%23f2c94c' stroke='%23fffcf3' stroke-width='3.5' paint-order='stroke'/%3E%3Cpath d='M6 20.5h28M5.5 27.5h29' stroke='%23d9a72e' stroke-width='1.6'/%3E%3Crect x='13' y='36' width='14' height='5' rx='2' fill='%23263c35' stroke='%23fffcf3' stroke-width='2.5' paint-order='stroke'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 #gt-qr:has(> svg)::after {
   content: "";
   position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 64px;
-  height: 8px;
-  background: conic-gradient(currentColor 25%, transparent 0 50%, currentColor 0 75%, transparent 0)
-              0 0 / 8px 8px;
+  right: -20px;
+  bottom: -18px;
+  width: 38px;
+  height: 38px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-24 -24 48 48'%3E%3Cpath transform='rotate%2824%29' d='M0 -20L5 -9L15 -13L11 -2L20 2L9 6L11 14L2 9L0 20L-2 9L-11 14L-9 6L-20 2L-11 -2L-15 -13L-5 -9Z' fill='%23c9782e' stroke='%23fffcf3' stroke-width='3.5' stroke-linejoin='round' paint-order='stroke'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-#gt-qr > svg { border-radius: 18px; }
+#gt-qr > svg { border-radius: 8px; }
 #gt-room, .gt-stats b, #wt-goal b, .gt-resrow b, .pad-ui .stats b {
   font-variant-numeric: tabular-nums;
   letter-spacing: -.025em;
@@ -3020,7 +3020,8 @@ body { background: var(--paper); }
 .gt-stats > div:nth-child(2) { background: var(--ice); }
 .gt-task, #gt-call { background: var(--ice); font-style: normal; }
 #gt-map { border-radius: 16px; }
-#wt-goal, .wt-switch.on { background: var(--rose); }
+#wt-goal { background: #fffcf3; border: 1.5px solid #e3d6bc; border-radius: 22px; box-shadow: 0 5px 0 #dcc6a2; }
+.wt-switch.on { background: var(--rose); }
 .wt-switch { border-color: var(--rule); }
 .wt-switch.on { border-color: #dcafbc; }
 .wt-switch em, .wt-sub, .wt-subhead, .pad-ui #task { font-style: normal; }
@@ -3106,19 +3107,6 @@ body { background: var(--paper); }
   margin: 2px 0 0;
   font: 500 clamp(34px, 5vw, 52px)/1 var(--display);
 }
-.gt-ticket-sticker {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 62px;
-  height: 62px;
-  border: 3px solid var(--panel);
-  border-radius: 18px;
-  background: var(--color-accent-100);
-  box-shadow: var(--dock-shadow);
-  font-size: 36px;
-  transform: rotate(-10deg);
-}
 #gt-menu {
   width: min(470px, calc(100% - 24px));
   padding: 16px;
@@ -3195,8 +3183,7 @@ dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
 }
 @media (max-height: 620px) {
   .gt-ticket { min-height: 76px; padding-block: 8px; }
-  .gt-ticket-sticker { width: 48px; height: 48px; font-size: 28px; }
-}
+  }
 </style>
 <script>window.GT_CITY = {"name": "Tokyo", "brand": "tandem", "bowl": "Joyride", "blurb": "Drive a taxi around Shibuya Crossing, the busiest scramble in Tokyo.", "drivePaths": false, "open": false, "money": {"sym": "¥", "rate": 1, "dec": 0, "label": "Yen"}, "id": "tokyo", "cities": [{"id": "tokyo", "name": "Tokyo", "href": "taxi-tokyo.html"}, {"id": "gion", "name": "Kyoto", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
 <script>
@@ -3452,20 +3439,17 @@ stage.insertAdjacentHTML('beforeend', `
 <div id="gt-menu" class="gt-card">
   <div class="gt-ticket">
     <div><span class="gt-ticket-city">${CITYCFG.name}</span><h2>${CITYCFG.brand}</h2></div>
-    <span class="gt-ticket-sticker" aria-hidden="true">🚕</span>
   </div>
-  <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
+  <p>${CITYCFG.blurb}</p>
   <p id="gt-result"></p>
   <div class="gt-menu-actions"><button id="gt-start">Start driving</button></div>
   <details class="gt-instructions"><summary>Driving controls</summary>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
-  <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
-  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little.</p>
   </details>
-  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button> · Knock over as many pedestrians as you can in 60 seconds.</p>
+  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button></p>
   ${CITYCFG.cities.length > 1 ? `<p class="gt-cities">${CITYCFG.cities.map(c => c.id === CITYCFG.id ? `<b>${c.name}</b>` : `<a href="${c.href}">${c.name}</a>`).join('')}</p>` : ''}
 </div>
-<button id="gt-open" class="gt-card" hidden>🚕 Drive</button>`);
+<button id="gt-open" class="gt-card" hidden>Drive</button>`);
 const map = $('gt-map');
 const ringPath = groups => groups.map(rs => rs.map(r => 'M' + r.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z').join('')).join('');
 // the minimap is in plan coordinates with y up, so flip it; north is roughly up (the plot is turned only a few degrees)
@@ -4398,7 +4382,7 @@ function frame(now) {
   // HUD line
   const bar = $('gt-shootbar');
   bar.hidden = !shooter && !stuck.length;
-  bar.innerHTML = `<b>Lv ${level + 1}</b><span>✶ ${stats.hits} popped</span><span class="${stuck.length >= LV[level].cap ? 'full' : ''}">${stuck.length ? `${stuck.length} on the glass` : 'Glass clear'}</span>`;
+  bar.innerHTML = `<b>Lv ${level + 1}</b><span>${stats.hits} popped</span><span class="${stuck.length >= LV[level].cap ? 'full' : ''}">${stuck.length ? `${stuck.length} on the glass` : 'Glass clear'}</span>`;
   // the 10 Hz picture for the phones
   if (now - sendT > 100) {
     sendT = now;
@@ -4599,9 +4583,8 @@ const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
 // one line per role for the briefing before a shift
-const ROLE_BRIEF = { steer: 'Wheel: steer the taxi.', pedals: 'Pedals: gas and brake; D/R to reverse.', nav: 'Navigator: call the turns.',
-  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.',
-  fog: 'Fog: rub the fog off the windshield so the driver can see.' };
+// in the briefing each player's line is just their jobs; their phone shows how
+const ROLE_BRIEF = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', shoot: 'Shooter', wipe: 'Wipers', ops: 'Doors', fog: 'Fog' };
 
 let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
 let phase = 'off';             // off | lobby | count | driving | results
@@ -4667,7 +4650,7 @@ function renderLobby() {
   // the Start button says what it's waiting for, so the card needs no notes
   $('gt-lstart').textContent = !crew.length ? 'Scan the code to join' : notReady ? `Waiting for ${notReady} to get ready` : (result ? 'Start next ' : 'Start ') + (game === 'bowling' ? 'round' : 'shift');
   for (const b of document.querySelectorAll('.gt-modes button')) b.setAttribute('aria-pressed', b.dataset.game === game);
-  $('gt-lnote').textContent = wsOk ? '' : 'Can’t reach the crew server. Is node gion-drive/server.js still running?';
+  $('gt-lnote').textContent = wsOk ? '' : 'Crew server offline.';
   $('gt-lnote').hidden = wsOk;
   $('gt-lresult').innerHTML = result ? resultHTML(result) : '';
   $('gt-lobby').classList.toggle('has-result', !!result);
@@ -4841,9 +4824,9 @@ function startCountdown(force) {
   if (window.GionBrief) {
     toPhones({ t: 'brief' });
     window.GionBrief({
-      title: game === 'bowling' ? GT.city.bowl : 'Crew shift',
-      objective: game === 'bowling' ? 'Knock over as many pedestrians as you can in 60 seconds.' : 'Pick up and deliver passengers together before the shift ends.',
-      lines: crew.map(p => ({ color: p.color, name: p.name, text: rolesOf(p).map(r => ROLE_BRIEF[r] || r).join(' ') })),
+      title: game === 'bowling' ? GT.city.bowl : GT.city.name,
+      objective: game === 'bowling' ? 'Knock over as many people as you can.' : 'Orange lantern to gold lantern.',
+      lines: crew.map(p => ({ color: p.color, name: p.name, text: rolesOf(p).map(r => ROLE_BRIEF[r] || r).join(' · ') })),
       onCount: n => toPhones({ t: 'count', n }), abort: () => phase !== 'count',
     }).then(() => { if (phase !== 'count') return; GT.lockMenu = false; GT.start(game) });
     return;
@@ -4934,6 +4917,8 @@ const GOAL = 3000;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sol = l => (l / 1e9).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
 const yen = v => GT.money ? GT.money(v) : '¥' + Math.round(v).toLocaleString();   // the city's currency
+const flaps = t => [...t].map(c => /[\d]/.test(c) ? `<i>${c}</i>` : `<u>${c}</u>`).join('');   // split-flap digits
+const LANTERN = '<svg viewBox="0 0 12 16" aria-hidden="true"><rect x="4" y="0" width="4" height="2" rx="1" fill="#263c35"/><rect x="1" y="2" width="10" height="12" rx="4" fill="#f2c94c" stroke="#263c35" stroke-width="1.4"/><path d="M1.7 8h8.6" stroke="#d9a72e" stroke-width="1.4"/><rect x="4" y="14" width="4" height="2" rx="1" fill="#263c35"/></svg>';
 
 let on = true, avail = null, phase = 'off', withBots = false;   // off | setup | driving | vote | final
 let goal = GOAL, lastStatus = null;
@@ -5023,7 +5008,7 @@ setInterval(() => {
   // the door opens by itself after a while: holding it shut only buys a few seconds
   atDoorT = st.atDoor ? atDoorT + dt : 0;
   if (atDoorT > 4.5) { atDoorT = 2.5; GT.openDoor() }
-  goalEl.innerHTML = `<small>Trip goal</small><b class="${st.yen >= goal ? 'ok' : ''}">${yen(st.yen)}</b><span>of ${yen(goal)}</span><em>Someone in this taxi is lying.</em>`;
+  goalEl.innerHTML = `<small>${LANTERN}Fare</small><b class="${st.yen >= goal ? 'ok' : ''}">${flaps(yen(st.yen))}</b><span>of ${yen(goal)}</span><em>Someone is lying.</em>`;
 }, 100);
 
 // a glitch looks like bad luck or bad driving; the server never says whose phone sent it
@@ -5052,8 +5037,7 @@ function renderVote(m, st) {
   const s = st || {}, left = Math.max(0, Math.ceil((m.until - Date.now()) / 1000));
   voteEl.innerHTML = `<small class="wt-cap">Shift over</small>
     <h2>Who took the wrong turn?</h2>
-    <p class="wt-tripline ${m.success ? 'ok' : 'bad'}">${m.success ? `The trip made it: ${yen(m.yen)} of ${yen(m.goal)}.` : `The trip fell short: ${yen(m.yen)} of ${yen(m.goal)}.`}</p>
-    <p>${m.success ? 'The crew already won, but name the imposter anyway.' : 'Vote on your phones. A majority on the imposter still wins it for the crew.'}</p>
+    <p class="wt-tripline ${m.success ? 'ok' : 'bad'}">${m.success ? `Made it: ${yen(m.yen)} of ${yen(m.goal)}` : `Fell short: ${yen(m.yen)} of ${yen(m.goal)}`}</p>
     <ul class="wt-seats">${m.seats.map(p => `<li style="--c:${p.color}"><i></i>${esc(p.name)}</li>`).join('')}</ul>
     <p class="wt-sub">${s.voted ?? 0} of ${m.seats.length} voted · ${left} s</p>`;
 }
@@ -5150,7 +5134,7 @@ if (lclose) { lclose.textContent = '← Cities'; lclose.setAttribute('aria-label
 
 /* ---------- the briefing: objective, each player's job, then a 3-2-1 ---------- */
 $('stage').insertAdjacentHTML('beforeend', `<div id="gt-brief" class="gt-card" hidden>
-  <small>Today’s shift</small><h2 id="gt-btitle"></h2><p id="gt-bobj"></p><ul id="gt-blines"></ul><b id="gt-bcount" aria-live="assertive"></b></div>`);
+  <h2 id="gt-btitle"></h2><p id="gt-bobj"></p><ul id="gt-blines"></ul><b id="gt-bcount" aria-live="assertive"></b></div>`);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let briefing = false;
 // returns a promise that resolves at "go"; onCount(n) fires on each number (mp.js sends it to the phones);
@@ -5186,8 +5170,8 @@ const whenLoaded = cb => { const f = () => ($('loading').hidden ? (cb(), request
 GT.on('stop', () => document.body.classList.remove('gt-focus'));
 if (play === 'solo') {
   whenLoaded(() => window.GionBrief({
-    title: GT.city.name, objective: 'Pick up passengers at the orange lantern and deliver them to the gold one before the shift ends.',
-    lines: [{ color: '#c8513a', name: 'You', text: '↑ / W gas · ↓ / S brake, then reverse · ← → steer · C camera · Esc ends the shift' }],
+    title: GT.city.name, objective: 'Orange lantern to gold lantern.',
+    lines: [{ color: '#c8513a', name: 'You', text: 'Arrows or WASD · C camera · Esc stop' }],
   }).then(() => { GT.lockMenu = false; if (!GT.driving) GT.start('taxi') }));
   // after a solo shift, the result card comes back with the page
 } else {
