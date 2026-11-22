@@ -2728,6 +2728,12 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
   text-shadow:0 0 8px #fffcf3,0 0 3px #fffcf3;white-space:nowrap;pointer-events:none}
 #gt-shootnote.pop{animation:gt-note 2.6s ease-out forwards}
 @keyframes gt-note{0%{opacity:0;transform:translate(-50%,6px)}12%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0}}
+/* Gion Taxi crew play: the fog layer and its small HUD line (fog.js). Same cards, inks and type as drive.css. */
+#gt-fog{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#gt-fog[hidden],#gt-fogbar[hidden]{display:none}
+#gt-fogbar{position:absolute;right:14px;bottom:58px;display:flex;gap:10px;align-items:baseline;padding:5px 12px;font:13px var(--sans);color:var(--muted)}
+#gt-fogbar b{font:600 15px var(--serif);color:var(--ink)}
+#gt-fogbar .full{color:var(--rust);font-weight:600}
 /* Gion Taxi "Wrong Turn": the lobby switch, the wager panel, the goal card, the vote and the reveal.
    Same paper, inks and serif as the rest of the game. */
 .wt-switch{display:flex;gap:10px;align-items:flex-start;margin:12px auto 0;max-width:520px;padding:10px 14px;border:1px dashed var(--rule);border-radius:10px;font-size:13px;color:var(--muted);cursor:pointer;text-align:left}
@@ -3003,6 +3009,45 @@ body { background: var(--paper); }
 #gt-seats li.empty { background: var(--color-background-primary-hover); }
 #gt-seats .st { font-style: normal; }
 #gt-qr { background: #fff; border-color: var(--rule); border-radius: 14px; }
+
+/* The taxi silhouette frames the QR without covering its quiet zone. */
+#gt-qr:has(> svg) {
+  box-sizing: content-box;
+  position: relative;
+  margin: 16px 0 9px;
+  padding: 8px 8px 16px;
+  overflow: visible;
+  border: 3px solid #fff;
+  border-radius: 30px 30px 24px 24px;
+  background: #f9ca65;
+  color: var(--ink);
+  box-shadow: 0 3px 0 #d3a34a, 0 7px 13px #263c3524;
+}
+#gt-qr:has(> svg)::before {
+  content: "";
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 66px;
+  height: 13px;
+  border: 3px solid #fff;
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: #f9ca65;
+}
+#gt-qr:has(> svg)::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 8px;
+  background: conic-gradient(currentColor 25%, transparent 0 50%, currentColor 0 75%, transparent 0)
+              0 0 / 8px 8px;
+}
+#gt-qr > svg { border-radius: 18px; }
 #gt-room, .gt-stats b, #wt-goal b, .gt-resrow b, .pad-ui .stats b {
   font-variant-numeric: tabular-nums;
   letter-spacing: -.025em;
@@ -3948,6 +3993,105 @@ window.GionCuties = { KINDS, META, draw, confetti, drawBit, tint };
 
 </script>
 <script>
+/* tandem: the crew's characters, one per seat colour. Built like the map: simple geometric parts with softened corners,
+   flat fills and no outlines, a hard light/shade split down the middle (light from the upper right), a see-through
+   blue-violet ground shadow, and small dot eyes. Just the heads, all facing front, so they read as a set.
+
+   GionCrew.forColor('#c8513a')          → 'fox'   (the seat colours in mp.js COLORS)
+   GionCrew.svg(kindOrColor, { size, shadow })  → an <svg> string
+     shadow  false to leave out the ground shadow (for small chips)
+   GionCrew.icon(color, size, mood)       → the same without the shadow, for lists and chips
+   Used by the laptop (built into the page) and the phone (served as /crew.js). */
+(() => {
+const INK = '#263c35', CREAM = '#f3e6cc', AUTUMN = '#e0702c';
+const SHADOW = '#4a4f8a';
+
+// mix #rrggbb toward white (k > 0) or toward the map's ink (k < 0)
+function tint(hex, k) {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255];
+  const to = k > 0 ? [255, 255, 255] : [0x26, 0x3c, 0x35], a = Math.abs(k);
+  return '#' + c.map((v, i) => Math.round(v + (to[i] - v) * a).toString(16).padStart(2, '0')).join('');
+}
+let uid = 0, clipId = '';
+// every part is drawn in its lit colour with softened corners, then its left half again in shade (light comes from the
+// upper right, like the map, so the split is a hard vertical edge down the middle of the figure)
+function part(d, color, { shade = -.18, round = 5 } = {}) {
+  const st = (f) => `<path d="${d}" fill="${f}" stroke="${f}" stroke-width="${round}" stroke-linejoin="round"/>`;
+  return st(color) + `<g clip-path="url(#${clipId})">${st(tint(color, shade))}</g>`;
+}
+
+// a regular-ish octagon of radius r centred on (x, y), for the faceted ears and eye discs
+const oct = (x, y, r) => { const k = r * .42; return `M${x - k} ${y - r}H${x + k}L${x + r} ${y - k}V${y + k}L${x + k} ${y + r}H${x - k}L${x - r} ${y + k}V${y - k}Z` };
+// plain round dot eyes, no expression
+const eyes = (x1, x2, y, { r = 3.6, color = INK } = {}) =>
+  `<circle cx="${x1}" cy="${y}" r="${r}" fill="${color}"/><circle cx="${x2}" cy="${y}" r="${r}" fill="${color}"/>`;
+
+const CHARS = {
+  // fox: a pointed head with tall dark-tipped ears and a cream muzzle
+  fox: { color: '#c8513a', name: 'Fox', draw(c) {
+    let s = part('M30 38L33 13L52 32Z', c) + part('M90 38L87 13L68 32Z', c);
+    s += part('M33 13L37 20L34 24Z', tint(c, -.5), { round: 3 }) + part('M87 13L83 20L86 24Z', tint(c, -.5), { round: 3 });
+    s += part('M30 36H90L84 60L60 80L36 60Z', c);
+    s += part('M38 58L60 54L82 58L60 80Z', CREAM, { shade: -.08 });
+    s += `<circle cx="60" cy="76" r="3.6" fill="${INK}"/>`;
+    return s + eyes(48, 72, 49);
+  } },
+  // bear: a brown faceted head with eight-sided ears and a pale six-sided muzzle (keeps the green seat; drawn brown)
+  bear: { color: '#36594b', name: 'Bear', draw() {
+    const lit = '#8a5a3b';
+    let s = part(oct(37, 30, 10), lit) + part(oct(83, 30, 10), lit);
+    s += part(oct(37, 30, 5), CREAM, { shade: -.08, round: 2 }) + part(oct(83, 30, 5), CREAM, { shade: -.08, round: 2 });
+    s += part('M38 30H82L92 40V64L78 80H42L28 64V40Z', lit);
+    s += part('M50 55H70L75 62L69 74H51L45 62Z', CREAM, { shade: -.08 });
+    s += part('M55 58H65L60 64Z', INK, { shade: 0, round: 3 });
+    return s + eyes(46, 74, 46);
+  } },
+  // owl: a faceted head with two ear tufts, eight-sided pale eye discs and a small beak
+  owl: { color: '#c9932c', name: 'Owl', draw(c) {
+    const lit = tint(c, .15);
+    let s = part('M32 38L34 16L50 30Z', lit) + part('M88 38L86 16L70 30Z', lit);
+    s += part('M40 28H80L92 40V62L74 80H46L28 62V40Z', lit);
+    s += part(oct(46, 50, 11), CREAM, { shade: -.08 }) + part(oct(74, 50, 11), CREAM, { shade: -.08 });
+    s += part('M56 58H64L60 68Z', AUTUMN, { shade: -.15, round: 3 });
+    return s + eyes(46, 74, 50);
+  } },
+  // raccoon: a broad head with a dark band across the eyes and a pale muzzle
+  raccoon: { color: '#4f6d8a', name: 'Raccoon', draw(c) {
+    const lit = tint(c, .12), dark = tint(c, -.5);
+    let s = part('M30 40L32 16L50 32Z', lit) + part('M90 40L88 16L70 32Z', lit);
+    s += part('M34 24L36 32L42 30Z', CREAM, { round: 2 }) + part('M86 24L84 32L78 30Z', CREAM, { round: 2 });
+    s += part('M32 36H88L94 58L78 78H42L26 58Z', lit);
+    s += part('M29 47H91L91 58L72 63L60 58L48 63L29 58Z', dark, { shade: -.1, round: 4 });
+    s += part('M48 66L60 61L72 66L60 80Z', CREAM, { shade: -.08 });
+    s += `<circle cx="60" cy="67" r="3.4" fill="${INK}"/>`;
+    return s + eyes(45, 75, 53, { color: CREAM, r: 3.4 });
+  } },
+};
+const KINDS = Object.keys(CHARS);
+const BY_COLOR = Object.fromEntries(KINDS.map(k => [CHARS[k].color.toLowerCase(), k]));
+const forColor = color => BY_COLOR[String(color || '').toLowerCase()] || null;
+
+function svg(kindOrColor, { size = 96, shadow = true, title = true } = {}) {
+  const kind = CHARS[kindOrColor] ? kindOrColor : forColor(kindOrColor) || KINDS[0], ch = CHARS[kind];
+  clipId = 'gc' + (++uid);
+  const ground = shadow ? `<ellipse cx="58" cy="90" rx="32" ry="6" fill="${SHADOW}" opacity=".26"/>` : '';
+  return `<svg class="gc-char gc-${kind}" viewBox="10 4 100 100" width="${size}" height="${size}" role="img"${title ? ` aria-label="${ch.name}"` : ' aria-hidden="true"'}>` +
+    `<clipPath id="${clipId}"><rect x="0" y="0" width="60" height="120"/></clipPath>` + ground + ch.draw(ch.color) + '</svg>';
+}
+
+// a small character for lists and chips: no ground shadow, sits inline with text
+const icon = (color, size = 24, mood = 'idle') => svg(color, { size, mood, shadow: false, title: false });
+if (typeof document !== 'undefined' && !document.getElementById('gc-style')) {
+  const st = document.createElement('style'); st.id = 'gc-style';
+  st.textContent = '.gc-char{flex:none;display:inline-block;vertical-align:middle;overflow:visible}';
+  (document.head || document.documentElement).appendChild(st);
+}
+
+window.GionCrew = { CHARS, KINDS, forColor, svg, icon, tint };
+})();
+
+</script>
+<script>
 /* Gion Taxi crew play: the shooter and the wipers (laptop side). Runs after drive.js, before mp.js.
    Little paper-sticker visitors (cuties.js: cats, sparrows, blossoms, maple leaves, lanterns, ladybugs, mochi) drift in from the street ahead and stick to the windshield unless the
    shooter (phone gyro → crosshair, tap → shoot) pops them first. Whatever sticks, the wiper player sweeps off.
@@ -4014,7 +4158,7 @@ const inCore = (x, y) => ((x - .5) / .17) ** 2 + ((y - .56) / .30) ** 2 < 1;   /
 const underHud = (x, y) => y < .2 || (x > .8 && y < .34) || (x < .22 && y > .8) || (x > .76 && y > .82);   // stats, minimap, crew strip, shooter bar
 
 function reset() {
-  targets = []; stuck = []; parts = []; fx = []; wipe = null; aim = null; aimShown = null; level = 0; spawnT = 1.6; combo = 0; recoil = 0;
+  targets = []; stuck = []; parts = []; fx = []; wipe = null; seizeUntil = 0; aim = null; aimShown = null; level = 0; spawnT = 1.6; combo = 0; recoil = 0;
   lastFares = 0; stats = resetStats(); $('gt-shootbar').hidden = true; g.clearRect(0, 0, cv.width, cv.height);
 }
 GT.on('start', reset);
@@ -4105,10 +4249,28 @@ function arrive(o) {
   stuck.push(o); stats.stuck++; combo = 0; sound.splat();
   toPhones({ t: 'sx', k: 'stick', kind: o.kind });
 }
+// Wrong Turn: a gust slaps a few visitors straight onto the glass, past the shooter (looks like a bad wave)
+function flurry(n = 3) {
+  if (!on) return;
+  const L = LV[level], colors = PALETTE[pal];
+  let kind = null;
+  for (let i = 0; i < n && stuck.length < L.cap + 2; i++) {
+    kind = L.kinds[Math.floor(Math.random() * L.kinds.length)];
+    const [x, y] = pickFinal();
+    stuck.push({ id: nextId++, kind, move: 'drift', t: 0, T: 1, fx: x, fy: y, x, y, s: 1, ph: Math.random() * 6.28, flash: 0,
+      color: colors[Math.floor(Math.random() * colors.length)], hp: SPR[kind].hp || 1, stuckAt: 0, slide: 0 });
+    stats.stuck++;
+  }
+  if (!kind) return;
+  combo = 0; sound.splat(); toPhones({ t: 'sx', k: 'stick', kind });
+}
 const PIVOT = () => ({ x: .5 * W, y: H * 1.12 });
 const WIPE_S = .55, SWEEP = 72 * Math.PI / 180;
+let seizeUntil = 0, seizeToldAt = 0;   // Wrong Turn: the wiper motor seizes for a few seconds
 function startWipe(dir) {
   if (wipe) return;   // one sweep at a time
+  const now = performance.now();
+  if (now < seizeUntil) { if (now - seizeToldAt > 1500) { seizeToldAt = now; GT.toast('The wipers are stuck!') } toPhones({ t: 'sx', k: 'seized' }); return }
   wipe = { t: 0, dir: dir < 0 ? -1 : 1, done: new Set() };
   sound.swish(); toPhones({ t: 'sx', k: 'wipe' });
 }
@@ -4280,8 +4442,153 @@ requestAnimationFrame(frame);
 cv.hidden = true;
 window.GionShoot = {
   get targets() { return targets }, get stuck() { return stuck }, get stats() { return stats }, get level() { return level + 1 }, get on() { return on },
-  get palette() { return pal }, fire: (x, y) => fire(x, y, aimColor), wipe: d => startWipe(d || 1), SPR, KINDS, PALETTE,
+  get palette() { return pal }, fire: (x, y) => fire(x, y, aimColor), wipe: d => startWipe(d || 1),
+  flurry, seize: ms => { seizeUntil = performance.now() + (ms || 4000) }, SPR, KINDS, PALETTE,
 };
+})();
+
+</script>
+<script>
+/* Gion Taxi crew play: the fog and the player who rubs it away (laptop side). Runs after shoot.js, before mp.js.
+   Banks of fog roll in from the edges and settle on the windshield until the driver can't see the road. The fog player
+   rubs it off on their phone (pad-fog.js); the strokes come here through mp.js (window.GionCrewExt.onPhone) and this
+   file sends the fog holder a small picture of the glass ('fg', 8 Hz).
+
+   The fog is a coarse density grid. It is drawn like the clouds in a woodblock print: flat cream bands with thin gold
+   edges, breathing slowly, rather than a grey blur. Only appears in a crew shift while a phone holds the fog role. */
+(() => {
+const GT = window.GionTaxi, $ = id => document.getElementById(id);
+if (!GT) return;
+const crew = () => window.GionCrew;
+const holder = r => { const c = crew(); return c && c.holder ? c.holder(r) : null };
+const toPhones = m => { const c = crew(); if (c && c.toPhones) c.toPhones(m) };
+
+/* ---------- the layer: under the shooter's stickers, under the HUD ---------- */
+($('gt-shoot') || $('gt-hud')).insertAdjacentHTML('beforebegin', '<canvas id="gt-fog" aria-hidden="true"></canvas>');
+$('gt-hud').insertAdjacentHTML('beforeend', '<div id="gt-fogbar" class="gt-card" hidden></div>');
+const cv = $('gt-fog'), g = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function fit() {
+  const r = cv.getBoundingClientRect(); DPR = Math.min(2, devicePixelRatio || 1);
+  if (r.width && (Math.round(r.width * DPR) !== cv.width || Math.round(r.height * DPR) !== cv.height)) { cv.width = Math.round(r.width * DPR); cv.height = Math.round(r.height * DPR) }
+  W = r.width; H = r.height;
+}
+
+/* ---------- the fog: a density grid, 0 (clear) to 1 (can't see a thing) ---------- */
+const GW = 64, GH = 40;
+const fog = new Float32Array(GW * GH);
+let banks = [], bankT = 4, on = false, sendT = 0, drawT = 0, stats = { rubbed: 0, peak: 0 };
+const cover = () => { let s = 0; for (let i = 0; i < fog.length; i++) s += Math.min(1, fog[i] / .45); return s / fog.length };   // share of the glass you can't see through
+
+// a bank is a few puffs that drift in together and leave fog behind them as they go
+function bank(thick = false) {
+  const fromLeft = Math.random() < .5, y = .15 + Math.random() * .7;
+  const x = thick ? .3 + Math.random() * .4 : fromLeft ? -.08 : 1.08;
+  const vx = thick ? (Math.random() - .5) * .03 : (fromLeft ? 1 : -1) * (.05 + Math.random() * .04);
+  const puffs = Array.from({ length: thick ? 7 : 4 + Math.floor(Math.random() * 3) }, () => ({ dx: (Math.random() - .5) * .22, dy: (Math.random() - .5) * .16, r: .07 + Math.random() * .07 }));
+  banks.push({ x, y, vx, vy: (Math.random() - .5) * .015, puffs, life: thick ? 2.2 : 5 + Math.random() * 3, t: 0, rate: thick ? 1.4 : .5 });
+}
+function deposit(cx, cy, r, amt) {   // a soft round puff, in glass coordinates (0–1)
+  const rx = r * GW, ry = r * GW * (W && H ? W / H : 1.6) * GH / GW, x0 = cx * GW, y0 = cy * GH;
+  for (let j = Math.max(0, Math.floor(y0 - ry)); j <= Math.min(GH - 1, Math.ceil(y0 + ry)); j++)
+    for (let i = Math.max(0, Math.floor(x0 - rx)); i <= Math.min(GW - 1, Math.ceil(x0 + rx)); i++) {
+      const d = ((i - x0) / rx) ** 2 + ((j - y0) / ry) ** 2; if (d >= 1) continue;
+      const k = j * GW + i; fog[k] = Math.min(1, fog[k] + amt * (1 - d) ** 2);
+    }
+}
+// rubbing: each point clears a soft round patch, a bit more each pass
+function rub(x, y, x1, y1) {
+  const steps = Math.max(1, Math.ceil(Math.hypot((x1 - x) * GW, (y1 - y) * GH) / .8));
+  for (let s = 0; s <= steps; s++) {
+    const px = (x + (x1 - x) * s / steps) * GW, py = (y + (y1 - y) * s / steps) * GH, R = 3.4;
+    for (let j = Math.max(0, Math.floor(py - R)); j <= Math.min(GH - 1, Math.ceil(py + R)); j++)
+      for (let i = Math.max(0, Math.floor(px - R)); i <= Math.min(GW - 1, Math.ceil(px + R)); i++) {
+        const d = ((i - px) ** 2 + (j - py) ** 2) / (R * R); if (d >= 1) continue;
+        const k = j * GW + i, before = fog[k]; fog[k] *= 1 - .5 * (1 - d); stats.rubbed += before - fog[k];
+      }
+  }
+}
+
+/* ---------- drawing: posterised cloud bands with gold edges ---------- */
+const small = document.createElement('canvas'); small.width = GW; small.height = GH;
+const sg = small.getContext('2d');
+const MW = 320, MH = 200;   // the bands are cut at this size, then scaled up smoothly
+const mid = document.createElement('canvas'); mid.width = MW; mid.height = MH;
+const mg = mid.getContext('2d', { willReadFrequently: true });
+const out = document.createElement('canvas'); out.width = MW; out.height = MH;
+const og = out.getContext('2d'), img = og.createImageData(MW, MH), sImg = sg.createImageData(GW, GH);
+const BANDS = [[.16, .4], [.4, .3], [.64, .24]];   // threshold, how much each band adds
+const ss = (a, b, v) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t) };
+function render(t) {
+  for (let i = 0; i < fog.length; i++) { const v = Math.round(fog[i] * 255), o = i * 4; sImg.data[o] = sImg.data[o + 1] = sImg.data[o + 2] = v; sImg.data[o + 3] = 255 }
+  sg.putImageData(sImg, 0, 0);
+  mg.imageSmoothingEnabled = true; mg.imageSmoothingQuality = 'high'; mg.drawImage(small, 0, 0, MW, MH);
+  const src = mg.getImageData(0, 0, MW, MH).data, d = img.data;
+  for (let y = 0, p = 0; y < MH; y++) {
+    const wy = Math.sin(y * .061 - t * .7);
+    for (let x = 0; x < MW; x++, p += 4) {
+      const v = src[p] / 255 + .035 * Math.sin(x * .047 + t * .9) * wy;   // the edges breathe
+      let a = 0, edge = 0;
+      for (const [th, add] of BANDS) { a += ss(th - .012, th + .012, v) * add; edge = Math.max(edge, 1 - Math.abs(v - th - .016) / .011) }
+      if (edge > 0 && v > .12) { d[p] = 201; d[p + 1] = 160; d[p + 2] = 92; d[p + 3] = Math.round(Math.max(a * 255, 150 * edge)) }   // a thin gold rim
+      else { d[p] = 250; d[p + 1] = 245; d[p + 2] = 233; d[p + 3] = Math.round(a * 255) }
+    }
+  }
+  og.putImageData(img, 0, 0);
+  g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(out, 0, 0, W, H);
+}
+
+/* ---------- phone messages (called by mp.js for the fog role) ---------- */
+const num = v => typeof v === 'number' && Number.isFinite(v);
+const prev = window.GionCrewExt && window.GionCrewExt.onPhone;
+window.GionCrewExt = Object.assign(window.GionCrewExt || {}, {
+  onPhone(p, m, roles, phase) {
+    if (m.t === 'rub' && roles.includes('fog')) {
+      if (phase !== 'driving' || !on || !Array.isArray(m.p)) return true;
+      const pts = m.p.slice(0, 120).filter(num).map(v => Math.max(0, Math.min(1, v)));
+      for (let i = 0; i + 1 < pts.length; i += 2) rub(pts[Math.max(0, i - 2)], pts[Math.max(1, i - 1)], pts[i], pts[i + 1]);
+      return true;
+    }
+    return prev ? prev(p, m, roles, phase) : false;
+  },
+});
+
+function reset() { fog.fill(0); banks = []; bankT = 5; stats = { rubbed: 0, peak: 0 } }
+GT.on('start', reset);
+
+/* ---------- the loop ---------- */
+let last = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+  const c = crew(), fogger = GT.driving && c && c.phase === 'driving' && holder('fog');
+  if (!fogger) { if (on) { on = false; reset(); g.clearRect(0, 0, cv.width, cv.height) } cv.hidden = true; $('gt-fogbar').hidden = true; return }
+  on = true; cv.hidden = false; fit();
+  // banks come more often as the shift goes on (one step per fare, like the shooter's levels)
+  const st = GT.state(), lv = Math.min(4, st ? st.fares : 0);
+  bankT -= dt;
+  if (bankT <= 0) { if (banks.length < 3) bank(); bankT = (7.5 - lv * .9) * (.7 + Math.random() * .6) }
+  for (const b of banks) {
+    b.t += dt; b.x += b.vx * dt; b.y += b.vy * dt;
+    for (const q of b.puffs) deposit(b.x + q.dx, b.y + q.dy, q.r, b.rate * dt);
+  }
+  banks = banks.filter(b => b.t < b.life);
+  for (let i = 0; i < fog.length; i++) fog[i] = Math.max(0, fog[i] - dt * .004);   // it thins very slowly on its own
+  const cov = cover(); stats.peak = Math.max(stats.peak, cov);
+  if (now - drawT > 33) { drawT = now; render(now / 1000) }   // 30 fps is plenty for fog
+  const bar = $('gt-fogbar'); bar.hidden = false;
+  bar.innerHTML = `<b>Fog</b><span class="${cov > .45 ? 'full' : ''}">${cov < .03 ? 'Clear view' : Math.round(cov * 100) + '% fogged'}</span>`;
+  if (now - sendT > 125) {   // the fog player's picture: the grid at half size, one character (0–9) per cell
+    sendT = now; let s = '';
+    for (let j = 0; j < GH; j += 2) for (let i = 0; i < GW; i += 2) s += Math.min(9, Math.round((fog[j * GW + i] + fog[j * GW + i + 1] + fog[(j + 1) * GW + i] + fog[(j + 1) * GW + i + 1]) / 4 * 9));
+    toPhones({ t: 'fg', w: GW / 2, h: GH / 2, d: s, cov: +cov.toFixed(2), ar: +(W / Math.max(1, H)).toFixed(3) });
+  }
+}
+requestAnimationFrame(frame);
+cv.hidden = true;
+
+window.GionFog = { bank, get cover() { return cover() }, get stats() { return stats }, get on() { return on }, rub };
 })();
 
 </script>
@@ -4298,21 +4605,23 @@ const SC = GT.scene, HALF = SC.meta.half;
 const served = /^https?:$/.test(location.protocol);
 
 /* ---------- roles: which roles each phone holds, by crew size (seat order) ---------- */
-// The shooter took the navigator's seat (shoot.js); the wipers ride with doors & camera. The 'nav' code below stays
-// for now but no crew size hands it out.
+// The shooter took the navigator's seat (shoot.js); the wipers ride with doors & camera. With four phones the last
+// seat rubs fog off the glass (fog.js), so doors move to the pedals and wipers to the shooter. The 'nav' code below
+// stays for now but no crew size hands it out.
 const ROLE_SETS = {
   1: [['steer', 'pedals', 'ops']],          // one phone drives; no shooter, so no targets either
   2: [['steer', 'ops', 'wipe'], ['pedals', 'shoot']],
   3: [['steer'], ['pedals'], ['shoot', 'ops', 'wipe']],
-  4: [['steer'], ['pedals'], ['shoot'], ['ops', 'wipe']],
+  4: [['steer'], ['pedals', 'ops'], ['shoot', 'wipe'], ['fog']],
 };
-const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors', shoot: 'Shooter', wipe: 'Wipers' };
+const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors', shoot: 'Shooter', wipe: 'Wipers', fog: 'Fog' };
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
 // one line per role for the briefing before a shift
 const ROLE_BRIEF = { steer: 'Wheel: steer the taxi.', pedals: 'Pedals: gas and brake; D/R to reverse.', nav: 'Navigator: call the turns.',
-  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.' };
+  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.',
+  fog: 'Fog: rub the fog off the windshield so the driver can see.' };
 
 let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
 let phase = 'off';             // off | lobby | count | driving | results
@@ -4327,7 +4636,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const menu = $('gt-menu');
 if (served) $('gt-start').insertAdjacentHTML('afterend', '<button id="gt-mp" class="gt-ghost">Play with phones</button>');
 menu.querySelector('.gt-menu-actions').insertAdjacentHTML('afterend', served
-  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
+  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors, wipers &amp; fog.</p>'
   : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>
@@ -4736,6 +5045,9 @@ function glitch(kind) {
   if (kind === 'drift') { GT.mods.turnBias = (Math.random() < .5 ? -1 : 1) * .45; setTimeout(() => GT.mods.turnBias = 0, 900) }
   else if (kind === 'stall') GT.mods.gasCutUntil = now + 1500;
   else if (kind === 'jam') GT.mods.doorJamUntil = now + 3000;
+  else if (kind === 'fog') window.GionFog?.bank(true);   // a thick bank rolls over the glass
+  else if (kind === 'flurry') window.GionShoot?.flurry(3);   // a gust of stickers lands on the glass at once
+  else if (kind === 'seize') window.GionShoot?.seize(4000);   // the wipers won't move for 4 s
   else if (kind === 'decoy') {   // a marker "from the navigator" somewhere plausible and wrong
     const st = GT.state(); if (!st) return;
     const pts = GT.scene.roads.flat(2).filter(p => { const d = Math.hypot(p[0] - st.x, p[1] - st.y); return d > 25 && d < 80 && Math.hypot(p[0] - st.tx, p[1] - st.ty) > 30 });

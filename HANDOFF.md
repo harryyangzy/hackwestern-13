@@ -20,7 +20,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
-| Gion Taxi | Driving game on isometric maps of Gion (Kyoto), Western's campus (London ON), Nathan Phillips Sq (Toronto) and the Amsterdam canal ring; solo or a crew of 1–4 phones sharing one taxi (wheel, pedals, shooter, doors & wipers) | `gion-drive/` | Yes, in `main` (solo PR #1, crew play PR #6, shooter PR #8); cities, kart camera and handling in PR #9. Wrong Turn mode: PR #11 |
+| Gion Taxi | Driving game on isometric maps of Gion (Kyoto), Western's campus (London ON), Nathan Phillips Sq (Toronto) and the Amsterdam canal ring; solo or a crew of 1–4 phones sharing one taxi (wheel, pedals, shooter, doors, wipers & fog) | `gion-drive/` | Yes, in `main` (solo PR #1, crew play PR #6, shooter PR #8); cities, kart camera and handling in PR #9. Wrong Turn mode: PR #11 |
 | GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes, in `main` (build 2, via PR #4) |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes, in `main` (via PR #4) |
 | Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes, in `main` (PR #4, with two-corner calibration) |
@@ -46,6 +46,11 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   no page errors. **Not tested on a real phone yet.**
 - **Status:** solo game PR #1, crew play PR #6, shooter and wipers PR #8 (all in `main`); cities, kart camera,
   retuned handling, D/R gear, phone full screen and Gion Bowling in PR #9 (`gion-multiplayer`).
+- **Latest (`gion-multiplayer`, PR pending):** a 4th crew seat, **Fog** (rub the fog off the glass on the phone:
+  `fog.js`, `fog.css`, `pad-fog.js`); crew characters, one per seat colour (fox, bear, owl, raccoon, heads only:
+  `crew.js`); an animated hero on the title screen (`index.template.html`) with Multiplayer / Single player choices;
+  one Wrong Turn sabotage per role. Note: `crew.js` and `mp.js` both set `window.GionCrew` (mp.js wins on city pages),
+  so the characters aren't shown in-game yet, only on the title screen.
 - **Cities:** `gion-taxi.html` (Gion), `taxi-london.html` (Western main campus: University College to Middlesex College,
   paths drivable), `taxi-toronto.html` (Nathan Phillips Square, City Hall), `taxi-amsterdam.html` (Reguliersgracht ×
   Keizersgracht). `python3 gion-drive/build.py` builds all four (`--city` for one); the server serves `/london` etc.
@@ -76,7 +81,8 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   Step-by-step for teammates and their AI agents: skill `setup-wrong-turn-solana`
   (`.agents/skills/setup-wrong-turn-solana/SKILL.md`, also linked from `.claude/skills/`).
 - **Merged with `main` (shooter, wipers, new cities, bowling):** the navigator is gone, so the destination stays visible
-  and the *decoy* sabotage is unused; shooter sabotages with *drift*, wipers with *jam*. Wrong Turn only applies to taxi
+  and the *decoy* sabotage is unused; every role now has its own sabotage: wheel *drift*, pedals *stall*, doors *jam*, shooter *flurry*,
+  wipers *seize*, fog *fog bank*. Wrong Turn only applies to taxi
   shifts, not Gion Bowling.
 
 ### GripSense iOS app (`GripSense/`)

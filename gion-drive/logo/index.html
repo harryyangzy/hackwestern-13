@@ -1,0 +1,172 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>tandem logo concepts</title>
+<style>
+@font-face { font-family: "Zimula InkSpot Display"; src: url("../ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf") format("opentype"); font-weight: 500; }
+@font-face { font-family: "Suisse Intl"; src: url("../SuisseIntl-Regular.woff2") format("woff2"); }
+:root { --ink: #263c35; --paper: #f6f3e9; --cream: #fffcf3; --muted: #626c60; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 14px/1.4 "Suisse Intl", Inter, sans-serif; }
+main { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 32px; max-width: 1400px; margin: auto; }
+figure { margin: 0; background: var(--cream); border: 1px solid #ded6c5; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; }
+figure .stage { flex: 1; display: grid; place-items: center; min-height: 340px; border-radius: 16px; }
+figcaption { margin-top: 14px; color: var(--muted); }
+figcaption b { color: var(--ink); font: 500 18px/1.2 "Zimula InkSpot Display", sans-serif; display: block; margin-bottom: 2px; }
+.canal { background: #9cc3c4; }
+.night { background: #1d2b26; }
+svg { display: block; }
+.disp { font-family: "Zimula InkSpot Display", "Suisse Intl", sans-serif; font-weight: 500; }
+</style>
+
+<!-- shared pieces -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- the cuties' die-cut look: a fat cream outline plus a soft paper shadow -->
+    <filter id="sticker" x="-20%" y="-20%" width="140%" height="150%">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="7" result="grow"/>
+      <feFlood flood-color="#fffcf3"/><feComposite in2="grow" operator="in" result="edge"/>
+      <feGaussianBlur in="grow" stdDeviation="3" result="blur"/>
+      <feOffset in="blur" dy="5" result="drop"/>
+      <feFlood flood-color="#3d311e" flood-opacity=".22"/><feComposite in2="drop" operator="in" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sticker-sm" x="-20%" y="-20%" width="140%" height="150%">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="4" result="grow"/>
+      <feFlood flood-color="#fffcf3"/><feComposite in2="grow" operator="in" result="edge"/>
+      <feGaussianBlur in="grow" stdDeviation="2" result="blur"/>
+      <feOffset in="blur" dy="3" result="drop"/>
+      <feFlood flood-color="#3d311e" flood-opacity=".2"/><feComposite in2="drop" operator="in" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="sticker-night" x="-20%" y="-20%" width="140%" height="150%">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="7" result="grow"/>
+      <feFlood flood-color="#3a554c"/><feComposite in2="grow" operator="in" result="edge"/>
+      <feGaussianBlur in="grow" stdDeviation="4" result="blur"/>
+      <feOffset in="blur" dy="5" result="drop"/>
+      <feFlood flood-color="#000" flood-opacity=".35"/><feComposite in2="drop" operator="in" result="shadow"/>
+      <feMerge><feMergeNode in="shadow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sticker-night-sm" x="-20%" y="-20%" width="140%" height="150%">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="4" result="grow"/>
+      <feFlood flood-color="#3a554c"/><feComposite in2="grow" operator="in" result="edge"/>
+      <feMerge><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- the kerb: red and cream blocks, like the map's road edges -->
+    <pattern id="kerb" width="28" height="12" patternUnits="userSpaceOnUse">
+      <rect width="14" height="12" fill="#c8402f"/><rect x="14" width="14" height="12" fill="#fffcf3"/>
+    </pattern>
+
+    <clipPath id="glass"><path d="M58 50 Q60 44 66 44 H134 Q140 44 142 50 L150 84 H50 Z"/></clipPath>
+
+    <!-- the cab, front on, with the crew squeezed in behind the windshield (200 x 170 box) -->
+    <g id="cab">
+      <!-- wheels -->
+      <rect x="30" y="128" width="30" height="30" rx="9" fill="#263c35"/>
+      <rect x="140" y="128" width="30" height="30" rx="9" fill="#263c35"/>
+      <!-- roof lantern (the fare light) -->
+      <rect x="93" y="12" width="14" height="5" rx="2" fill="#263c35"/>
+      <ellipse cx="100" cy="27" rx="17" ry="12" fill="#f2c94c"/>
+      <path d="M86 24 H114 M85 30 H115" stroke="#d9a72e" stroke-width="1.6"/>
+      <rect x="92" y="36" width="16" height="5" rx="2" fill="#263c35"/>
+      <!-- cabin -->
+      <path d="M50 44 Q52 36 62 36 H138 Q148 36 150 44 L160 90 H40 Z" fill="#c8402f"/>
+      <path d="M58 50 Q60 44 66 44 H134 Q140 44 142 50 L150 84 H50 Z" fill="#bfe0e6"/>
+      <!-- crew: neko, sparrow, mochi, ladybug -->
+      <g clip-path="url(#glass)">
+        <path d="M58 70 L60 56 L68 63 Z M78 63 L86 56 L87 70 Z" fill="#d9738f"/>
+        <circle cx="72" cy="76" r="13" fill="#d9738f"/>
+        <circle cx="94" cy="78" r="12" fill="#2f7f78"/><path d="M104 77 L110 79 L104 81Z" fill="#f2c94c"/>
+        <ellipse cx="114" cy="82" rx="14" ry="11" fill="#f9dce5"/>
+        <circle cx="134" cy="78" r="11" fill="#263c35"/>
+        <path d="M130 68 Q127 62 124 61 M138 68 Q141 62 144 61" stroke="#263c35" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <g fill="#263c35">
+          <circle cx="68" cy="75" r="1.8"/><circle cx="76" cy="75" r="1.8"/>
+          <circle cx="91" cy="76" r="1.6"/><circle cx="98" cy="76" r="1.6"/>
+          <circle cx="110" cy="80" r="1.6"/><circle cx="118" cy="80" r="1.6"/>
+        </g>
+        <circle cx="131" cy="77" r="2.2" fill="#fffcf3"/><circle cx="137" cy="77" r="2.2" fill="#fffcf3"/>
+        <g fill="#ee9a92" opacity=".9">
+          <ellipse cx="66" cy="79" rx="2.6" ry="1.5"/><ellipse cx="78" cy="79" rx="2.6" ry="1.5"/>
+          <ellipse cx="108" cy="84" rx="2.4" ry="1.4"/><ellipse cx="120" cy="84" rx="2.4" ry="1.4"/>
+        </g>
+        <path d="M60 46 L76 46 L58 66 Z" fill="#fff" opacity=".35"/>
+      </g>
+      <!-- body -->
+      <rect x="22" y="84" width="156" height="56" rx="20" fill="#c8402f"/>
+      <rect x="22" y="104" width="156" height="12" fill="url(#kerb)"/>
+      <!-- headlights and grille -->
+      <circle cx="46" cy="100" r="11" fill="#fffcf3"/><circle cx="46" cy="100" r="5.5" fill="#f2c94c"/>
+      <circle cx="154" cy="100" r="11" fill="#fffcf3"/><circle cx="154" cy="100" r="5.5" fill="#f2c94c"/>
+      <rect x="70" y="122" width="60" height="9" rx="4.5" fill="#263c35"/>
+      <path d="M30 92 Q34 88 40 88" stroke="#fff" stroke-opacity=".4" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- a maple leaf from the map's trees -->
+    <path id="maple" d="M0 -20 L5 -9 L15 -13 L11 -2 L20 2 L9 6 L11 14 L2 9 L0 20 L-2 9 L-11 14 L-9 6 L-20 2 L-11 -2 L-15 -13 L-5 -9 Z"/>
+  </defs>
+</svg>
+
+<main>
+  <!-- A: sticker wordmark -->
+  <figure>
+    <div class="stage">
+      <svg viewBox="0 0 640 300" width="600">
+        <g transform="translate(60 214)" filter="url(#sticker)">
+          <text class="disp" font-size="150" fill="#263c35" letter-spacing="-4">tandem</text>
+        </g>
+        <!-- the cab parked on the 'd' -->
+        <g transform="translate(372 18) scale(.62) rotate(-6 100 85)" filter="url(#sticker)"><use href="#cab"/></g>
+        <!-- kerb underline as the road -->
+        <rect x="66" y="248" width="476" height="12" rx="6" fill="url(#kerb)" filter="url(#sticker-sm)"/>
+        <use href="#maple" transform="translate(82 64) rotate(-18) scale(1.05)" fill="#c9782e" filter="url(#sticker-sm)"/>
+        <use href="#maple" transform="translate(600 120) rotate(22) scale(.8)" fill="#ac4931" filter="url(#sticker-sm)"/>
+      </svg>
+    </div>
+    <figcaption><b>A · Sticker wordmark</b>The title-screen wordmark gets the cuties' cream die-cut edge, and the crew cab rides over the <i>e</i>. A kerb stripe for a road and two maple leaves from the Gion trees. Best for the title screen and posters.</figcaption>
+  </figure>
+
+  <!-- B: crew cab icon -->
+  <figure>
+    <div class="stage">
+      <svg viewBox="0 0 320 320" width="320">
+        <defs><clipPath id="sq"><rect x="20" y="20" width="280" height="280" rx="68"/></clipPath></defs>
+        <g filter="url(#sticker)">
+          <rect x="20" y="20" width="280" height="280" rx="68" fill="#9cc3c4"/>
+          <g clip-path="url(#sq)">
+            <!-- canal ripples -->
+            <path d="M40 80 q14 -7 28 0 t28 0 M210 64 q14 -7 28 0 t28 0 M232 110 q12 -6 24 0" stroke="#fffcf3" stroke-opacity=".55" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <!-- road -->
+            <path d="M20 232 H300 V300 H20Z" fill="#c9c3d4"/>
+            <rect x="20" y="226" width="280" height="12" fill="url(#kerb)"/>
+            <use href="#maple" transform="translate(64 136) rotate(-20) scale(1.25)" fill="#c9782e"/>
+            <use href="#maple" transform="translate(258 160) rotate(18) scale(1)" fill="#ac4931"/>
+            <use href="#maple" transform="translate(236 46) rotate(40) scale(.7)" fill="#f2c94c"/>
+          </g>
+        </g>
+        <g transform="translate(70 92)"><use href="#cab"/></g>
+      </svg>
+    </div>
+    <figcaption><b>B · Crew cab</b>One taxi, the whole crew: neko, sparrow, mochi and ladybug crammed behind the windshield, with the gold fare lantern on the roof. Set on the canal with a kerbed road. App icon, favicon, QR join card.</figcaption>
+  </figure>
+
+
+  <!-- D: one-line lockup, A's sticker wordmark beside the big cab -->
+  <figure>
+    <div class="stage">
+      <svg viewBox="0 0 720 250" width="620">
+        <!-- kerb road under car and word -->
+        <rect x="16" y="212" width="690" height="12" rx="6" fill="url(#kerb)" filter="url(#sticker-sm)"/>
+        <!-- big cab, tilted forward, nosing up to the t -->
+        <g transform="translate(6 48) scale(.95) rotate(-4 100 150)" filter="url(#sticker)"><use href="#cab"/></g>
+        <!-- A's sticker wordmark -->
+        <g transform="translate(190 196)" filter="url(#sticker)">
+          <text class="disp" font-size="150" fill="#263c35" letter-spacing="-4">tandem</text>
+        </g>
+        <use href="#maple" transform="translate(206 58) rotate(-18) scale(.9)" fill="#c9782e" filter="url(#sticker-sm)"/>
+        <use href="#maple" transform="translate(700 96) rotate(22) scale(.75)" fill="#ac4931" filter="url(#sticker-sm)"/>
+      </svg>
+    </div>
+    <figcaption><b>C · Ride-along lockup</b>A's sticker wordmark with the big crew cab pulled up beside it on one kerbed lane. One line, no tagline. For the top bar, README and slides.</figcaption>
+  </figure>
+</main>

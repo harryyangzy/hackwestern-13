@@ -10,21 +10,23 @@ const SC = GT.scene, HALF = SC.meta.half;
 const served = /^https?:$/.test(location.protocol);
 
 /* ---------- roles: which roles each phone holds, by crew size (seat order) ---------- */
-// The shooter took the navigator's seat (shoot.js); the wipers ride with doors & camera. The 'nav' code below stays
-// for now but no crew size hands it out.
+// The shooter took the navigator's seat (shoot.js); the wipers ride with doors & camera. With four phones the last
+// seat rubs fog off the glass (fog.js), so doors move to the pedals and wipers to the shooter. The 'nav' code below
+// stays for now but no crew size hands it out.
 const ROLE_SETS = {
   1: [['steer', 'pedals', 'ops']],          // one phone drives; no shooter, so no targets either
   2: [['steer', 'ops', 'wipe'], ['pedals', 'shoot']],
   3: [['steer'], ['pedals'], ['shoot', 'ops', 'wipe']],
-  4: [['steer'], ['pedals'], ['shoot'], ['ops', 'wipe']],
+  4: [['steer'], ['pedals', 'ops'], ['shoot', 'wipe'], ['fog']],
 };
-const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors', shoot: 'Shooter', wipe: 'Wipers' };
+const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors', shoot: 'Shooter', wipe: 'Wipers', fog: 'Fog' };
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
 // one line per role for the briefing before a shift
 const ROLE_BRIEF = { steer: 'Wheel: steer the taxi.', pedals: 'Pedals: gas and brake; D/R to reverse.', nav: 'Navigator: call the turns.',
-  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.' };
+  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.',
+  fog: 'Fog: rub the fog off the windshield so the driver can see.' };
 
 let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
 let phase = 'off';             // off | lobby | count | driving | results
@@ -39,7 +41,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const menu = $('gt-menu');
 if (served) $('gt-start').insertAdjacentHTML('afterend', '<button id="gt-mp" class="gt-ghost">Play with phones</button>');
 menu.querySelector('.gt-menu-actions').insertAdjacentHTML('afterend', served
-  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
+  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors, wipers &amp; fog.</p>'
   : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>

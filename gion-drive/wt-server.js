@@ -18,7 +18,7 @@ catch (e) { chainErr = /Cannot find module '@solana/.test(e.message) ? 'Run `npm
 
 const STAKE = Math.round((+process.env.WT_STAKE || 0.01) * 1e9);   // lamports each player deposits (test SOL)
 const SAB_CHARGES = 3, SAB_COOLDOWN_MS = 12000, VOTE_MS = 25000, REVEAL_MS = 45000;
-const KINDS = { steer: 'drift', pedals: 'stall', nav: 'decoy', ops: 'jam', shoot: 'drift', wipe: 'jam' };   // main replaced the navigator with shoot + wipe
+const KINDS = { steer: 'drift', pedals: 'stall', nav: 'decoy', ops: 'jam', shoot: 'flurry', wipe: 'seize', fog: 'fog' };   // one sabotage per role
 const DEFAULT_GOAL = 3000;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), '[wrong turn]', ...a);
 const hex = b => Buffer.from(b).toString('hex');
