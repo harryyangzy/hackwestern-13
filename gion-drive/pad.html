@@ -68,10 +68,11 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 .mates button{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--rule);border-radius:10px;background:#fff9;text-align:left}
 .mates button.mine{border-color:var(--me);box-shadow:inset 0 0 0 1px var(--me)}
 .mates button b{font:600 14px var(--serif);flex:1}
-#brief{position:fixed;inset:0;z-index:39;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8vh;background:var(--paper);text-align:center;gap:4px}
+/* before a shift: just this phone's mascot on flat paper, and the countdown in a rust badge under it */
+#brief{position:fixed;inset:0;z-index:39;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:9vh;background:#fffcf3;text-align:center}
 #brief[hidden]{display:none}
-#brief h2{font-size:30px}
-#brief p{font:italic 17px var(--serif);color:var(--muted);margin:0;max-width:520px}
+#briefFace{display:grid;place-items:center;width:38vh;height:38vh;border-radius:50%;background:#f4ecdc}
+#briefFace svg{width:30vh;height:30vh}
 .mates div{display:flex;align-items:center;gap:7px}
 .mates i{width:8px;height:8px;border-radius:50%}
 .mates .ok{margin-left:auto;color:var(--green);font-weight:600}
@@ -254,8 +255,11 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 #brief:not([hidden])>*:nth-child(2){animation-delay:.06s}#brief:not([hidden])>*:nth-child(3){animation-delay:.12s}
 @media (prefers-reduced-motion:reduce){#lobby,#drive,#join,#wait,#brief>*{animation:none!important}}
 /* countdown + banner */
-#count{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:600 34vh var(--serif);color:var(--ink);text-shadow:0 0 30px #fffcf3;z-index:40;pointer-events:none}
-#count.pop{animation:pop .9s ease-out}
+#count{position:fixed;left:0;right:0;bottom:10vh;margin:0 auto;width:30vh;height:30vh;display:grid;place-items:center;border-radius:50%;background:#c8402f;color:#fff6e2;
+  font:500 17vh/1 var(--display,var(--sans));box-shadow:0 1.4vh 0 #9a2f22;z-index:40;pointer-events:none}
+#count[hidden]{display:none}
+#count.pop{animation:cbump .45s cubic-bezier(.2,.7,.2,1)}
+@keyframes cbump{0%{transform:scale(1.3)}100%{transform:scale(1)}}
 @keyframes pop{0%{opacity:0;transform:scale(1.4)}25%{opacity:1;transform:scale(1)}100%{opacity:.1}}
 #banner{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:45;padding:7px 16px;font:italic 15px var(--serif);color:var(--rust);white-space:nowrap}
 #toast{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:44;font:600 16px var(--serif);color:var(--rust);text-shadow:0 0 6px #fffcf3,0 0 3px #fffcf3;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
@@ -363,7 +367,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
   </div>
 </div>
 <div id="swipe" aria-live="polite"><svg viewBox="0 0 48 48" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 40V10m-9 9 9-9 9 9"/></svg><h2>Swipe up for full screen</h2><button id="swipeSkip">Not now</button></div>
-<div id="brief" hidden><small>Your job</small><h2 id="briefRole"></h2><p id="briefText"></p></div>
+<div id="brief" hidden><span id="briefFace"></span></div>
 <div id="count" hidden></div>
 <div id="banner" class="card" hidden></div>
 <div id="toast"></div>
@@ -547,8 +551,8 @@ $('ready').onclick = () => {
 // before a shift: this phone's job, under the countdown
 function showBrief() {
   if (!myRoles.length) return;
-  $('briefRole').textContent = myRoles.map(r => ROLE_INFO[r][0]).join(' + ');
-  $('briefText').textContent = myRoles.map(r => ROLE_INFO[r][1]).join(' ');
+  const col = document.documentElement.style.getPropertyValue('--me').trim() || '#c8513a';
+  $('briefFace').innerHTML = window.GionCrew ? GionCrew.icon(col, 120) : '';
   $('brief').hidden = false; buzz(20);
   clearTimeout(showBrief.t); showBrief.t = setTimeout(() => { $('brief').hidden = true }, 6500);
 }
