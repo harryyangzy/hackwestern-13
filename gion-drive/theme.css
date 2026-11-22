@@ -253,7 +253,7 @@ body { background: var(--paper); }
 .gt-stats > div:nth-child(2) { background: var(--ice); }
 .gt-task, #gt-call { background: var(--ice); font-style: normal; }
 #gt-map { border-radius: 16px; }
-#wt-goal { background: #fffcf3; border: 1.5px solid #e3d6bc; border-radius: 22px; box-shadow: 0 5px 0 #dcc6a2; }
+#wt-goal { background: #fffcf3; border: 1px solid #e3d6bc; border-radius: 16px; box-shadow: 0 3px 0 #e3d6bc; }
 .wt-switch.on { background: var(--rose); }
 .wt-switch { border-color: var(--rule); }
 .wt-switch.on { border-color: #dcafbc; }

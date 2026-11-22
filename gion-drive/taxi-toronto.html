@@ -2799,15 +2799,20 @@ body.gt-flow #gt-lclose{position:static;display:inline-flex;width:max-content;he
 .wt-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--rule);transition:background .3s,border-color .3s}
 .wt-dots i.on{background:var(--green);border-color:var(--green)}
 .wt-sub{font:italic 14px var(--serif)}
-#wt-goal{position:absolute;left:14px;top:14px;z-index:4;display:flex;flex-direction:column;gap:6px;padding:14px 16px 13px;min-width:150px;max-width:220px}
-#wt-goal small{display:flex;align-items:center;gap:6px;font:700 14px var(--sans);color:#c8402f}
-#wt-goal small svg{width:11px;height:15px}
-#wt-goal b{display:flex;gap:3px;align-items:flex-end;font:700 30px/1 var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
-#wt-goal b i{position:relative;font-style:normal;min-width:26px;padding:7px 3px 6px;text-align:center;background:linear-gradient(#efe4cf 0 calc(50% - 1px),#fffcf3 0 calc(50% + 1px),#e9dcc3 0);border-radius:7px;box-shadow:0 2px 0 #dcc6a2}
-#wt-goal b u{text-decoration:none;font-size:18px;padding-bottom:5px;color:var(--muted)}
+/* the trip goal: a small fare meter. Light cream split-flap tiles (pale green at the goal), a thin progress rail
+   that turns green at the goal, and the one-line warning under a hairline */
+#wt-goal{position:absolute;left:14px;top:14px;z-index:4;display:flex;flex-direction:column;gap:9px;padding:12px 14px 11px;width:max-content;min-width:168px}
+#wt-goal small{display:flex;align-items:center;gap:6px;font:800 13px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:#c8402f}
+#wt-goal small svg{width:10px;height:14px}
+#wt-goal small span{margin-left:auto;padding-left:14px;font:600 11px var(--sans);letter-spacing:.02em;text-transform:none;color:var(--muted)}
+#wt-goal b{display:flex;gap:3px;align-items:center;font:500 26px/1 var(--display);font-variant-numeric:tabular-nums}
+#wt-goal b i{position:relative;font-style:normal;min-width:22px;padding:6px 2px 5px;text-align:center;color:var(--ink);background:linear-gradient(#efe4cf 0 calc(50% - 1px),#fffcf3 0 calc(50% + 1px),#e9dcc3 0);border-radius:6px;box-shadow:0 2px 0 #dcc6a2;overflow:hidden}
+#wt-goal b u{text-decoration:none;font:600 15px var(--sans);color:var(--muted);padding:0 1px}
 #wt-goal b.ok i{background:linear-gradient(#dcebd5 0 calc(50% - 1px),#fffcf3 0 calc(50% + 1px),#cfe2c6 0);box-shadow:0 2px 0 #a9c79e;color:#24644e}
-#wt-goal span{font:500 13px var(--sans);color:var(--muted)}
-#wt-goal em{font:600 13px var(--sans);font-style:normal;color:#c8402f}
+.wt-gbar{height:4px;border-radius:4px;background:#e9dfca;overflow:hidden}
+.wt-gbar i{display:block;height:100%;border-radius:4px;background:#c8402f;transition:width .4s ease}
+.wt-gbar.ok i{background:#24644e}
+#wt-goal em{padding-top:8px;border-top:1px solid #e9dfca;font:italic 500 12.5px var(--sans);color:#9b3c50}
 .wt-tripline{font:600 17px var(--serif)!important}
 .wt-tripline.ok{color:var(--green)!important}.wt-tripline.bad{color:var(--rust)!important}
 .wt-seats{list-style:none;padding:0;margin:12px 0;display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px}
@@ -3104,7 +3109,7 @@ body { background: var(--paper); }
 .gt-stats > div:nth-child(2) { background: var(--ice); }
 .gt-task, #gt-call { background: var(--ice); font-style: normal; }
 #gt-map { border-radius: 16px; }
-#wt-goal { background: #fffcf3; border: 1.5px solid #e3d6bc; border-radius: 22px; box-shadow: 0 5px 0 #dcc6a2; }
+#wt-goal { background: #fffcf3; border: 1px solid #e3d6bc; border-radius: 16px; box-shadow: 0 3px 0 #e3d6bc; }
 .wt-switch.on { background: var(--rose); }
 .wt-switch { border-color: var(--rule); }
 .wt-switch.on { border-color: #dcafbc; }
@@ -5154,7 +5159,9 @@ setInterval(() => {
   // the door opens by itself after a while: holding it shut only buys a few seconds
   atDoorT = st.atDoor ? atDoorT + dt : 0;
   if (atDoorT > 4.5) { atDoorT = 2.5; GT.openDoor() }
-  goalEl.innerHTML = `<small>${LANTERN}Fare</small><b class="${st.yen >= goal ? 'ok' : ''}">${flaps(yen(st.yen))}</b><span>of ${yen(goal)}</span><em>Someone is lying.</em>`;
+  const pct = Math.min(100, goal ? st.yen / goal * 100 : 0), ok = st.yen >= goal;
+  goalEl.innerHTML = `<small>${LANTERN}Fare<span>Goal ${yen(goal)}</span></small><b class="${ok ? 'ok' : ''}">${flaps(yen(st.yen))}</b>
+    <div class="wt-gbar${ok ? ' ok' : ''}"><i style="width:${pct.toFixed(1)}%"></i></div><em>Someone is lying.</em>`;
 }, 100);
 
 // a glitch looks like bad luck or bad driving; the server never says whose phone sent it

@@ -99,7 +99,9 @@ setInterval(() => {
   // the door opens by itself after a while: holding it shut only buys a few seconds
   atDoorT = st.atDoor ? atDoorT + dt : 0;
   if (atDoorT > 4.5) { atDoorT = 2.5; GT.openDoor() }
-  goalEl.innerHTML = `<small>${LANTERN}Fare</small><b class="${st.yen >= goal ? 'ok' : ''}">${flaps(yen(st.yen))}</b><span>of ${yen(goal)}</span><em>Someone is lying.</em>`;
+  const pct = Math.min(100, goal ? st.yen / goal * 100 : 0), ok = st.yen >= goal;
+  goalEl.innerHTML = `<small>${LANTERN}Fare<span>Goal ${yen(goal)}</span></small><b class="${ok ? 'ok' : ''}">${flaps(yen(st.yen))}</b>
+    <div class="wt-gbar${ok ? ' ok' : ''}"><i style="width:${pct.toFixed(1)}%"></i></div><em>Someone is lying.</em>`;
 }, 100);
 
 // a glitch looks like bad luck or bad driving; the server never says whose phone sent it
