@@ -40,7 +40,7 @@ dialog{color:var(--ink);background:var(--panel);border:1px solid #afb5a5;border-
 @media(min-width:761px){.compass{top:72px;right:18px}}
 @media(max-width:760px){.views{max-width:calc(100% - 20px);padding:3px}.vbtn{height:30px;padding:0 10px;font-size:12px}.stage>.tools{top:8px;right:8px}}
 @media(max-height:480px) and (orientation:landscape){.stage>.tools{top:6px;right:8px}.compass{top:auto;bottom:6px}}
-</style></head><body>
+</style></head><body><style>#gt-veil{position:fixed;inset:0;z-index:60;background:#f6f3e9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:opacity .5s cubic-bezier(.4,0,.2,1)}#gt-veil.out{opacity:0;pointer-events:none}#gt-veil b{font:700 44px Inter,"Helvetica Neue",Arial,sans-serif;letter-spacing:-.02em;color:#263c35}#gt-veil small{font:11px Inter,"Helvetica Neue",Arial,sans-serif;color:#626c60;text-transform:uppercase;letter-spacing:.08em}#gt-veil i{width:28px;height:2px;background:#ac4931;margin-top:10px;animation:gt-veil 1.1s ease-in-out infinite alternate}@keyframes gt-veil{from{transform:scaleX(.3);opacity:.4}to{transform:scaleX(1);opacity:1}}@media (prefers-reduced-motion:reduce){#gt-veil,#gt-veil i{transition:none;animation:none}}</style><div id="gt-veil" aria-hidden="true"><b>Amsterdam</b><small>Reguliersgracht × Keizersgracht</small><i></i></div>
 
 
 <header class="top"><div class="identity"><span class="brand-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round"><g stroke="#507968" stroke-width="1.25"><path d="m2.7 28.8 11.5-5.4 12.3 2.7 10.6-4.4 8.2 10.6-12.6 7.2-12.3-2.7-10.2 4Z" fill="#a9ccaa"/><path d="m14.2 23.4 6.2 13.4 12.3 2.7-6.2-13.4Z" fill="#e9ddad"/><path d="m5.5 33.4 10.1-4.1 11.8 2.2 13.8-5.6" stroke="#6a9d95" stroke-width="2.3"/></g><g stroke="#774638" stroke-width="1.25"><path d="m24.8 30.9 8.9-4.8V13.8l-8.9 3.4Z" fill="#c98353"/><path d="m15.2 27.7 9.6 3.2V17.2l-2-.7v-2.3l-2-.7v-2.2l-2.7-.9v2.1l-1.9-.6v2.5l-1-.3Z" fill="#e8ac68"/><path d="m24.8 17.2 8.9-3.4-5.9-5.7-7 3.2 1 2.2 2 .7v2.3Z" fill="#985b49"/><path d="m11.6 32.8 8.9 3.6V17.7l-2.1-.8v-2.6l-2.2-.8v-2.7l-2.8-1.1v2.6l-2-.8v2.8l-1.8-.6v2.8l-1.4-.6v15.6Z" fill="#db7153"/><path d="m20.5 17.7 5.7-3-6-7.7-4 3.8v2.7l2.2.8v2.6Z" fill="#b35545"/><path d="m20.5 36.4 5.7-3.3V14.7l-5.7 3Z" fill="#a65548"/></g><g fill="#fceac8"><path d="m10.4 18.8 2.1.8v3.6l-2.1-.8Zm5 1.9 2.2.9v3.5l-2.2-.8Zm-5 4.4 2.1.8v3.6l-2.1-.8Z"/></g><path d="m15.4 33.9 2.2.8v-6.4l-2.2-.8Z" fill="#41584f"/><path d="m28.4 17 .1 3.3m2.6-4.6v3.2" stroke="#fcdfaa" stroke-width="1.65"/></svg></span><span class="wordmark">tandem</span></div><nav class="city-nav" aria-label="Place"><a aria-current="page" id="placeTab" href="#"></a></nav><div class="topnav"><div class="status" id="status"><i></i><span>Simulation live</span></div><button id="notesBtn" aria-label="Field notes" class="button" aria-haspopup="dialog"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-2-2-5-3-9-2v15c4-1 7 0 9 2 2-2 5-3 9-2V4c-4-1-7 0-9 2v15"/></svg><span>Field notes</span></button></div></header>
@@ -2532,13 +2532,22 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 .gt-link{color:var(--rust);font-weight:600;text-decoration:underline;font-size:inherit}
 /* a cleaner game page: no view bar, no "Simulation live", no view-name label, no season picker (always autumn) */
 .control-area,#status,.map-code,.season-box,.view-select{display:none!important}
-.stage{bottom:12px}
-/* while driving: the map takes the whole window */
-body.gt-driving .top,body.gt-driving .foot,body.gt-driving .rail,body.gt-driving .tools,body.gt-driving .compass,body.gt-driving .stage>.mark{display:none!important}
-body.gt-driving .workspace{height:100%}
-body.gt-driving .stage{left:0;right:0;top:0;bottom:0}
+/* the map always fills the window; the page's header, sidebar and footer float over it and step aside for the briefing
+   and the shift (no resize, so the map never jumps or redraws at a new size) */
+.workspace{position:fixed;inset:0;height:auto;z-index:0}
+.stage{left:0;right:0;top:0;bottom:0}
+.top{position:absolute;left:0;right:0;top:0;z-index:5}
+.foot{position:absolute;left:0;right:0;bottom:0;z-index:5}
+.rail{top:90px;bottom:52px}
+.stage>.tools,.compass,.scale{display:none!important}
+.top,.foot,.rail{transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.2,.7,.2,1)}
+body.gt-focus .top,body.gt-driving .top{opacity:0;transform:translateY(-14px);pointer-events:none}
+body.gt-focus .foot,body.gt-driving .foot{opacity:0;transform:translateY(10px);pointer-events:none}
+body.gt-focus .rail,body.gt-driving .rail{opacity:0;transform:translateX(-22px);pointer-events:none}
+body.gt-focus .stage>.mark,body.gt-driving .stage>.mark{opacity:0}
+.stage>.mark{transition:opacity .4s}
 /* tandem opening flow (flow.js): the old card only shows a shift's result; the briefing before each shift */
-body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
+body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-menu .gt-instructions,body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
 body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weight:600;color:var(--rust)}
 #gt-brief{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 28px));padding:22px 28px;z-index:7;text-align:center}
 #gt-brief[hidden]{display:none}
@@ -2553,6 +2562,23 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 #gt-bcount{display:block;font:600 64px/1 var(--serif);color:var(--rust);min-height:64px}
 #gt-bcount.ready{font:italic 22px/64px var(--serif);color:var(--muted)}
 #gt-bcount.pop{animation:gt-pop .9s ease-out}
+
+/* ---------- motion: short, eased, staggered; nothing waits on an animation ---------- */
+@keyframes gt-rise{from{opacity:0;transform:translate(-50%,calc(-50% + 14px)) scale(.985)}to{opacity:1;transform:translate(-50%,-50%)}}
+@keyframes gt-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes gt-num{0%{opacity:0;transform:scale(1.45)}30%{opacity:1;transform:scale(1)}100%{opacity:.2;transform:scale(.92)}}
+#gt-menu:not([hidden]),#gt-lobby:not([hidden]),#gt-brief:not([hidden]){animation:gt-rise .45s cubic-bezier(.2,.7,.2,1) both}
+#gt-brief.leave,#gt-lobby.leave{animation:none;opacity:0;transform:translate(-50%,calc(-50% - 10px)) scale(.985);transition:opacity .28s ease,transform .3s ease}
+#gt-brief li{animation:gt-in .4s cubic-bezier(.2,.7,.2,1) both}
+#gt-brief li:nth-child(2){animation-delay:.07s}#gt-brief li:nth-child(3){animation-delay:.14s}#gt-brief li:nth-child(4){animation-delay:.21s}
+#gt-bcount.pop{animation:gt-num .9s cubic-bezier(.2,.7,.2,1)}
+#gt-seats li{animation:gt-in .35s cubic-bezier(.2,.7,.2,1) both}
+#gt-seats li:nth-child(2){animation-delay:.04s}#gt-seats li:nth-child(3){animation-delay:.08s}#gt-seats li:nth-child(4){animation-delay:.12s}
+/* the HUD arrives as the shift starts: stats, task, minimap a beat apart */
+#gt-hud:not([hidden]) .gt-stats{animation:gt-in .45s cubic-bezier(.2,.7,.2,1) both}
+#gt-hud:not([hidden]) .gt-task{animation:gt-in .45s .08s cubic-bezier(.2,.7,.2,1) both}
+#gt-hud:not([hidden]) #gt-map{animation:gt-in .45s .16s cubic-bezier(.2,.7,.2,1) both}
+@media (prefers-reduced-motion:reduce){#gt-menu,#gt-lobby,#gt-brief,#gt-brief li,#gt-seats li,#gt-hud *,.top,.foot,.rail{animation:none!important;transition:none!important}}
 /* Gion Taxi crew play: the lobby card, the countdown, the navigator's callout and the crew strip.
    Same cards, inks and type as drive.css (Pocket City's :root tokens), nothing new in the palette. */
 .gt-ghost{margin:8px 0 0 8px;background:transparent;color:var(--ink);border:1px solid var(--rust);border-radius:999px;padding:9px 20px;font-weight:600;font-size:15px}
@@ -3082,7 +3108,7 @@ dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
   .gt-ticket-sticker { width: 48px; height: 48px; font-size: 28px; }
 }
 </style>
-<script>window.GT_CITY = {"name": "Amsterdam", "brand": "tandem", "bowl": "Canal Bowling", "blurb": "Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.", "drivePaths": false, "open": false, "id": "amsterdam", "cities": [{"id": "gion", "name": "Kyoto", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
+<script>window.GT_CITY = {"name": "Amsterdam", "brand": "tandem", "bowl": "Joyride", "blurb": "Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.", "drivePaths": false, "open": false, "money": {"sym": "€", "rate": 0.006, "dec": 2, "label": "Euros"}, "id": "amsterdam", "cities": [{"id": "gion", "name": "Kyoto", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
 <script>
 /* Gion Taxi: a small QR code encoder for the crew lobby (byte mode, error correction level M, versions 1–6,
    i.e. up to 106 bytes, which is plenty for a join URL). Follows ISO/IEC 18004; the structure mirrors
@@ -3195,7 +3221,7 @@ else window.GTQR = GTQR;
    The taxi lives here (physics, fares, score); the render worker draws it from window.PLAYER (see player.js).
    Input comes through one interface (readInput): the keyboard and touch pad write `keys`, phone controllers (mp.js)
    write `remote`. window.GionTaxi is the API mp.js uses: state, events, door, camera and navigator pings.
-   Two modes: 'taxi' (the fare shift) and 'bowling' (Gion Bowling: 60 s to knock over as many pedestrians as you can). */
+   Two modes: 'taxi' (the fare shift) and 'bowling' (Joyride: 60 s to knock over as many pedestrians as you can). */
 (() => {
 const $ = id => document.getElementById(id);
 const SC = new Function($('data').textContent + ';return SCENE;')();
@@ -3203,8 +3229,11 @@ const SC = new Function($('data').textContent + ';return SCENE;')();
 if (typeof selectSeason === 'function') { try { selectSeason('autumn') } catch (e) { console.error(e) } }
 const HALF = SC.meta.half;
 // the city's settings, written by build.py (window.GT_CITY); Gion's are the defaults
-const CITYCFG = Object.assign({ id: 'gion', name: 'Gion', brand: 'tandem', bowl: 'Gion Bowling', drivePaths: false, cities: [],
+const CITYCFG = Object.assign({ id: 'gion', name: 'Gion', brand: 'tandem', bowl: 'Joyride', drivePaths: false, cities: [],
   blurb: 'Drive a taxi through the lanes of Gion, Kyoto.' }, window.GT_CITY || {});
+// money in the city's currency (scores stay in yen internally)
+const MONEY = Object.assign({ sym: '¥', rate: 1, dec: 0, label: 'Yen' }, CITYCFG.money || {});
+const money = v => (v < 0 ? '−' : '') + MONEY.sym + (Math.abs(v) * MONEY.rate).toLocaleString('en', { minimumFractionDigits: MONEY.dec, maximumFractionDigits: MONEY.dec });
 document.title = CITYCFG.brand + ' · ' + document.title.replace(/^[^·]*·\s*/, '');
 
 /* ---------- geometry ---------- */
@@ -3318,7 +3347,7 @@ stage.insertAdjacentHTML('beforeend', `
 <div id="gt-hud" hidden>
   <div class="gt-card gt-stats">
     <div><small id="gt-l1">Fares</small><b id="gt-fares">0</b></div>
-    <div><small id="gt-l2">Yen</small><b id="gt-yen">¥0</b></div>
+    <div><small id="gt-l2">${MONEY.label}</small><b id="gt-yen">${money(0)}</b></div>
     <div><small>Time</small><b id="gt-time">90</b></div>
     <div><small>km/h</small><b id="gt-speed">0</b></div>
   </div>
@@ -3341,9 +3370,9 @@ stage.insertAdjacentHTML('beforeend', `
   <details class="gt-instructions"><summary>Driving controls</summary>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
   <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
-  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little ¥.</p>
+  <p class="gt-keys">People and bikes step aside for the taxi; only a car bump costs you a little.</p>
   </details>
-  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button> · Bowl over as many pedestrians as you can in 60 seconds.</p>
+  <p class="gt-keys gt-bowlnote"><button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button> · Knock over as many pedestrians as you can in 60 seconds.</p>
   ${CITYCFG.cities.length > 1 ? `<p class="gt-cities">${CITYCFG.cities.map(c => c.id === CITYCFG.id ? `<b>${c.name}</b>` : `<a href="${c.href}">${c.name}</a>`).join('')}</p>` : ''}
 </div>
 <button id="gt-open" class="gt-card" hidden>🚕 Drive</button>`);
@@ -3396,11 +3425,12 @@ function newFare() {
 function start(m) {
   mode = m === 'bowling' ? 'bowling' : 'taxi';
   car = { x: START.x, y: START.y, h: START.h, v: 0, steer: 0 };
+  blendFrom = { ...camera }; blend = 0;   // ease in from the current view instead of cutting
   yen = 0; fares = 0; clock = mode === 'bowling' ? 60 : 120; finished = false; camYaw = car.h * 180 / Math.PI + 180;
   pins = 0; score = 0; combo = 0; comboT = 0; hit = new Set(); pops = [];
   bumpCount = 0; penaltyYen = 0; penaltyTime = 0; fareTimes = []; doorOpen = 0; bumpCool = 0; ping = null; keys.clear(); clearRemote();
   if (mode === 'taxi') newFare(); else { fare = null; $('gt-task').textContent = CITYCFG.bowl + ': knock over as many pedestrians as you can' }
-  $('gt-l1').textContent = mode === 'bowling' ? 'Pins' : 'Fares'; $('gt-l2').textContent = mode === 'bowling' ? 'Score' : 'Yen';
+  $('gt-l1').textContent = mode === 'bowling' ? 'Hits' : 'Fares'; $('gt-l2').textContent = mode === 'bowling' ? 'Score' : MONEY.label;
   $('gt-arrow').hidden = mode === 'bowling'; $('gt-mt').style.display = mode === 'bowling' ? 'none' : '';
   driving = true; $('gt-menu').hidden = true; $('gt-open').hidden = true; $('gt-hud').hidden = false;
   document.body.classList.add('gt-driving');   // the map takes the whole window (drive.css)
@@ -3413,8 +3443,8 @@ function stop(result) {
   driving = false; window.PLAYER = null; document.body.classList.remove('gt-driving'); keys.clear(); clearRemote(); ping = null;
   $('gt-hud').hidden = true; $('gt-menu').hidden = false;
   if (result) {
-    if (mode === 'bowling') { saveBest(score); $('gt-result').innerHTML = `<b>Time!</b> ${pins} pin${pins === 1 ? '' : 's'}, ${score.toLocaleString()} points · best ${best().toLocaleString()}` }
-    else { saveBest(yen); $('gt-result').innerHTML = `<b>Shift over.</b> ${fares} fare${fares === 1 ? '' : 's'}, ¥${yen.toLocaleString()} · best ¥${best().toLocaleString()}` }
+    if (mode === 'bowling') { saveBest(score); $('gt-result').innerHTML = `<b>Time!</b> ${pins} hit${pins === 1 ? '' : 's'}, ${score.toLocaleString()} points · best ${best().toLocaleString()}` }
+    else { saveBest(yen); $('gt-result').innerHTML = `<b>Shift over.</b> ${fares} fare${fares === 1 ? '' : 's'}, ${money(yen)} · best ${money(best())}` }
   }
   $('gt-start').textContent = result ? 'Drive again' : 'Start driving';
   setView('cine');
@@ -3544,7 +3574,7 @@ function bumps(dt) {
         hit.add(a.k + a.id); pins++; combo++; comboT = 2.2;
         const pts = (a.k === 'bike' ? 150 : 100) * Math.min(combo, 5); score += pts;
         pops.push({ x: a.x, y: a.y, t: performance.now() }); shake = Math.max(shake, .15); car.v *= .9;
-        toast((combo >= 3 ? `Strike ×${Math.min(combo, 5)}! ` : a.k === 'bike' ? 'Spare! ' : 'Strike! ') + '+' + pts, true);
+        toast((combo >= 3 ? `Combo ×${Math.min(combo, 5)}! ` : a.k === 'bike' ? 'Ding! ' : 'Bonk! ') + '+' + pts, true);
         emit('pin', { kind: a.k, pts, combo });
         continue;
       }
@@ -3554,7 +3584,7 @@ function bumps(dt) {
       penaltyYen += Math.min(yen, cost); penaltyTime += Math.min(clock, lost); bumpCount++;
       yen = Math.max(0, yen - cost); clock = Math.max(0, clock - lost); car.v *= mode === 'taxi' ? .75 : .3; bumpCool = mode === 'taxi' ? 2 : 1.2; shake = .2;
       emit('bump', { kind: a.k, cost });
-      toast(a.k === 'ped' ? 'Watch the pedestrians! −¥' + cost : a.k === 'bike' ? 'You clipped a bike! −¥' + cost : 'Fender bender! −¥' + cost);
+      toast((a.k === 'ped' ? 'Watch the pedestrians! ' : a.k === 'bike' ? 'You clipped a bike! ' : 'Fender bender! ') + money(-cost));
       return;
     }
   }
@@ -3571,11 +3601,33 @@ function fareLogic() {
     if (fare.mode === 'pickup') { fare.mode = 'drop'; fare.t = 0; toast('Passenger aboard!', true); setTask(); emit('pickup') }
     else {
       const pay = Math.round((500 + fare.dist * 12 + Math.max(0, 40 - fare.t) * 25) / 10) * 10, bonus = Math.round(8 + fare.dist / 12);
-      yen += pay; fares++; clock += bonus; fareTimes.push(fare.t); toast('Fare paid ¥' + pay + ' · +' + bonus + ' s', true); newFare();
+      yen += pay; fares++; clock += bonus; fareTimes.push(fare.t); toast('Fare paid ' + money(pay) + ' · +' + bonus + ' s', true); newFare();
       emit('dropoff', { pay, bonus });
     }
   } else if (fare.atDoor) { fare.atDoor = false; setTask() }
   return target;
+}
+
+/* ---------- framing the taxi (the game loop, and the countdown's glide toward it) ---------- */
+function frameTaxi(c, yaw, j = 0) {
+  const C = CAMS[cam], zoom = iso.zoom * C.zoom * (1 - Math.abs(c.v) / MAX * .22);   // pulls back with speed, for a sense of it
+  // push the view centre up the road so the taxi sits `low` of the screen height below the middle
+  const vbH = stage.clientHeight / (Math.min(stage.clientWidth / 302, stage.clientHeight / 202) * zoom || 1);
+  const ahead = Math.max(0, c.v) * .5 + C.low * vbH / Math.sin(C.pitch * Math.PI / 180);
+  const fx = cam === 'top' ? Math.cos(c.h) : -Math.cos(yaw * Math.PI / 180), fy = cam === 'top' ? Math.sin(c.h) : -Math.sin(yaw * Math.PI / 180);
+  return { yaw, pitch: C.pitch, zoom, x: c.x + fx * ahead + j, y: c.y + fy * ahead + j, z: 1 };
+}
+const mixCam = (a, b, e) => { const o = {};
+  for (const k of Object.keys(b)) { let d = b[k] - (a[k] ?? b[k]); if (k === 'yaw') d = ((d + 180) % 360 + 360) % 360 - 180; o[k] = (a[k] ?? b[k]) + d * e }
+  return o };
+let blend = 1, blendFrom = null;
+// the countdown parks the taxi at its start and lets the page's own camera easing glide toward the shift's view
+function preview(on) {
+  if (driving) return;
+  if (!on) { window.PLAYER = null; if (view === 'drive') setView('cine'); return }
+  const c = { x: START.x, y: START.y, h: START.h, v: 0 }, yaw = cam === 'top' ? iso.yaw : c.h * 180 / Math.PI + 180;
+  window.PLAYER = { x: c.x, y: c.y, h: c.h, v: 0, cut: true, cy: yaw, cp: CAMS[cam].pitch };
+  view = 'drive'; goal = frameTaxi(c, yaw); redraw();
 }
 
 /* ---------- the loop ---------- */
@@ -3593,19 +3645,17 @@ function frame(now) {
   window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, cut: true, ghost: mode === 'taxi', cy: camYaw, cp: CAMS[cam].pitch, ...(target ? { tx: target.x, ty: target.y, mode: fare.mode } : {}),
     ...(ping ? { px: ping.x, py: ping.y, pc: ping.color } : {}), ...(mode === 'bowling' ? { hit: [...hit], pops: pops.map(p => [p.x, p.y, (now - p.t) / 900]) } : {}) };
   // camera: kart (low, close, taxi in the lower third), chase (the original), or overhead at the plot's iso angle
-  const C = CAMS[cam], want = cam === 'top' ? iso.yaw : car.h * 180 / Math.PI + 180;
-  let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * C.rate);
+  const want = cam === 'top' ? iso.yaw : car.h * 180 / Math.PI + 180;
+  let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * CAMS[cam].rate);
   shake = Math.max(0, shake - dt);
-  const zoom = iso.zoom * C.zoom * (1 - Math.abs(car.v) / MAX * .22);   // pulls back with speed, for a sense of it
-  // push the view centre up the road so the taxi sits `low` of the screen height below the middle
-  const vbH = stage.clientHeight / (Math.min(stage.clientWidth / 302, stage.clientHeight / 202) * zoom || 1);
-  const j = shake > 0 ? (Math.random() - .5) * shake * 2 : 0, ahead = Math.max(0, car.v) * .5 + C.low * vbH / Math.sin(C.pitch * Math.PI / 180);
-  const fx = cam === 'top' ? Math.cos(car.h) : -Math.cos(camYaw * Math.PI / 180), fy = cam === 'top' ? Math.sin(car.h) : -Math.sin(camYaw * Math.PI / 180);
+  const j = shake > 0 ? (Math.random() - .5) * shake * 2 : 0, view0 = frameTaxi(car, camYaw, j);
   view = 'drive';
-  goal = camera = { yaw: camYaw, pitch: C.pitch, zoom, x: car.x + fx * ahead + j, y: car.y + fy * ahead + j, z: 1 };
+  // the first moments of a shift ease from wherever the camera was (the countdown's glide) into the taxi's view
+  if (blend < 1) { blend = Math.min(1, blend + dt / .6); goal = camera = mixCam(blendFrom, view0, 1 - Math.pow(1 - blend, 3)) }
+  else goal = camera = view0;
   $('viewName').textContent = CITYCFG.brand;
   // HUD
-  $('gt-fares').textContent = mode === 'bowling' ? pins : fares; $('gt-yen').textContent = mode === 'bowling' ? score.toLocaleString() : '¥' + yen.toLocaleString();
+  $('gt-fares').textContent = mode === 'bowling' ? pins : fares; $('gt-yen').textContent = mode === 'bowling' ? score.toLocaleString() : money(yen);
   $('gt-time').textContent = Math.ceil(clock); $('gt-time').classList.toggle('low', clock < 15);
   $('gt-speed').textContent = Math.round(Math.abs(car.v) * 3.6);
   $('gt-me').setAttribute('transform', `translate(${car.x} ${car.y}) rotate(${car.h * 180 / Math.PI}) scale(1.6)`);
@@ -3624,7 +3674,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
-  start, stop, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
+  start, stop, preview, money, moneyLabel: MONEY.label, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
   get car() { return car }, get driving() { return driving }, get cam() { return cam }, get mode() { return mode },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },
@@ -4248,14 +4298,14 @@ function resultHTML(r) {
   if (r.mode === 'bowling') {
     const n = rating(r);
     return `<div class="gt-res"><b>Time!</b><span class="gt-stars" aria-label="${n} of 3">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span>
-      <div class="gt-resrow"><div><small>Pins</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div>
+      <div class="gt-resrow"><div><small>Hits</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div>
       <p>Best ${GT.city.bowl} score ${r.best.toLocaleString()}.</p></div>`;
   }
   const stars = '★'.repeat(rating(r)) + '☆'.repeat(3 - rating(r));
   return `<div class="gt-res"><b>Shift over</b><span class="gt-stars" aria-label="${rating(r)} of 3">${stars}</span>
-    <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div>
-    <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>−¥${r.penaltyYen.toLocaleString()}</b></div></div>
-    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ¥${r.best.toLocaleString()}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass, ${r.wiped} wiped off.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
+    <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>${GT.moneyLabel}</small><b>${GT.money(r.yen)}</b></div>
+    <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>${GT.money(-r.penaltyYen)}</b></div></div>
+    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ${GT.money(r.best)}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass, ${r.wiped} wiped off.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
 }
 function renderCrewStrip() {
   const el = $('gt-crew'), on = phase === 'driving' && crew.length;
@@ -4380,7 +4430,7 @@ function rolesChanged() {
 }
 function broadcastLobby() {
   renderLobby();
-  toPhones({ t: 'lobby', phase, room, result, game, brand: GT.city.brand, bowl: GT.city.bowl, canStart: canStart(),
+  toPhones({ t: 'lobby', phase, room, result, game, brand: GT.city.brand, bowl: GT.city.bowl, money: GT.city.money, canStart: canStart(),
     seats: crew.map(p => ({ pid: p.pid, name: p.name, color: p.color, roles: rolesOf(p), on: p.on, ready: p.ready })) });
 }
 function sendMap(to) {
@@ -4443,7 +4493,7 @@ GT.on('cam', cam => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', cam
 
 if (served) $('gt-mp').onclick = openRoom;
 // close the room; on a ?play=crew page (flow.js) go back to city selection, so no room is left behind
-$('gt-lclose').onclick = () => { const home = $('gt-lclose').dataset.home; closeRoom(); if (home) location.href = home };
+$('gt-lclose').onclick = () => { const home = $('gt-lclose').dataset.home; closeRoom(); if (home) (window.GionFlow ? window.GionFlow.leave(home) : (location.href = home)) };
 $('gt-lstart').onclick = () => startCountdown();
 document.querySelector('.gt-modes').onclick = e => { const b = e.target.closest('[data-game]'); if (b && (phase === 'lobby' || phase === 'results')) { game = b.dataset.game; broadcastLobby() } };
 $('gt-ip').onclick = () => { ipIndex++; renderLobby() };
@@ -4503,7 +4553,7 @@ if (!GT || !C || !/^https?:$/.test(location.protocol)) return;
 const GOAL = 3000;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sol = l => (l / 1e9).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
-const yen = v => '¥' + Math.round(v).toLocaleString();
+const yen = v => GT.money ? GT.money(v) : '¥' + Math.round(v).toLocaleString();   // the city's currency
 
 let on = false, avail = null, phase = 'off', withBots = false;   // off | setup | driving | vote | final
 let goal = GOAL, lastStatus = null;
@@ -4687,10 +4737,20 @@ const served = /^https?:$/.test(location.protocol);
 if (play !== 'solo' && !(play === 'crew' && served)) { location.replace(HOME + (play === 'crew' ? '#crew' : '')); return }
 
 document.body.classList.add('gt-flow');   // drive.css: the old card only shows a shift's result now
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// leaving for city selection: the paper veil comes back first, so the exit mirrors the arrival
+const leave = href => {
+  const v = $('gt-veil');
+  if (!v || reduce) { location.href = href; return }
+  v.classList.remove('out'); v.querySelector('i')?.remove(); setTimeout(() => { location.href = href }, 380);
+};
+window.GionFlow = { leave };
+// coming back with the browser's back button restores this page from memory: lift the veil again
+addEventListener('pageshow', e => { if (e.persisted) $('gt-veil')?.classList.add('out') });
 $('gt-menu').hidden = true; $('gt-open').hidden = true; GT.lockMenu = true;
 const back = `${HOME}#${play}`;
 const cities = $('gt-menu').querySelector('.gt-cities');
-if (cities) cities.innerHTML = `<a href="${back}">← Choose another city</a>`;
+if (cities) { cities.innerHTML = `<a href="${back}">← Choose another city</a>`; cities.querySelector('a').onclick = e => { e.preventDefault(); leave(back) } }
 // the crew lobby's close button goes back to city selection (mp.js closes the room first)
 const lclose = $('gt-lclose');
 if (lclose) { lclose.textContent = '← Cities'; lclose.setAttribute('aria-label', 'Close the room and choose another city'); lclose.dataset.home = back }
@@ -4708,8 +4768,15 @@ window.GionBrief = ({ title, objective, lines = [], onCount, abort = () => false
   $('gt-btitle').textContent = title; $('gt-bobj').textContent = objective;
   $('gt-blines').innerHTML = lines.map(l => `<li><i style="background:${esc(l.color)}"></i><b>${esc(l.name)}</b><span>${esc(l.text)}</span></li>`).join('');
   const box = $('gt-brief'), num = $('gt-bcount');
-  num.textContent = 'Get ready'; num.className = 'ready'; box.hidden = false;
-  const done = ok => { briefing = false; box.hidden = true; if (ok) resolve() };
+  num.textContent = 'Get ready'; num.className = 'ready'; box.classList.remove('leave'); box.hidden = false;
+  // the page steps aside and the camera glides down behind the taxi while everyone reads (drive.js preview)
+  document.body.classList.add('gt-focus'); GT.preview(true);
+  const done = ok => {
+    briefing = false;
+    if (!ok) { box.hidden = true; document.body.classList.remove('gt-focus'); GT.preview(false); return }
+    box.classList.add('leave'); setTimeout(() => { box.hidden = true; box.classList.remove('leave') }, 300);   // fades as the shift begins
+    resolve();
+  };
   let n = 3;
   const tick = () => {
     if (abort()) return done(false);
@@ -4721,12 +4788,15 @@ window.GionBrief = ({ title, objective, lines = [], onCount, abort = () => false
 });
 
 /* ---------- go ---------- */
-const whenLoaded = cb => { const f = () => ($('loading').hidden ? cb() : setTimeout(f, 120)); f() };
+// once the first picture of the city is on screen, lift the arrival veil (built in by build.py)
+const whenLoaded = cb => { const f = () => ($('loading').hidden ? (cb(), requestAnimationFrame(() => $('gt-veil')?.classList.add('out'))) : setTimeout(f, 60)); f() };
+GT.on('stop', () => document.body.classList.remove('gt-focus'));
 if (play === 'solo') {
   whenLoaded(() => window.GionBrief({
     title: GT.city.name, objective: 'Pick up passengers at the orange lantern and deliver them to the gold one before the shift ends.',
     lines: [{ color: '#c8513a', name: 'You', text: '↑ / W gas · ↓ / S brake, then reverse · ← → steer · C camera · Esc ends the shift' }],
   }).then(() => { GT.lockMenu = false; if (!GT.driving) GT.start('taxi') }));
+  // after a solo shift, the result card comes back with the page
 } else {
   whenLoaded(() => window.GionCrew?.open());
 }

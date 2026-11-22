@@ -36,6 +36,19 @@ h2{font:600 32px var(--serif);margin:0 0 4px}
 .city small{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.06em}
 .city em{font:italic 14px var(--serif);color:var(--muted)}
 .back{background:none;border:0;color:var(--rust);font-weight:600;margin:22px 0 0}
+/* motion: short and eased; a screen leaves before the next arrives, its parts a beat apart */
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+main.enter>*{animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+main.enter>*:nth-child(2){animation-delay:.07s}main.enter>*:nth-child(3){animation-delay:.14s}main.enter>*:nth-child(4){animation-delay:.21s}
+main.enter .city{animation:rise .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(.12s + var(--i) * .06s)}
+main.leave{opacity:0;transform:translateY(-8px);transition:opacity .2s ease,transform .22s ease}
+.city{transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,border-color .25s,opacity .3s}
+.city:hover:not(:disabled){transform:translateY(-3px)}
+.city.chosen{transform:translateY(-6px) scale(1.02);border-color:var(--rust);box-shadow:0 16px 40px #ac493133}
+.cities.choosing .city:not(.chosen){opacity:.35}
+body{transition:opacity .38s cubic-bezier(.4,0,.2,1)}
+body.going{opacity:0}
+@media (prefers-reduced-motion:reduce){main.enter>*,main.enter .city{animation:none}main.leave,.city,body{transition:none}}
 </style></head>
 <body>
 <main id="title">
@@ -63,23 +76,40 @@ h2{font:600 32px var(--serif);margin:0 0 4px}
 const $ = id => document.getElementById(id);
 const served = /^https?:$/.test(location.protocol);   // crew play needs the server (it relays the phones)
 if (!served) { $('crew').disabled = true; $('crewNote').hidden = false }
-// the screen follows the address: #crew or #solo is city selection for that mode, anything else the title
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.querySelectorAll('.city').forEach((c, i) => c.style.setProperty('--i', i));
+// the screen follows the address: #crew or #solo is city selection for that mode, anything else the title.
+// The current screen fades out (200 ms) before the next one rises in, its parts staggered.
+let shown = null;
 function render() {
   const mode = location.hash.slice(1);
   const picking = mode === 'solo' || (mode === 'crew' && served);
-  $('title').hidden = picking; $('pick').hidden = !picking;
-  if (picking) {
-    $('pickSub').textContent = mode === 'crew' ? 'Then your friends scan a code with their phones.' : 'You drive with the keyboard.';
-    document.querySelector('.city:not(:disabled)')?.focus();
-  }
+  const next = picking ? $('pick') : $('title');
+  if (picking) $('pickSub').textContent = mode === 'crew' ? 'Then your friends scan a code with their phones.' : 'You drive with the keyboard.';
+  const show = () => {
+    $('title').hidden = next !== $('title'); $('pick').hidden = next !== $('pick');
+    for (const m of [$('title'), $('pick')]) m.classList.remove('leave', 'enter');
+    void next.offsetWidth; next.classList.add('enter'); shown = next;
+    if (picking) document.querySelector('.city:not(:disabled)')?.focus({ preventScroll: true });
+  };
+  if (!shown || shown === next || reduce) return show();
+  shown.classList.add('leave'); setTimeout(show, 200);
 }
 addEventListener('hashchange', render); render();
+// back from a city page via the browser: the page may come back from memory, faded out; bring it back
+addEventListener('pageshow', e => { if (e.persisted) { document.body.classList.remove('going'); $('cities').classList.remove('choosing'); document.querySelectorAll('.chosen').forEach(c => c.classList.remove('chosen')) } });
 $('crew').onclick = () => { location.hash = 'crew' };
 $('solo').onclick = () => { location.hash = 'solo' };
 $('back').onclick = () => { location.hash = '' };
+// choosing a city: the card lifts, the rest fall back, the page fades to paper, and the city page opens on that paper
+let going = false;
 $('cities').onclick = e => {
-  const b = e.target.closest('.city'); if (!b || b.disabled) return;
-  location.href = b.dataset.href + '?play=' + location.hash.slice(1);
+  const b = e.target.closest('.city'); if (!b || b.disabled || going) return;
+  const href = b.dataset.href + '?play=' + location.hash.slice(1);
+  if (reduce) { location.href = href; return }
+  going = true; b.classList.add('chosen'); $('cities').classList.add('choosing');
+  setTimeout(() => document.body.classList.add('going'), 160);
+  setTimeout(() => { location.href = href; going = false }, 540);
 };
 })();
 </script>

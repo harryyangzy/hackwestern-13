@@ -31,13 +31,22 @@
 .gt-link{color:var(--rust);font-weight:600;text-decoration:underline;font-size:inherit}
 /* a cleaner game page: no view bar, no "Simulation live", no view-name label, no season picker (always autumn) */
 .control-area,#status,.map-code,.season-box,.view-select{display:none!important}
-.stage{bottom:12px}
-/* while driving: the map takes the whole window */
-body.gt-driving .top,body.gt-driving .foot,body.gt-driving .rail,body.gt-driving .tools,body.gt-driving .compass,body.gt-driving .stage>.mark{display:none!important}
-body.gt-driving .workspace{height:100%}
-body.gt-driving .stage{left:0;right:0;top:0;bottom:0}
+/* the map always fills the window; the page's header, sidebar and footer float over it and step aside for the briefing
+   and the shift (no resize, so the map never jumps or redraws at a new size) */
+.workspace{position:fixed;inset:0;height:auto;z-index:0}
+.stage{left:0;right:0;top:0;bottom:0}
+.top{position:absolute;left:0;right:0;top:0;z-index:5}
+.foot{position:absolute;left:0;right:0;bottom:0;z-index:5}
+.rail{top:90px;bottom:52px}
+.stage>.tools,.compass,.scale{display:none!important}
+.top,.foot,.rail{transition:opacity .4s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.2,.7,.2,1)}
+body.gt-focus .top,body.gt-driving .top{opacity:0;transform:translateY(-14px);pointer-events:none}
+body.gt-focus .foot,body.gt-driving .foot{opacity:0;transform:translateY(10px);pointer-events:none}
+body.gt-focus .rail,body.gt-driving .rail{opacity:0;transform:translateX(-22px);pointer-events:none}
+body.gt-focus .stage>.mark,body.gt-driving .stage>.mark{opacity:0}
+.stage>.mark{transition:opacity .4s}
 /* tandem opening flow (flow.js): the old card only shows a shift's result; the briefing before each shift */
-body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
+body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-menu .gt-instructions,body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
 body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weight:600;color:var(--rust)}
 #gt-brief{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 28px));padding:22px 28px;z-index:7;text-align:center}
 #gt-brief[hidden]{display:none}
@@ -52,3 +61,20 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 #gt-bcount{display:block;font:600 64px/1 var(--serif);color:var(--rust);min-height:64px}
 #gt-bcount.ready{font:italic 22px/64px var(--serif);color:var(--muted)}
 #gt-bcount.pop{animation:gt-pop .9s ease-out}
+
+/* ---------- motion: short, eased, staggered; nothing waits on an animation ---------- */
+@keyframes gt-rise{from{opacity:0;transform:translate(-50%,calc(-50% + 14px)) scale(.985)}to{opacity:1;transform:translate(-50%,-50%)}}
+@keyframes gt-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes gt-num{0%{opacity:0;transform:scale(1.45)}30%{opacity:1;transform:scale(1)}100%{opacity:.2;transform:scale(.92)}}
+#gt-menu:not([hidden]),#gt-lobby:not([hidden]),#gt-brief:not([hidden]){animation:gt-rise .45s cubic-bezier(.2,.7,.2,1) both}
+#gt-brief.leave,#gt-lobby.leave{animation:none;opacity:0;transform:translate(-50%,calc(-50% - 10px)) scale(.985);transition:opacity .28s ease,transform .3s ease}
+#gt-brief li{animation:gt-in .4s cubic-bezier(.2,.7,.2,1) both}
+#gt-brief li:nth-child(2){animation-delay:.07s}#gt-brief li:nth-child(3){animation-delay:.14s}#gt-brief li:nth-child(4){animation-delay:.21s}
+#gt-bcount.pop{animation:gt-num .9s cubic-bezier(.2,.7,.2,1)}
+#gt-seats li{animation:gt-in .35s cubic-bezier(.2,.7,.2,1) both}
+#gt-seats li:nth-child(2){animation-delay:.04s}#gt-seats li:nth-child(3){animation-delay:.08s}#gt-seats li:nth-child(4){animation-delay:.12s}
+/* the HUD arrives as the shift starts: stats, task, minimap a beat apart */
+#gt-hud:not([hidden]) .gt-stats{animation:gt-in .45s cubic-bezier(.2,.7,.2,1) both}
+#gt-hud:not([hidden]) .gt-task{animation:gt-in .45s .08s cubic-bezier(.2,.7,.2,1) both}
+#gt-hud:not([hidden]) #gt-map{animation:gt-in .45s .16s cubic-bezier(.2,.7,.2,1) both}
+@media (prefers-reduced-motion:reduce){#gt-menu,#gt-lobby,#gt-brief,#gt-brief li,#gt-seats li,#gt-hud *,.top,.foot,.rail{animation:none!important;transition:none!important}}

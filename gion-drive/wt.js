@@ -8,7 +8,7 @@ if (!GT || !C || !/^https?:$/.test(location.protocol)) return;
 const GOAL = 3000;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sol = l => (l / 1e9).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
-const yen = v => '¥' + Math.round(v).toLocaleString();
+const yen = v => GT.money ? GT.money(v) : '¥' + Math.round(v).toLocaleString();   // the city's currency
 
 let on = false, avail = null, phase = 'off', withBots = false;   // off | setup | driving | vote | final
 let goal = GOAL, lastStatus = null;

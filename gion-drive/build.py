@@ -30,23 +30,35 @@ a = ap.parse_args()
 read = lambda p: open(p, encoding='utf-8').read()
 src = lambda name: read(os.path.join(HERE, name))
 
-# brand: the game's name (tandem, in every city); bowl: the bonus mode's name; drivePaths: the taxi may also use footpaths
+# brand: the game's name (tandem, in every city); bowl: the bonus mode's name (Joyride); drivePaths: the taxi may also use footpaths
 # (Western's main campus is almost all paths); open: drive anywhere on the plot except through buildings (London: the
 # paths are only ~2.6 m wide, too skinny to be fun); blurb: the menu's first line.
+# money: scores are kept in yen (the fare rules were tuned in yen) and shown in the city's currency, at a rate that makes
+# a typical ~¥2,500 fare look like a real short taxi ride there ($25 in Ontario, €15 in Amsterdam)
+YEN = dict(sym='¥', rate=1, dec=0, label='Yen')
+CAD = dict(sym='$', rate=.01, dec=2, label='Dollars')
+EUR = dict(sym='€', rate=.006, dec=2, label='Euros')
 CITIES = {
     'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Kyoto', place='Gion Shirakawa', brand='tandem',
-                 bowl='Gion Bowling', blurb='Drive a taxi through the lanes of Gion, Kyoto.', drivePaths=False),
+                 bowl='Joyride', money=YEN, blurb='Drive a taxi through the lanes of Gion, Kyoto.', drivePaths=False),
     'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', place='Western University, Ontario', brand='tandem',
-                   bowl='Campus Bowling', blurb='Drive a taxi across Western University’s main campus in London, Ontario: the whole campus is open, just not through the buildings.', drivePaths=True, open=True),
+                   bowl='Joyride', money=CAD, blurb='Drive a taxi across Western University’s main campus in London, Ontario: the whole campus is open, just not through the buildings.', drivePaths=True, open=True),
     'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', place='Nathan Phillips Square', brand='tandem',
-                    bowl='Square Bowling', blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False),
+                    bowl='Joyride', money=CAD, blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False),
     'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', place='Reguliersgracht × Keizersgracht', brand='tandem',
-                      bowl='Canal Bowling', blurb='Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.', drivePaths=False),
+                      bowl='Joyride', money=EUR, blurb='Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.', drivePaths=False),
 }
 P_OPEN, P_CLOSE = '/* <gion-taxi player.js> */\n', '\n/* </gion-taxi player.js> */'
 G_OPEN, G_CLOSE = '<!-- <gion-taxi game> -->\n', '<!-- </gion-taxi game> -->\n'
 LICENSE = ('<!-- {brand}. The city, its drawing engine and the street simulation are Pocket City by April Zhu '
            '(MIT licence, https://april-zhu.com/pocketcity). Map data © OpenStreetMap contributors (ODbL). -->')
+VEIL = ('<style>#gt-veil{{position:fixed;inset:0;z-index:60;background:#f6f3e9;display:flex;flex-direction:column;align-items:center;'
+        'justify-content:center;gap:4px;transition:opacity .5s cubic-bezier(.4,0,.2,1)}}#gt-veil.out{{opacity:0;pointer-events:none}}'
+        '#gt-veil b{{font:700 44px Inter,"Helvetica Neue",Arial,sans-serif;letter-spacing:-.02em;color:#263c35}}#gt-veil small{{font:11px Inter,"Helvetica Neue",Arial,sans-serif;'
+        'color:#626c60;text-transform:uppercase;letter-spacing:.08em}}#gt-veil i{{width:28px;height:2px;background:#ac4931;margin-top:10px;'
+        'animation:gt-veil 1.1s ease-in-out infinite alternate}}@keyframes gt-veil{{from{{transform:scaleX(.3);opacity:.4}}to{{transform:scaleX(1);opacity:1}}}}'
+        '@media (prefers-reduced-motion:reduce){{#gt-veil,#gt-veil i{{transition:none;animation:none}}}}</style>'
+        '<div id="gt-veil" aria-hidden="true"><b>{name}</b><small>{place}</small><i></i></div>')
 TEMPLATE_DESC = '''<meta name="description" content="Turn a hand-drawn, register-built miniature of Amsterdam's Reguliersgracht and Keizersgracht. Explore its seasons, bridges and street life.">'''
 
 
@@ -55,6 +67,7 @@ def build(cid):
     out = os.path.join(HERE, c['out'])
     cfg = {k: c[k] for k in ('name', 'brand', 'bowl', 'blurb', 'drivePaths')}
     cfg['open'] = c.get('open', False)
+    cfg['money'] = c['money']
     cfg['id'] = cid
     cfg['cities'] = [{'id': k, 'name': v['name'], 'href': v['out']} for k, v in CITIES.items()]
     player = P_OPEN + 'const GT_CITY = ' + json.dumps({'drivePaths': c['drivePaths'], 'open': c.get('open', False)}) + ';\n' + src('player.js') + P_CLOSE
@@ -97,6 +110,9 @@ def build(cid):
         ('document.title=\'Pocket City · \'+(CITY.title||CITY.name);', f'document.title=\'{b} · \'+(CITY.title||CITY.name);'),
         ("<dt>Drawing</dt><dd>Pocket City by April Zhu.", "<dt>Drawing</dt><dd>City drawing engine by April Zhu (MIT licence)."),
         (TEMPLATE_DESC, f'<meta name="description" content="{b}: {c["blurb"]} Alone or with a crew of phones.">'),
+        # arriving from city selection: the page opens on the same paper with the city's name, and flow.js lifts it once
+        # the first picture of the city is drawn (no flash of the page being built, no loading text)
+        ('</head><body>', '</head><body>' + VEIL.format(name=c['name'], place=c['place'])),
     ]
     for old, new in patches:
         if html.count(new) == 1: continue

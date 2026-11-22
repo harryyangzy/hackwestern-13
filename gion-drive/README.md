@@ -16,7 +16,7 @@ Open `index.html` in a browser (it works offline, no server needed), press **Pla
 Arrows/WASD drive (hold ↓ to brake, then reverse), `C` cycles the camera (kart → chase → overhead), `Esc` ends the shift.
 The red and cream kerbs mark the road; dark and cream ones mark the edge of the map.
 
-**Gion Bowling** (bonus mode, from the menu or the crew lobby): 60 seconds to knock over as many pedestrians as you can.
+**Joyride** (bonus mode, from the menu or the crew lobby): 60 seconds to knock over as many pedestrians as you can.
 Each person counts once; hits in quick succession multiply (up to ×5); cars still cost time.
 
 ## Crew: phones as controllers
