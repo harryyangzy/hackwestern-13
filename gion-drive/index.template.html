@@ -25,26 +25,24 @@ h1{font:500 clamp(64px,12vw,128px)/1 var(--display);margin:0}
 button:focus-visible{outline:2px solid var(--color-border-focus-ring);outline-offset:2px}
 .note{font-size:13px;color:var(--muted);margin:2px 0 0;text-align:center}
 .note code{font-size:12px;background:#fff;border:1px solid var(--rule);border-radius:4px;padding:1px 5px}
-/* ---------- city selection: the world map ---------- */
-#pick{position:fixed;inset:0;min-height:0;padding:0;display:block;overflow:hidden;background-color:var(--paper)}
+/* ---------- city selection: the world map, flat like the game: the city maps' water and sand, cream labels, fine ink ---------- */
+#pick{position:fixed;inset:0;min-height:0;padding:0;display:block;overflow:hidden;background:#9cc3c4}
 #map{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
 #map.dragging{cursor:grabbing}#map.over{cursor:pointer}
-.head,#shifts,.zoom{z-index:1}
-.head{position:absolute;left:20px;top:20px;max-width:340px;background:var(--panel,#fffcf3);border:1px solid var(--rule);border-radius:14px;padding:10px 16px 12px}
-.back{background:none;border:0;padding:4px 0;color:var(--rust);font-weight:600}
-h2{font:500 30px/1.1 var(--display);margin:6px 0 4px}
+.head,.zoom{z-index:1}
+.head{position:absolute;left:20px;top:20px;max-width:340px;background:var(--panel,#fffcf3);border:1px solid var(--rule);border-radius:16px;padding:12px 18px 14px}
+.head .gt-backbtn{margin:0 0 6px}
+h2{font:500 30px/1.1 var(--display);margin:4px 0 4px}
 .sub{color:var(--muted);margin:0;font-size:14px}
-#shifts{position:absolute;right:20px;top:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;max-width:min(520px,calc(100% - 40px))}
-#shifts small{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:4px}
-#shifts button{background:#fffcf3d9;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;backdrop-filter:blur(3px)}
-#shifts button:hover,#shifts button[aria-pressed="true"]{border-color:var(--rust);color:var(--rust)}
 .zoom{position:absolute;left:20px;bottom:20px;display:flex;align-items:center;gap:6px}
-.zoom button{width:34px;height:34px;border-radius:50%;background:#fffcf3d9;border:1px solid var(--rule);font-size:18px;line-height:1;padding:0}
-.zoom span{font-size:12px;color:var(--muted);margin-left:6px;background:#f6f3e9cc;border-radius:999px;padding:4px 10px}
+.zoom button{width:36px;height:36px;border-radius:10px;background:var(--panel,#fffcf3);border:1px solid var(--rule);font-size:19px;line-height:1;padding:0;color:var(--ink)}
+.zoom button:hover{background:var(--color-background-primary-hover,#f8f4e9)}
+.zoom span{font-size:12px;color:var(--muted);margin-left:4px;background:var(--panel,#fffcf3);border:1px solid var(--rule);border-radius:999px;padding:5px 11px}
 #panel{position:absolute;right:20px;top:0;bottom:0;margin:auto 0;height:max-content;max-height:calc(100% - 140px);overflow:auto;width:300px;background:var(--panel,#fffcf3);border:1px solid var(--rule);
-  border-radius:16px;box-shadow:0 18px 48px #263c3526;padding:18px 18px 16px;transition:opacity .22s ease,transform .26s cubic-bezier(.2,.7,.2,1)}
+  border-radius:18px;padding:18px 18px 16px;transition:opacity .22s ease,transform .26s cubic-bezier(.2,.7,.2,1)}
 #panel.off{opacity:0;transform:translateY(10px);pointer-events:none}
-#panel .x{position:absolute;right:10px;top:10px;width:30px;height:30px;border-radius:50%;border:0;background:none;font-size:18px;color:var(--muted)}
+#panel .x{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:50%;border:1px solid var(--rule);background:none;font-size:16px;color:var(--muted)}
+#panel .icon{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#f0e6cf;margin-bottom:10px}#panel .icon svg{width:32px;height:32px}
 #panel .eyebrow{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-right:28px}
 #panel h3{font:500 26px/1.1 var(--display);margin:4px 0 2px}
 #panel .where{margin:0 0 12px;color:var(--muted);font-size:13px}
@@ -54,16 +52,24 @@ h2{font:500 30px/1.1 var(--display);margin:6px 0 4px}
 #panel .primary{width:100%}
 #panel .none{font:500 17px var(--display);margin:10px 0 12px}
 #panel .secondary{width:100%;padding:11px 14px}
+/* a city with a shift: its map fills the whole card, fading to paper at the bottom under the name, one line and Start */
+#panel.shift{padding:0;overflow:hidden;height:440px;max-height:calc(100% - 140px)}
+#panel.shift .body{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end}
+#panel.shift .pv{position:absolute;inset:0;margin:0;border:0;border-radius:0;aspect-ratio:auto;max-height:none;width:auto}
+#panel.shift .pv::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,var(--panel,#fffcf3) 0%,var(--panel,#fffcf3) 24%,#fffcf3d9 40%,#fffcf300 68%)}
+#panel.shift .pfoot{position:relative;padding:0 20px 18px}
+#panel.shift h3{font-size:34px;margin:0 0 4px}
+#panel.shift .blurb{margin:0 0 14px;color:var(--ink);opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panel.shift .x{z-index:2;background:#fffcf3e6}
 #panel .body{transition:opacity .16s ease}
 #panel .body.swap{opacity:0}
 @media (max-width:720px){
-  .head{left:12px;top:12px;padding:6px 12px 8px}h2{font-size:22px;margin:2px 0 0}.sub{display:none}
-  #shifts{left:16px;right:16px;top:auto;bottom:16px;justify-content:center;max-width:none}
-  #shifts small{width:100%;text-align:center;margin:0}
+  .head{left:12px;top:12px;padding:8px 12px 10px}h2{font-size:22px;margin:2px 0 0}.sub{display:none}
   .zoom{left:auto;right:16px;bottom:auto;top:16px}.zoom span{display:none}
   #panel{left:12px;right:12px;width:auto;top:auto;bottom:12px;margin:0;max-height:calc(100% - 90px);z-index:2}
   #panel.off{transform:translateY(12px)}
-  #panel .pv{max-height:150px;width:150px}
+  #panel:not(.shift) .pv{max-height:150px;width:150px}
+  #panel.shift{height:360px}
 }
 
 /* motion: short and eased; a screen leaves before the next arrives, its parts a beat apart */
@@ -75,7 +81,7 @@ main.enter>*:nth-child(2){animation-delay:.07s}main.enter>*:nth-child(3){animati
 main.leave{opacity:0;transform:translateY(-8px);transition:opacity .2s ease,transform .22s ease}
 body{transition:opacity .38s cubic-bezier(.4,0,.2,1)}
 body.going{opacity:0}
-@media (prefers-reduced-motion:reduce){main.enter>*,#pick.enter>#map{animation:none}main.leave,body,#panel,#panel .body{transition:none}}
+@media (prefers-reduced-motion:reduce){main.enter>*,main.enter>*:not(#panel),#pick.enter>#map{animation:none}main.leave,body,#panel,#panel .body{transition:none}}
 
 /* ---------- the hero (the title screen): a painted morning, the city rolling past, the whole crew in one taxi ---------- */
 #title.hero{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;min-height:max(100svh,640px);overflow:hidden;
@@ -162,12 +168,11 @@ body.going{opacity:0}
   <div class="scene" aria-hidden="true" id="scene"></div>
 </main>
 <main id="pick" hidden>
-  <canvas id="map" tabindex="0" role="img" aria-label="World map of cities. Drag to move, scroll or pinch to zoom, tap a city. Arrow keys move it, plus and minus zoom."></canvas>
+  <canvas id="map" tabindex="0" role="img" aria-label="World map with a label on each city. Drag to move, scroll or pinch to zoom, tap a city. Arrow keys move it, plus and minus zoom."></canvas>
   <div class="head">
-    <button class="back" id="back">← Back</button>
+    <button class="gt-backbtn" id="back">Back</button>
     <h2>Choose a city</h2>
   </div>
-  <nav id="shifts" aria-label="Cities"></nav>
   <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button></div>
   <aside id="panel" class="off" aria-live="polite" hidden><button class="x" id="pclose" aria-label="Close">×</button><div class="body" id="pbody"></div></aside>
 </main>
@@ -310,16 +315,15 @@ if (!served) { $('crew').disabled = true; $('crewNote').hidden = false }
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-/* ---------- the world map, flat, in the city maps' style (Pocket City): flat colours and fine ink, no gradients, glows
-   or shadows. Water with short light strokes, sand-coloured land, paper-white ice, autumn woods, the fare lantern for
-   every city. Miller projection, framed like a map sheet. World data: Natural Earth (globe/world.js). ---------- */
+/* ---------- the world map, light and modern: soft blue water that pales along the coasts, pale green land, quiet grey
+   names, and a white rounded tile with a landmark on each city (tiles that would collide give way as you zoom out; the
+   playable cities always show). Miller projection. World data: Natural Earth (globe/world.js). ---------- */
 const W = window.GT_WORLD, SHIFTS = window.GT_SHIFTS || [];
 const D2R = Math.PI / 180, LAT0 = -56, LAT1 = 78;   // the sheet runs from the Southern Ocean to the High Arctic
 const miller = lat => 1.25 * Math.log(Math.tan(Math.PI / 4 + .4 * Math.max(-89, Math.min(89, lat)) * D2R));
 const Y0 = miller(LAT1), MW = 2 * Math.PI, MH = Y0 - miller(LAT0);
 const PX = lon => (lon + 180) * D2R, PY = lat => Y0 - miller(lat);   // map units: x 0…MW from the date line east, y 0…MH down
-const C = { sea: '#9cc3c4', wave: '#e6f1ee', grat: '#ffffff80', land: '#e7d7b9', ice: '#f4efe4', ink: '#263c35', paper: '#f6f3e9', edge: '#d9c7a3' };
-const CROWNS = ['#ac4931', '#c9782e', '#b8902a', '#8a4a2a', '#d08a3a'];
+const C = { sea: '#9cc3c4', shallow: '#b2d1d0', land: '#efe7d4', ice: '#f8f4ea', coast: '#a89a85', ink: '#263c35', card: '#fffcf3', line: '#ded6c5', rust: '#a04631', ticket: '#fffcf3', ticketLine: '#ded6c5', ticketInk: '#263c35', lantern: '#c8513a', glow: '#e9a08a' };
 // land and lakes as paths in map units, built once (a coast that crosses the date line is unwrapped and drawn on both sides)
 const unwrap = r => { const out = []; let off = 0, prev = null; for (let i = 0; i < r.length; i += 2) { let lon = r[i] / 100; if (prev !== null) { if (lon + off - prev > 180) off -= 360; else if (lon + off - prev < -180) off += 360 } lon += off; out.push(lon, r[i + 1] / 100); prev = lon } return out };
 function polyPath(poly) {
@@ -339,31 +343,43 @@ const LAKES = new Path2D(); for (const poly of W.lakes) LAKES.addPath(polyPath(p
 const PLACES = W.places.filter(([, , lat]) => lat > LAT0 && lat < LAT1).map(([name, country, lat, lon, rank]) => ({ name, country, lat, lon, rank, x: PX(lon), y: PY(lat) }));
 for (const s of SHIFTS) { s.place_ = PLACES.find(p => p.name === s.dot[0] && p.country === s.dot[1]); if (s.place_) s.place_.shift = s }
 const playable = SHIFTS.filter(s => s.place_);
-// where things sit: a fixed scatter, worked out once
-const inLand = (lon, lat) => { for (const poly of W.land) { const o = poly[0]; let c = false;
-  for (let i = 0, j = o.length - 2; i < o.length; j = i, i += 2) { const xi = o[i] / 100, yi = o[i + 1] / 100, xj = o[j] / 100, yj = o[j + 1] / 100;
-    if (Math.abs(xi - xj) < 180 && (yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) c = !c }
-  if (c) return true } return false };
-let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-// autumn woods, small groves of crowns as in the city maps, only where broadleaf forests really turn in autumn:
-// eastern North America, Europe, East Asia (north-east China, Korea, Japan) and southern Chile's lenga forests
-const WOODS = [[-97, -60, 31, 49, 5], [-9, 40, 43, 59, 5], [116, 146, 30, 47, 4], [-74, -69, -51, -39, 1]];   // lon, lon, lat, lat, weight
-const wsum = WOODS.reduce((a, z) => a + z[4], 0), TREES = [], WAVES = [];
-for (let i = 0; i < 3000 && TREES.length < 900; i++) {
-  let pick = rnd() * wsum, z = WOODS[0]; for (const q of WOODS) { if ((pick -= q[4]) <= 0) { z = q; break } }
-  const lon = z[0] + rnd() * (z[1] - z[0]), lat = z[2] + rnd() * (z[3] - z[2]);
-  if (!inLand(lon, lat)) continue;
-  const n = 3 + Math.floor(rnd() * 5), mix = [CROWNS[Math.floor(rnd() * 5)], CROWNS[Math.floor(rnd() * 5)]];
-  for (let k = 0; k < n; k++) {
-    const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * .9, x = lon + Math.cos(a) * d / Math.cos(lat * D2R), y = lat + Math.sin(a) * d * .8;
-    if (inLand(x, y)) TREES.push({ x: PX(x), y: PY(y), c: mix[k % 2], s: .75 + rnd() * .45 });
-  }
+// each city's icon: a small flat landmark drawn like the title screen's skyline and the city maps (flat fills, a darker
+// left side where it helps, no outlines). The four playable cities get their own; the rest one that fits the region.
+const ICON_SVG = {
+  tokyo: '<path d="M12 1L5.5 23H8.4L12 12.5L15.6 23H18.5Z" fill="#d9472f"/><path d="M12 1L5.5 23H8.4L12 12.5Z" fill="#b83a26"/><rect x="8.7" y="8" width="6.6" height="1.8" fill="#fffcf3"/><rect x="7.1" y="15.2" width="9.8" height="1.8" fill="#fffcf3"/>',
+  gothic: '<path d="M7 8L8 3.5L9 8ZM15 8L16 3.5L17 8Z" fill="#8a6f55"/><rect x="8" y="8" width="8" height="15" fill="#d3bf98"/><rect x="8" y="8" width="4" height="15" fill="#bba67f"/><path d="M8 8L12 1.5L16 8Z" fill="#8a6f55"/><circle cx="12" cy="12.5" r="2" fill="#fffcf3"/><rect x="10.5" y="18" width="3" height="5" rx="1.5" fill="#6d5a47"/>',
+  cn: '<rect x="11.7" y=".5" width=".6" height="6" fill="#263c35"/><path d="M11 23L11.4 6H12.6L13 23Z" fill="#a9b8b4"/><path d="M11 23L11.4 6H12V23Z" fill="#93a39f"/><path d="M8 10H16L14.6 13H9.4Z" fill="#4f6d8a"/><rect x="10.7" y="5.5" width="2.6" height="2" rx=".6" fill="#4f6d8a"/><rect x="7" y="21.5" width="10" height="1.5" fill="#93a39f"/>',
+  canal: '<rect x="2.5" y="10" width="6.5" height="13" fill="#b4523b"/><path d="M2.5 10L5.75 5.5L9 10Z" fill="#b4523b"/><rect x="9" y="8" width="6" height="15" fill="#36594b"/><path d="M9 8H10V6.5H11V5H13V6.5H14V8H15Z" fill="#36594b"/><rect x="15" y="11" width="6.5" height="12" fill="#c9932c"/><path d="M15 11Q15.6 7.5 18.25 6.5Q20.9 7.5 21.5 11Z" fill="#c9932c"/><g fill="#fffcf3"><rect x="4.5" y="12" width="2.5" height="3"/><rect x="4.5" y="17" width="2.5" height="3"/><rect x="10.75" y="10.5" width="2.5" height="3"/><rect x="10.75" y="16" width="2.5" height="3"/><rect x="17" y="13" width="2.5" height="3"/><rect x="17" y="18" width="2.5" height="3"/></g>',
+  pagoda: '<rect x="11.4" y="1" width="1.2" height="4" fill="#263c35"/><rect x="9" y="7" width="6" height="3" fill="#efe0c2"/><rect x="8" y="13" width="8" height="3" fill="#efe0c2"/><rect x="7" y="19" width="10" height="4" fill="#efe0c2"/><path d="M6 7L9 4H15L18 7ZM4 13L7 10H17L20 13ZM2 19L5 16H19L22 19Z" fill="#b54a33"/><path d="M6 7L9 4H12V7ZM4 13L7 10H12V13ZM2 19L5 16H12V19Z" fill="#9b3d2a"/>',
+  dome: '<rect x="19" y="7" width="2.4" height="16" fill="#e5d3ae"/><path d="M19 7L20.2 3.5L21.4 7Z" fill="#c9932c"/><rect x="4" y="14" width="14" height="9" fill="#f3e6cc"/><rect x="4" y="14" width="7" height="9" fill="#e5d3ae"/><path d="M5 14Q11 2 17 14Z" fill="#d9a23a"/><path d="M5 14Q8 6 11 5.6V14Z" fill="#c9932c"/><rect x="10.6" y="3" width=".8" height="3" fill="#c9932c"/><rect x="9" y="17" width="4" height="6" rx="2" fill="#a9905f"/>',
+  onion: '<rect x="6" y="13" width="12" height="10" fill="#efe0c2"/><rect x="6" y="13" width="6" height="10" fill="#e0cda6"/><path d="M12 3Q17.5 8 15.8 11.8Q14.6 13.4 12 13.4Q9.4 13.4 8.2 11.8Q6.5 8 12 3Z" fill="#c8513a"/><path d="M12 3Q6.5 8 8.2 11.8Q9.4 13.4 12 13.4Z" fill="#ad4230"/><rect x="11.6" y=".5" width=".8" height="3" fill="#c9932c"/><rect x="10.3" y="17" width="3.4" height="6" rx="1.7" fill="#b58f5f"/>',
+  temple: '<path d="M2.5 9L12 3L21.5 9Z" fill="#d3bf98"/><path d="M2.5 9L12 3V9Z" fill="#bba67f"/><rect x="3" y="9" width="18" height="2" fill="#bba67f"/><g fill="#efe0c2"><rect x="4.5" y="11" width="2.2" height="9"/><rect x="8.7" y="11" width="2.2" height="9"/><rect x="13.1" y="11" width="2.2" height="9"/><rect x="17.3" y="11" width="2.2" height="9"/></g><rect x="2" y="20" width="20" height="3" fill="#bba67f"/>',
+  pyramid: '<path d="M1.5 21.5L12 4L22.5 21.5Z" fill="#e6bd6a"/><path d="M1.5 21.5L12 4V21.5Z" fill="#c9932c"/><rect x="1" y="21.5" width="22" height="1.5" fill="#d9c7a3"/>',
+  palm: '<path d="M11.2 23Q12.6 16 11.6 10H12.8Q14 16 12.8 23Z" fill="#8a5a3b"/><path d="M12 10Q7 5.5 2 9Q7 7.8 12 10Z" fill="#36594b"/><path d="M12 10Q17 5.5 22 9Q17 7.8 12 10Z" fill="#5e8a70"/><path d="M12 10Q9 4 4.5 3.5Q9.5 6 12 10Z" fill="#5e8a70"/><path d="M12 10Q15 4 19.5 3.5Q14.5 6 12 10Z" fill="#36594b"/><circle cx="11" cy="11" r="1.2" fill="#8a5a3b"/><circle cx="13" cy="11.2" r="1.2" fill="#7a4e33"/>',
+  mountain: '<path d="M1 22L9 7L13 13.5L16 9.5L23 22Z" fill="#6f8aa0"/><path d="M1 22L9 7V22ZM13 13.5L16 9.5V22H13Z" fill="#4f6d8a"/><path d="M9 7L6.4 11.9L8 11.3L9.4 12.4L11 10.8Z" fill="#fffcf3"/><path d="M16 9.5L14.6 11.7L16 11.3L17.4 11.9Z" fill="#fffcf3"/>',
+  skyline: '<rect x="2.5" y="11" width="6" height="12" fill="#a9bfc9"/><rect x="8.5" y="4" width="7" height="19" fill="#4f6d8a"/><rect x="8.5" y="4" width="3.5" height="19" fill="#435f79"/><rect x="15.5" y="8" width="6" height="15" fill="#8fa9b8"/><g fill="#fffcf3"><rect x="10" y="7" width="1.5" height="1.5"/><rect x="12.7" y="7" width="1.5" height="1.5"/><rect x="10" y="11" width="1.5" height="1.5"/><rect x="12.7" y="11" width="1.5" height="1.5"/><rect x="10" y="15" width="1.5" height="1.5"/><rect x="12.7" y="15" width="1.5" height="1.5"/><rect x="17.2" y="11" width="1.4" height="1.4"/><rect x="17.2" y="15" width="1.4" height="1.4"/><rect x="4.3" y="14" width="1.4" height="1.4"/><rect x="4.3" y="18" width="1.4" height="1.4"/></g>',
+};
+const ICON_IMG = {};
+for (const [k, body] of Object.entries(ICON_SVG)) {
+  const img = new Image(); img.onload = () => { dirty = true }; ICON_IMG[k] = img;
+  img.src = 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96">${body}</svg>`);
 }
-TREES.sort((a, b) => a.y - b.y);   // back to front, so the nearer crowns overlap the ones behind
-for (let lat = LAT0 + 3; lat <= LAT1 - 6; lat += 5) for (let lon = -178; lon < 178; lon += 6) {
-  const x = lon + (rnd() - .5) * 4, y = lat + (rnd() - .5) * 3;
-  if (rnd() < .6 && !inLand(x, y) && !inLand(x + 2, y) && !inLand(x - 2, y)) WAVES.push({ x: PX(x), y: PY(y) });
-}
+const iconSVG = k => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON_SVG[k]}</svg>`;
+const ICONS = { Tokyo: 'tokyo', 'London|Canada': 'gothic', Toronto: 'cn', Amsterdam: 'canal', Paris: 'tokyo', Rome: 'temple', Athens: 'temple',
+  'Washington, D.C.': 'temple', Cairo: 'pyramid', Moscow: 'onion', Kyiv: 'onion', 'London|United Kingdom': 'gothic', Brussels: 'canal',
+  'København': 'canal', 'The Hague': 'canal', 'Reykjavík': 'mountain', Kathmandu: 'mountain', Thimphu: 'mountain', Santiago: 'mountain', 'La Paz': 'mountain',
+  Quito: 'mountain', Denver: 'mountain', Wellington: 'mountain', Bern: 'mountain', Vaduz: 'mountain', Andorra: 'mountain', 'New York': 'skyline' };
+const iconFor = (name, country, lat, lon) => {
+  const named = ICONS[name + '|' + country] || ICONS[name]; if (named) return named;
+  const A = Math.abs(lat);
+  if (A > 60) return 'mountain';
+  if (lon > 95 && lon < 146 && lat > 18) return 'pagoda';                          // East Asia
+  if (lon > -18 && lon < 62 && lat > 12 && lat < 42) return 'dome';                 // North Africa and the Middle East
+  if (lon > 60 && lon < 92 && lat > 5) return 'dome';                               // South Asia
+  if (lon > -12 && lon < 45 && lat >= 42) return lat > 51 ? 'canal' : 'gothic';     // Europe
+  return A < 22 ? 'palm' : 'skyline';                                               // the tropics; everywhere else, a city
+};
+for (const p of PLACES) p.icon = iconFor(p.name, p.country, p.lat, p.lon);
 
 const cv = $('map'), g = cv.getContext('2d');
 const FONT = (getComputedStyle(document.body).getPropertyValue('--sans') || 'sans-serif').trim();
@@ -371,13 +387,42 @@ let w = 0, h = 0, dpr = 1, S0 = 1;
 // the view: the map point at the middle of the screen, and the zoom (1 = the whole sheet fits)
 const view = { cx: MW / 2, cy: MH / 2, k: 1 };
 const K_MAX = 10;
-let dirty = true, anim = null, spin = { x: 0, y: 0 }, selected = null, hover = null, interacted = false, dots = [];
-const pads = () => w < 720 ? { t: 64, b: 112, s: 10 } : { t: 150, b: 70, s: 24 };
+let moving = false, dirty = true, anim = null, spin = { x: 0, y: 0 }, selected = null, hover = null, interacted = false, dots = [];
+// room around the sheet; the top clears the header card (Back, title, note) whatever its height, so they never overlap
+const pads = () => {
+  const p = w < 720 ? { t: 64, b: 112, s: 10 } : { t: 150, b: 70, s: 24 };
+  const head = document.querySelector('#pick .head'), hb = head ? head.getBoundingClientRect().bottom - cv.getBoundingClientRect().top : 0;
+  if (hb > 0) p.t = Math.max(p.t, Math.ceil(hb) + 12);
+  return p;
+};
 function size() {
   const r = cv.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
   w = r.width; h = r.height; cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
-  const p = pads(); S0 = Math.min((w - 2 * p.s) / MW, (h - p.t - p.b) / MH); clamp(); dirty = true;
+  const p = pads(); S0 = Math.min((w - 2 * p.s) / MW, (h - p.t - p.b) / MH); clamp(); placeLabels(); dirty = true;
 }
+/* Each city's label is a flat cream tag (icon + name) standing on a short pointer above the city. Which tags show is
+   settled here, not every frame, so nothing flickers while you pan: in priority order (playable cities, then the biggest
+   places), a tag gets the zoom from which it clears every tag above it; zooming in past that fades it in, and it stays. */
+const LH = 28, LIFT = 9, GAP = 6;   // tag height, the pointer under it, the space kept between tags (screen px)
+const tagW = p => 5 + 20 + 6 + p.tw + 12;
+function placeLabels() {
+  g.setTransform(1, 0, 0, 1, 0, 0); g.font = `600 12px ${FONT}`;
+  for (const p of PLACES) p.tw = g.measureText(p.name).width;
+  const order = PLACES.slice().sort((a, b) => !!b.shift - !!a.shift || a.rank - b.rank || a.name.localeCompare(b.name));
+  order.forEach((p, i) => {
+    if (p.shift) { p.minK = 1; return }
+    let need = 1;
+    for (let j = 0; j < i; j++) {
+      const q = order[j]; if (q.minK > K_MAX) continue;
+      const dx = Math.abs(p.x - q.x) * S0, dy = Math.abs(p.y - q.y) * S0;
+      const kx = dx ? ((tagW(p) + tagW(q)) / 2 + GAP) / dx : Infinity, ky = dy ? (LH + GAP) / dy : Infinity;
+      const sep = Math.min(kx, ky);   // the zoom from which these two tags no longer touch
+      if (sep > q.minK) need = Math.max(need, sep);
+    }
+    p.minK = need;
+  });
+}
+if (document.fonts) document.fonts.ready.then(() => { if (w) { placeLabels(); dirty = true } });
 addEventListener('resize', () => { if (!$('pick').hidden) size() });
 const scale = () => S0 * view.k;
 // keep the sheet on screen: centred while it fits, edge to edge once it's bigger than the window
@@ -389,61 +434,67 @@ function clamp() {
   if (fitY) view.cy = MH / 2 - (midY - h / 2) / S; else view.cy = Math.max((h / 2 - p.t) / S, Math.min(MH - (h / 2 - p.b) / S, view.cy));
 }
 const toScreen = (x, y) => [w / 2 + (x - view.cx) * scale(), h / 2 + (y - view.cy) * scale()];
+let tiles = [];   // the tags drawn this frame: { p, x, y, w, ax, ay } (x, y: the tag's centre; ax, ay: the city)
 function draw() {
-  const S = scale(), ox = w / 2 - view.cx * S, oy = h / 2 - view.cy * S, mw = MW * S, mh = MH * S;
-  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h); g.lineJoin = g.lineCap = 'round';
-  // the sheet's cut edge, like the slab under each city's plot
-  g.fillStyle = C.edge; g.fillRect(ox, oy + mh, mw, 6); g.lineWidth = 1; g.strokeStyle = C.ink; g.strokeRect(ox, oy + mh, mw, 6);
-  g.fillStyle = C.sea; g.fillRect(ox, oy, mw, mh);
-  g.save(); g.beginPath(); g.rect(ox, oy, mw, mh); g.clip();
-  // graticule every 30°, dashed like road markings
-  g.strokeStyle = C.grat; g.lineWidth = .8; g.setLineDash([2, 4]); g.beginPath();
-  for (let lon = -150; lon < 180; lon += 30) { const x = ox + PX(lon) * S; g.moveTo(x, oy); g.lineTo(x, oy + mh) }
-  for (const lat of [-30, 0, 30, 60]) { const y = oy + PY(lat) * S; g.moveTo(ox, y); g.lineTo(ox + mw, y) }
-  g.stroke(); g.setLineDash([]);
-  // the water's short light strokes
-  const L = Math.min(11, 3 + view.k * 1.4); g.strokeStyle = C.wave; g.lineWidth = Math.min(1.7, .9 + view.k * .12); g.beginPath();
-  for (const wv of WAVES) { const x = ox + wv.x * S, y = oy + wv.y * S; if (x < -20 || x > w + 20 || y < -20 || y > h + 20) continue; g.moveTo(x - L / 2, y); g.lineTo(x + L / 2, y) }
-  g.stroke();
-  // land, ice and lakes in flat colours, the coasts in one fine ink line (drawn in map units, so built once)
+  const S = scale(), ox = w / 2 - view.cx * S, oy = h / 2 - view.cy * S;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = C.sea; g.fillRect(0, 0, w, h); g.lineJoin = g.lineCap = 'round';
+  // land in flat sand with one fine coast line; a flat band of shallower water hugs the shore (drawn in map units, built once)
   g.setTransform(dpr * S, 0, 0, dpr * S, dpr * ox, dpr * oy);
+  g.strokeStyle = C.shallow; g.lineWidth = 9 / S; g.stroke(COAST);
   for (const l of LAND) { g.fillStyle = l.fill; g.fill(l.path, 'evenodd') }
   g.fillStyle = C.sea; g.fill(LAKES, 'evenodd');
-  g.strokeStyle = C.ink; g.lineWidth = Math.min(1.3, .75 + view.k * .07) / S; g.stroke(COAST); g.lineWidth = .7 / S; g.stroke(LAKES);
+  g.strokeStyle = C.coast; g.lineWidth = 1 / S; g.stroke(COAST); g.stroke(LAKES);
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  // autumn trees: a little crown of overlapping rounds each
-  const tr = Math.max(1.2, S * .0062);
-  for (const t of TREES) { const x = ox + t.x * S, y = oy + t.y * S; if (x < -9 || x > w + 9 || y < -9 || y > h + 9) continue; const r = tr * t.s;
-    g.fillStyle = t.c; g.beginPath(); g.arc(x - r * .55, y + r * .15, r, 0, 7); g.arc(x + r * .55, y + r * .15, r, 0, 7); g.arc(x, y - r * .45, r, 0, 7); g.fill();
-    if (r > 2.2) { g.fillStyle = '#ffffff2e'; g.beginPath(); g.arc(x - r * .2, y - r * .6, r * .45, 0, 7); g.fill() } }
-  g.restore();
-  g.lineWidth = 1.2; g.strokeStyle = C.ink; g.strokeRect(ox, oy, mw, mh);
-  // city dots, all alike: the fare lantern's ring (rust round a cream centre); names appear as you zoom in
+  // the cities on screen, each a small ink dot
   dots = [];
-  for (const p of PLACES) { const x = ox + p.x * S, y = oy + p.y * S; if (x > -10 && x < w + 10 && y > -10 && y < h + 10) dots.push({ p, x, y }) }
-  const r0 = 3 + Math.min(1.4, (view.k - 1) * .25);
+  for (const p of PLACES) { const x = ox + p.x * S, y = oy + p.y * S; if (x > -120 && x < w + 120 && y > -60 && y < h + 60) dots.push({ p, x, y }) }
+  // the tags that show at this zoom (plus whatever is chosen or under the mouse); playable ones nudge sideways, smoothly,
+  // when two of them sit closer than their tags are wide (London beside Toronto), with a line back to the city
+  // each tag fades in or out over a moment when its zoom is crossed (never left half-seen), and a playable tag whose
+  // spot is taken by another playable one (London beside Toronto) stacks above it; both moves glide rather than jump
+  const now = performance.now(), dt = Math.min(.1, (now - (draw.t || now)) / 1000); draw.t = now; moving = false;
+  const ease = (cur, to, rate) => { const v = cur + (to - cur) * Math.min(1, dt * rate); if (Math.abs(to - v) > .01) { moving = true; return v } return to };
+  tiles = [];
   for (const d of dots) {
-    const r = d.p === hover || d.p === selected ? r0 * 1.45 : r0;
-    g.beginPath(); g.arc(d.x, d.y, r + 1, 0, 7); g.fillStyle = C.paper; g.fill();
-    g.beginPath(); g.arc(d.x, d.y, r, 0, 7); g.fillStyle = '#c8513a'; g.fill();
-    g.beginPath(); g.arc(d.x, d.y, r * .42, 0, 7); g.fillStyle = '#fbefd5'; g.fill();
+    const p = d.p, want = view.k >= p.minK || p === selected || p === hover ? 1 : 0;
+    p.al = reduce ? want : ease(p.al ?? want, want, 14);
+    if (p.al > 0) tiles.push({ p, a: p.al, w: tagW(p), ax: d.x, ay: d.y, x: d.x, y: d.y - LIFT - LH / 2, ty: 0 });
   }
-  const sel = selected && dots.find(d => d.p === selected);
-  if (sel) { g.beginPath(); g.arc(sel.x, sel.y, r0 * 1.45 + 5, 0, 7); g.lineWidth = 2; g.strokeStyle = '#c9932c'; g.stroke() }   // the drop-off lantern's gold
-  // names never run under the heading, the menus or the card
-  const cr = cv.getBoundingClientRect(), boxes = [...document.querySelectorAll('#pick .head, #shifts, .zoom, #panel:not([hidden])')].map(el => {
-    const r = el.getBoundingClientRect(); return [r.left - cr.left - 4, r.top - cr.top - 4, r.width + 8, r.height + 8] });
-  const label = (d, force) => {
-    g.font = `${d.p === selected ? 600 : 500} 12px ${FONT}`;
-    const tw = g.measureText(d.p.name).width, b = [d.x + r0 + 5, d.y - 8, tw + 4, 16];
-    if (!force && (b[0] + b[2] > w - 4 || boxes.some(o => b[0] < o[0] + o[2] && o[0] < b[0] + b[2] && b[1] < o[1] + o[3] && o[1] < b[1] + b[3]))) return;
-    boxes.push(b); g.lineWidth = 3.2; g.strokeStyle = C.paper; g.strokeText(d.p.name, b[0], d.y + 4); g.fillStyle = C.ink; g.fillText(d.p.name, b[0], d.y + 4);
+  const placed = [];
+  for (const t of tiles.filter(t => t.p.shift).sort((a, b) => a.ax - b.ax)) {
+    const clash = y => placed.some(u => Math.abs(t.x - u.x) < (t.w + u.w) / 2 + GAP && Math.abs(y - u.y) < LH + GAP);
+    let lift = 0; while (lift < 4 && clash(t.y - lift * (LH + GAP))) lift++;
+    t.ty = -lift * (LH + GAP); placed.push({ x: t.x, y: t.y + t.ty, w: t.w });
+  }
+  for (const t of tiles) { t.p.oy = reduce ? t.ty : ease(t.p.oy ?? t.ty, t.ty, 12); t.y += t.p.oy }
+  tiles.sort((a, b) => (a.p === selected) - (b.p === selected) || (a.p === hover) - (b.p === hover) || a.ay - b.ay);
+  // every city a small ink dot; the playable ones the game's orange pickup lantern, glowing
+  g.fillStyle = C.ink;
+  for (const d of dots) if (!d.p.shift) { g.beginPath(); g.arc(d.x, d.y, 2.2, 0, 7); g.fill() }
+  const lantern = (x, y) => {
+    const a0 = g.globalAlpha;
+    g.globalAlpha = a0 * .45; g.fillStyle = C.glow; g.beginPath(); g.arc(x, y - 3, 9, 0, 7); g.fill(); g.globalAlpha = a0;
+    g.fillStyle = C.ink; g.fillRect(x - 3, y - 9.5, 6, 1.6); g.fillRect(x - 3, y + 1.9, 6, 1.6);
+    g.fillStyle = C.lantern; g.beginPath(); g.roundRect(x - 4, y - 8.5, 8, 11, 3.5); g.fill();
+    g.globalAlpha = a0 * .75; g.fillStyle = C.card; g.fillRect(x - 4, y - 4, 8, 1.6); g.globalAlpha = a0;
   };
-  for (const d of dots) if (d.p === selected || d.p === hover) label(d, true);
-  if (view.k >= 1.4) {
-    const limit = view.k >= 3.5 ? 10 : view.k >= 2.2 ? 5 : 2;   // which ranks are named at this zoom
-    for (const d of dots.filter(d => d.p.rank <= limit).sort((a, b) => a.p.rank - b.p.rank)) if (d.p !== selected && d.p !== hover) label(d);
+  for (const d of dots) if (d.p.shift && !tiles.some(t => t.p === d.p)) lantern(d.x, d.y);
+  for (const t of tiles) {
+    const on = t.p === selected, hov = t.p === hover, play = !!t.p.shift, x = t.x - t.w / 2, y = t.y - LH / 2;
+    g.globalAlpha = t.a;
+    // the pointer: a fine ink stem from the tag down to the city (a longer one if the tag stacked up)
+    g.strokeStyle = on ? C.rust : C.ink; g.lineWidth = 1.25; g.beginPath(); g.moveTo(t.x, y + LH); g.lineTo(t.ax, t.ay - (play ? 9 : 0)); g.stroke();
+    if (play) lantern(t.ax, t.ay); else { g.fillStyle = on ? C.rust : C.card; g.beginPath(); g.arc(t.ax, t.ay, 3.4, 0, 7); g.fill(); g.lineWidth = 1.5; g.stroke() }
+    // the tag, like the game's HUD pills: cream with a fine rule, a shift you can drive marked only by its lantern, rust when chosen
+    g.fillStyle = on ? C.rust : play ? C.ticket : C.card; g.strokeStyle = on ? C.rust : hov ? C.ink : play ? C.ticketLine : C.line; g.lineWidth = 1;
+    g.beginPath(); g.roundRect(x + .5, y + .5, t.w - 1, LH - 1, LH / 2); g.fill(); g.stroke();
+    // the landmark in a small round badge, then the name
+    g.fillStyle = on ? '#fffcf3' : '#f0e6cf'; g.beginPath(); g.arc(x + 15, t.y, 10, 0, 7); g.fill();
+    const img = ICON_IMG[t.p.icon]; if (img && img.complete && img.naturalWidth) g.drawImage(img, x + 7, t.y - 8, 16, 16);
+    g.font = `600 12px ${FONT}`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillStyle = on ? '#fff' : play ? C.ticketInk : C.ink; g.fillText(t.p.name, x + 31, t.y + .5);
+    g.textBaseline = 'alphabetic';
   }
+  g.globalAlpha = 1;
 }
 
 /* ---------- motion: a short glide to a chosen city, a little coast after a drag; grabbing the map stops both ---------- */
@@ -459,7 +510,7 @@ function tick(now) {
   } else if (Math.hypot(spin.x, spin.y) * scale() > 4) {
     view.cx += spin.x * dt; view.cy += spin.y * dt; clamp(); const f = Math.pow(.005, dt); spin.x *= f; spin.y *= f; dirty = true;
   }
-  if (dirty) { draw(); dirty = false }
+  if (dirty || moving) { draw(); dirty = false }
   requestAnimationFrame(tick);
 }
 const Map_ = { wake() { size(); draw(); if (!running) { running = true; last = performance.now(); requestAnimationFrame(tick) } } };
@@ -523,7 +574,9 @@ cv.addEventListener('keydown', e => {
 });
 $('zin').onclick = () => zoomAt(1.4); $('zout').onclick = () => zoomAt(1 / 1.4);
 function hit(e, radius = 14) {
-  const [x, y] = local(e); let best = null, bd = radius;
+  const [x, y] = local(e);
+  for (let i = tiles.length - 1; i >= 0; i--) { const t = tiles[i]; if (t.a > .5 && Math.abs(t.x - x) <= t.w / 2 + 2 && Math.abs(t.y - y) <= LH / 2 + 2) return { p: t.p, x: t.ax, y: t.ay } }
+  let best = null, bd = radius;
   for (const d of dots) { const dd = Math.hypot(d.x - x, d.y - y); if (dd < bd) { bd = dd; best = d } }
   return best;
 }
@@ -531,24 +584,20 @@ function hit(e, radius = 14) {
 /* ---------- choosing: a playable city shows its map and Continue; anywhere else points to the nearest shift ---------- */
 const km = (a, b) => { const v = p => { const la = p.lat * D2R, lo = p.lon * D2R; return [Math.cos(la) * Math.cos(lo), Math.cos(la) * Math.sin(lo), Math.sin(la)] }, u = v(a), q = v(b);
   return 6371 * Math.acos(Math.max(-1, Math.min(1, u[0] * q[0] + u[1] * q[1] + u[2] * q[2]))) };
-const nav = $('shifts');
-for (const s of playable) nav.insertAdjacentHTML('beforeend', `<button data-shift="${s.id}" aria-pressed="false">${esc(s.name)}</button>`);
-nav.addEventListener('click', e => { const b = e.target.closest('[data-shift]'); if (b) select(playable.find(s => s.id === b.dataset.shift).place_, true) });
 let panelT = null;
 function select(p, fromMenu = false) {
   selected = p; hover = null; dirty = true;
   const panel = $('panel'), body = $('pbody'), opening = panel.hidden || panel.classList.contains('off');
   if (opening) { panel.hidden = false }   // shown first, so the glide aims beside it
   flyTo(viewFor(p, Math.max(view.k, p.shift ? 3 : 2.6)));
-  for (const b of nav.querySelectorAll('button')) b.setAttribute('aria-pressed', b.dataset.shift === p.shift?.id ? 'true' : 'false');
   const s = p.shift, near = s ? null : playable.map(t => ({ t, d: km(p, t.place_) })).sort((a, b) => a.d - b.d)[0];
   const html = s
-    ? `<span class="eyebrow">${esc(p.country)}</span><h3>${esc(s.name)}</h3><p class="where">${esc(s.place)}</p>
-       <div class="pv">${s.preview}</div><p class="blurb">${esc(s.blurb)}</p><button class="primary" id="go">Continue</button>`
-    : `<span class="eyebrow">${esc(p.country)}</span><h3>${esc(p.name)}</h3><p class="none">Not open yet</p>
+    ? `<div class="pv">${s.preview.replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ')}</div>
+       <div class="pfoot"><h3>${esc(s.name)}</h3><p class="blurb">${esc(s.place)}</p><button class="primary" id="go">Start</button></div>`
+    : `<span class="icon" aria-hidden="true">${iconSVG(p.icon)}</span><span class="eyebrow">${esc(p.country)}</span><h3>${esc(p.name)}</h3><p class="none">Not open yet</p>
        ${near ? `<button class="secondary" id="near" data-shift="${near.t.id}">${esc(near.t.name)} →</button>` : ''}`;
   const fill = () => {
-    body.innerHTML = html; body.classList.remove('swap');
+    body.innerHTML = html; body.classList.remove('swap'); panel.classList.toggle('shift', !!s);
     $('go')?.addEventListener('click', () => go(s));
     $('near')?.addEventListener('click', () => select(playable.find(t => t.id === $('near').dataset.shift).place_, true));
     if (fromMenu) ($('go') || $('near'))?.focus({ preventScroll: true });
@@ -558,7 +607,7 @@ function select(p, fromMenu = false) {
   else { body.classList.add('swap'); panelT = setTimeout(fill, 140) }   // a quick crossfade between cities
 }
 function closePanel() {
-  selected = null; dirty = true; for (const b of nav.querySelectorAll('button')) b.setAttribute('aria-pressed', 'false');
+  selected = null; dirty = true;
   const panel = $('panel'); panel.classList.add('off'); clearTimeout(panelT); panelT = setTimeout(() => { panel.hidden = true }, reduce ? 0 : 240);
 }
 $('pclose').onclick = closePanel;
