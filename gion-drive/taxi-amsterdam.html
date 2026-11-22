@@ -3490,10 +3490,14 @@ function openDoor() {
 //   back     reverse throttle (the phone's gas in R)
 //   brake    keyboard ↓: brakes, then reverses once stopped (arcade style)
 //   stopper  the phone's brake pedal: brakes to a stop and never reverses
+// keyboard gas is a pedal too: holding ↑ presses it further down (about 2 s to the floor), letting go lifts it quickly,
+// so a tap creeps, a short hold cruises and a long hold is flat out
+let kGas = 0;
+function pressKeys(dt) { kGas = keys.has('gas') ? Math.min(1, Math.max(kGas, .25) + dt * .4) : Math.max(0, kGas - dt * 3) }
 function readInput() {
   const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0), r = remote.gear === 'R';
   const cut = performance.now() < mods.gasCutUntil;   // Wrong Turn: a stall cuts the throttle for a moment
-  return { gas: cut ? 0 : Math.max(keys.has('gas') ? 1 : 0, r ? 0 : remote.gas), back: cut || !r ? 0 : remote.gas,
+  return { gas: cut ? 0 : Math.max(kGas, r ? 0 : remote.gas), back: cut || !r ? 0 : remote.gas,
     brake: keys.has('brake') ? 1 : 0, stopper: remote.brake * mods.brakeScale, turn: Math.max(-1, Math.min(1, kTurn + remote.turn + mods.turnBias)) };
 }
 for (const b of document.querySelectorAll('#gt-pad button')) {
@@ -3509,10 +3513,17 @@ const MAX = 17, REV = 5.5, WHEELBASE = 2.7;   // ~61 km/h flat out
 // how many of the car's 8 outline points are on the road (8 = it fits)
 const onCount = (x, y, h) => { let n = 0; for (const c of corners(x, y, h)) if (onRoad(c)) n++; return n };
 function step(dt) {
-  const { gas, back, brake, stopper, turn } = readInput();
+  pressKeys(dt); const { gas, back, brake, stopper, turn } = readInput();
   const coast = -Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
   // the pull fades only near top speed (not linearly), so holding the gas keeps building speed; a lighter pedal settles lower
-  if (gas > 0) car.v += gas * (car.v < 0 ? 16 : 8 * (1 - Math.pow(Math.max(0, car.v) / MAX, 1.7))) * dt + (1 - gas) * coast * 1.4;
+  // the gas picks a speed: a quarter pedal cruises at ~12 km/h, half at ~28, the floor at top speed. Below it the taxi pulls
+  // (harder the deeper the pedal); above it (you eased off) it slows to it gently, like engine braking
+  if (gas > 0) {
+    const want = MAX * Math.pow(gas, 1.3);
+    if (car.v < 0) car.v += 16 * dt;
+    else if (car.v < want) car.v = Math.min(want, car.v + (3 + 7 * gas) * (1 - .55 * Math.pow(car.v / MAX, 2)) * dt);
+    else car.v = Math.max(want, car.v - 3.5 * dt);
+  }
   else if (back > 0) car.v -= back * (car.v > .05 ? 16 : 7 * (1 + car.v / REV)) * dt - (1 - back) * coast;   // gas in R: brake, then reverse
   else if (brake > 0) car.v -= brake * (car.v > .05 ? 16 : 7) * dt - (1 - brake) * coast;   // keyboard ↓: hard brake, then a brisk reverse
   else if (stopper > 0) car.v -= Math.sign(car.v) * Math.min(Math.abs(car.v), (stopper * 16 + (1 - stopper) * 2.2) * dt);   // phone brake: to a stop
@@ -4269,7 +4280,7 @@ function renderLobby() {
   if (url) {
     $('gt-qr').innerHTML = GTQR.svg(url);
     $('gt-url').textContent = url.replace(/^https?:\/\//, '').replace(/\?r=.*/, '');
-    $('gt-net').textContent = publicUrl ? 'Over the internet: any network works' : 'Same Wi-Fi as this laptop';
+    $('gt-net').textContent = publicUrl ? '' : 'Same Wi-Fi as this laptop';
   } else $('gt-qr').innerHTML = `<p class="gt-qrmsg">${!wsOk ? 'Connecting to the crew server…' : 'No network found. Connect this laptop to Wi-Fi or a phone’s hotspot.'}</p>`;
   $('gt-ip').hidden = ips.length < 2 || isLanHost() || !!publicUrl;
   $('gt-lobby').classList.toggle('public', !!publicUrl);
