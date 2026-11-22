@@ -45,7 +45,6 @@ C.beforeStart = () => {
 // the wager panel's picture: a corner of the city map (same paper, roads, canal and buildings as the map) with a phone
 // showing a sealed role card and a stack of coins for the wager
 const WT_ART = `<svg class="wt-art" viewBox="0 0 240 150" aria-hidden="true">
-  <ellipse cx="120" cy="140" rx="98" ry="6" fill="#4a4f8a" opacity=".16"/>
   <rect x="18" y="22" width="204" height="112" rx="10" fill="#efe7d4"/>
   <path d="M18 92H222V104H18Z" fill="#9cc3c4"/><path d="M86 22H100V134H86ZM18 56H222V66H18Z" fill="#cbbab3"/>
   <g fill="#d9c7a8" stroke="#a89a85"><rect x="28" y="30" width="22" height="18" rx="1.5"/><rect x="56" y="30" width="22" height="18" rx="1.5"/>
@@ -65,9 +64,9 @@ function renderPanel(st, err) {
   panel.hidden = false;
   const dots = Array.from({ length: s.n || 0 }, (_, i) => `<i class="${i < (s.committed || 0) ? 'on' : ''}"></i>`).join('');
   const sealed = s.phase === 'locked';
-  panel.innerHTML = `${err ? '' : WT_ART}<small class="wt-cap">Wrong Turn</small>
+  panel.innerHTML = `${err ? '' : WT_ART}
     <h2>${err ? 'Something went wrong' : sealed ? 'Wagers locked. Get in the taxi.' : 'Check your role and wager.'}</h2>
-    ${err ? `<p>${esc(err)}</p>` : `<div class="wt-dots">${dots}</div><p class="wt-sub">${s.msg ? esc(s.msg) : `${s.committed || 0} of ${s.n} locked in`}</p>`}
+    ${err ? `<p>${esc(err)}</p>` : `<div class="wt-dots">${dots}</div>${s.msg ? `<p class="wt-sub">${esc(s.msg)}</p>` : ''}`}
     <button class="gt-ghost" id="wt-cancel">${err ? 'Back to the lobby' : 'Cancel and refund'}</button>`;
   $('wt-cancel').onclick = () => { C.send({ t: 'dx-abort' }); if (err) { panel.hidden = true; phase = 'off' } };
 }

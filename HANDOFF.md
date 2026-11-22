@@ -156,3 +156,4 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 - drive.js records a breadcrumb `trail` every 0.25 s plus `marks` (pickup, dropoff, bump, hit) and distance `dist`; the trail and marks only go out with the `stop` event, not with every `state()`. `GionTaxi.mapBase()` and `GionTaxi.half` draw the base map.
 - The lobby QR keeps the yellow taxi frame (theme.css `#gt-qr:has(> svg)`): yellow body with a white rim, roof sign and checker strip.
 - City picker panel (index.template.html `#panel.shift`): for a city with a shift, the city's map fills the whole card and fades to paper at the bottom under the city name, its place (one line) and Start. The icon, eyebrow, blurb and Continue are gone. Cities without a shift keep the old panel.
+- Wager wait panel (laptop): flat paper, no gradient or shadow, no "Wrong Turn" caption or "N of M locked in" line (the dots show progress); Cancel and refund is a raised cream key (theme.css `#wt-cancel`).

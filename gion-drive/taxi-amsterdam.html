@@ -3077,7 +3077,18 @@ body { background: var(--paper); }
 .wt-switch { border-color: var(--rule); }
 .wt-switch.on { border-color: #dcafbc; }
 .wt-switch em, .wt-sub, .wt-subhead, .pad-ui #task { font-style: normal; }
-#wt-panel { background: linear-gradient(140deg, #fff, #fff4ed); }
+/* the wager wait: flat paper, no gradient or shadow; Cancel is a raised cream key */
+#wt-panel { background: var(--panel); box-shadow: none; border: 1px solid var(--rule); }
+#wt-panel .wt-dots { margin: 16px 0 20px; }
+#wt-cancel {
+  margin: 4px 0 2px; padding: 11px 26px; border: 1px solid #d3c5a8; border-radius: 999px;
+  background: #fffcf3; color: var(--ink); font: 600 15px/1 var(--sans);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -2px 0 #efe6d3, 0 3px 0 #d3c5a8;
+  transition: transform .08s ease, box-shadow .08s ease, background .15s;
+}
+#wt-cancel:hover { background: #fffaf0; }
+#wt-cancel:active { transform: translateY(2px);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #efe6d3, 0 1px 0 #d3c5a8; }
 #wt-vote { background: linear-gradient(140deg, #fff, #f7f0e0); }
 .wt-face { background: #fffcf3; border-color: var(--rule); }
 .wt-card.imp .wt-back { background: var(--rose); border-color: #dcafbc; color: var(--ink); }
@@ -5057,7 +5068,6 @@ C.beforeStart = () => {
 // the wager panel's picture: a corner of the city map (same paper, roads, canal and buildings as the map) with a phone
 // showing a sealed role card and a stack of coins for the wager
 const WT_ART = `<svg class="wt-art" viewBox="0 0 240 150" aria-hidden="true">
-  <ellipse cx="120" cy="140" rx="98" ry="6" fill="#4a4f8a" opacity=".16"/>
   <rect x="18" y="22" width="204" height="112" rx="10" fill="#efe7d4"/>
   <path d="M18 92H222V104H18Z" fill="#9cc3c4"/><path d="M86 22H100V134H86ZM18 56H222V66H18Z" fill="#cbbab3"/>
   <g fill="#d9c7a8" stroke="#a89a85"><rect x="28" y="30" width="22" height="18" rx="1.5"/><rect x="56" y="30" width="22" height="18" rx="1.5"/>
@@ -5077,9 +5087,9 @@ function renderPanel(st, err) {
   panel.hidden = false;
   const dots = Array.from({ length: s.n || 0 }, (_, i) => `<i class="${i < (s.committed || 0) ? 'on' : ''}"></i>`).join('');
   const sealed = s.phase === 'locked';
-  panel.innerHTML = `${err ? '' : WT_ART}<small class="wt-cap">Wrong Turn</small>
+  panel.innerHTML = `${err ? '' : WT_ART}
     <h2>${err ? 'Something went wrong' : sealed ? 'Wagers locked. Get in the taxi.' : 'Check your role and wager.'}</h2>
-    ${err ? `<p>${esc(err)}</p>` : `<div class="wt-dots">${dots}</div><p class="wt-sub">${s.msg ? esc(s.msg) : `${s.committed || 0} of ${s.n} locked in`}</p>`}
+    ${err ? `<p>${esc(err)}</p>` : `<div class="wt-dots">${dots}</div>${s.msg ? `<p class="wt-sub">${esc(s.msg)}</p>` : ''}`}
     <button class="gt-ghost" id="wt-cancel">${err ? 'Back to the lobby' : 'Cancel and refund'}</button>`;
   $('wt-cancel').onclick = () => { C.send({ t: 'dx-abort' }); if (err) { panel.hidden = true; phase = 'off' } };
 }

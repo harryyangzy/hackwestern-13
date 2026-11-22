@@ -258,7 +258,18 @@ body { background: var(--paper); }
 .wt-switch { border-color: var(--rule); }
 .wt-switch.on { border-color: #dcafbc; }
 .wt-switch em, .wt-sub, .wt-subhead, .pad-ui #task { font-style: normal; }
-#wt-panel { background: linear-gradient(140deg, #fff, #fff4ed); }
+/* the wager wait: flat paper, no gradient or shadow; Cancel is a raised cream key */
+#wt-panel { background: var(--panel); box-shadow: none; border: 1px solid var(--rule); }
+#wt-panel .wt-dots { margin: 16px 0 20px; }
+#wt-cancel {
+  margin: 4px 0 2px; padding: 11px 26px; border: 1px solid #d3c5a8; border-radius: 999px;
+  background: #fffcf3; color: var(--ink); font: 600 15px/1 var(--sans);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -2px 0 #efe6d3, 0 3px 0 #d3c5a8;
+  transition: transform .08s ease, box-shadow .08s ease, background .15s;
+}
+#wt-cancel:hover { background: #fffaf0; }
+#wt-cancel:active { transform: translateY(2px);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #efe6d3, 0 1px 0 #d3c5a8; }
 #wt-vote { background: linear-gradient(140deg, #fff, #f7f0e0); }
 .wt-face { background: #fffcf3; border-color: var(--rule); }
 .wt-card.imp .wt-back { background: var(--rose); border-color: #dcafbc; color: var(--ink); }
