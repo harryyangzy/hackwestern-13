@@ -28,6 +28,10 @@
 #gt-seats li.off{opacity:.6}
 #gt-seats li>i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px #fffcf3,0 0 0 3px var(--c)}
 #gt-seats li.empty>i{background:transparent;box-shadow:0 0 0 1px var(--rule)}
+#gt-seats .gt-face{display:flex;flex:none;width:40px;height:40px}
+#gt-seats li.empty{justify-content:center;padding:6px 10px}
+#gt-seats li.empty .gt-face{filter:grayscale(1);opacity:.35}
+#gt-seats li.off .gt-face{filter:grayscale(.7)}
 #gt-seats li>div{flex:1;min-width:0;display:flex;flex-direction:column}
 #gt-seats b{font:600 16px var(--serif)}
 #gt-seats small{color:var(--muted);font-size:12px}
@@ -69,3 +73,16 @@
 .gt-modes button{padding:7px 18px;font-weight:600;font-size:14px;color:var(--muted)}
 .gt-modes button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 @media (max-width:620px){.gt-lgrid{grid-template-columns:1fr;justify-items:center}#gt-seats{width:100%}}
+
+/* the lobby, pared down: mode tabs on top, the QR code and room on the left, the seats and Start on the right */
+#gt-lobby{width:min(640px,calc(100% - 28px));padding:18px 22px 20px}
+#gt-lobby .gt-modes{margin:2px auto 18px}
+.gt-lgrid{gap:20px;align-items:stretch}
+.gt-qr{justify-content:center;padding:14px 12px 10px;border-radius:16px;background:#fffcf3;border:1px solid var(--rule)}
+.gt-qr figcaption{margin-top:4px}
+.gt-crewcol{display:flex;flex-direction:column}
+#gt-seats li{min-height:56px}
+#gt-lobby #gt-lstart{position:static;width:100%;margin:auto 0 0;box-shadow:none;transform:none}
+#gt-seats+.gt-lnote,#gt-seats+#gt-lstart{margin-top:12px}
+.gt-lnote[hidden]{display:none}
+.gt-lnote{color:var(--rust);margin:10px 0 10px}

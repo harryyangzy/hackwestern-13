@@ -10,52 +10,62 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const sol = l => (l / 1e9).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
 const yen = v => GT.money ? GT.money(v) : '¥' + Math.round(v).toLocaleString();   // the city's currency
 
-let on = false, avail = null, phase = 'off', withBots = false;   // off | setup | driving | vote | final
+let on = true, avail = null, phase = 'off', withBots = false;   // off | setup | driving | vote | final
 let goal = GOAL, lastStatus = null;
 
 /* ---------- UI ---------- */
-$('gt-lstart').insertAdjacentHTML('beforebegin', `<label class="wt-switch" id="wt-switch"><input type="checkbox" id="wt-on">
-  <span><b>Wrong Turn</b> One of you is secretly the imposter. Wagers in devnet SOL (test tokens). 3–4 phones.</span></label>
-  <label class="wt-bots" id="wt-bots-l" hidden><input type="checkbox" id="wt-bots"> Fill empty seats with bots (for testing with fewer than 3 phones)</label>`);
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="wt-panel" class="gt-card" hidden></div>
 <div id="wt-goal" class="gt-card" hidden></div>
 <div id="wt-vote" class="gt-card" hidden></div>
 <div id="wt-reveal" hidden></div>`);
 const panel = $('wt-panel'), voteEl = $('wt-vote'), revealEl = $('wt-reveal'), goalEl = $('wt-goal');
-$('wt-on').onchange = e => { on = e.target.checked; $('wt-switch').classList.toggle('on', on); $('wt-bots-l').hidden = !on; if (on) C.send({ t: 'dx-check' }); renderSwitch() };
-$('wt-bots').onchange = e => { withBots = e.target.checked; renderSwitch() };
-function renderSwitch() {
-  const n = C.crew.length, span = $('wt-switch').querySelector('span');
-  let note = '';
-  if (on && avail) note = `<em class="wt-bad">${esc(avail)}</em>`;
-  else if (on && n < 3 && withBots) note = n ? `<em>${3 - n} bot${3 - n === 1 ? '' : 's'} will fill the empty seats.</em>` : '<em class="wt-bad">Needs at least one phone.</em>';
-  else if (on && n < 3) note = `<em class="wt-bad">Needs ${3 - n} more phone${3 - n === 1 ? '' : 's'} to start, or untick it for a normal shift.</em>`;
-  span.innerHTML = `<b>Wrong Turn</b> One of you is secretly the imposter. Wagers in devnet SOL (test tokens). 3–4 phones. ${note}`;
-}
-setInterval(() => { if (!$('gt-lobby').hidden) renderSwitch() }, 1000);
+// Wrong Turn is always on for a taxi shift (Joyride plays as usual): there's no switch. With fewer than 3 phones the
+// empty seats are filled with bots. If the server can't do the Solana part (dx-avail says why), the shift runs as a
+// normal one instead of refusing to start.
+let checked = false;
+setInterval(() => {
+  withBots = C.crew.length < 3;
+  if (!checked && C.room) { checked = true; C.send({ t: 'dx-check' }) }
+}, 1000);
 
 /* ---------- 1. before the trip: secret roles out, wagers locked in on-chain ---------- */
 C.beforeStart = () => {
   if (!on || C.game !== 'taxi') return false;   // Wrong Turn is a taxi trip; bowling plays as usual
-  if (C.crew.length < (withBots ? 1 : 3) || avail) {   // say why Start did nothing, right where the eye is
-    renderSwitch(); const sw = $('wt-switch'); sw.classList.remove('wt-shake'); void sw.offsetWidth; sw.classList.add('wt-shake');
-    return true;
-  }
+  if (avail) { GT.toast('Wrong Turn is unavailable: ' + avail + ' Playing a normal shift.'); return false }
+  withBots = C.crew.length < 3;
+  if (!C.crew.length) return true;
   phase = 'setup';
   C.send({ t: 'dx-setup', goal, bots: withBots, seats: C.crew.map(p => ({ pid: p.pid, name: p.name, color: p.color, roles: p.roles })) });
   renderPanel({ phase: 'setup', msg: 'Opening the escrow on Solana devnet…', n: C.crew.length, committed: 0 });
   return true;
 };
+// the wager panel's picture: a corner of the city map (same paper, roads, canal and buildings as the map) with a phone
+// showing a sealed role card and a stack of coins for the wager
+const WT_ART = `<svg class="wt-art" viewBox="0 0 240 150" aria-hidden="true">
+  <ellipse cx="120" cy="140" rx="98" ry="6" fill="#4a4f8a" opacity=".16"/>
+  <rect x="18" y="22" width="204" height="112" rx="10" fill="#efe7d4"/>
+  <path d="M18 92H222V104H18Z" fill="#9cc3c4"/><path d="M86 22H100V134H86ZM18 56H222V66H18Z" fill="#cbbab3"/>
+  <g fill="#d9c7a8" stroke="#a89a85"><rect x="28" y="30" width="22" height="18" rx="1.5"/><rect x="56" y="30" width="22" height="18" rx="1.5"/>
+    <rect x="28" y="72" width="50" height="14" rx="1.5"/><rect x="180" y="30" width="32" height="18" rx="1.5"/><rect x="186" y="72" width="26" height="14" rx="1.5"/>
+    <rect x="28" y="110" width="22" height="16" rx="1.5"/><rect x="180" y="110" width="32" height="16" rx="1.5"/></g>
+  <circle cx="44" cy="61" r="9" fill="#f9cf7a" opacity=".45"/><rect x="40" y="55" width="8" height="12" rx="3.5" fill="#c8513a"/>
+  <g transform="rotate(-6 132 78)">
+    <rect x="108" y="14" width="56" height="112" rx="10" fill="#263c35"/><rect x="112" y="22" width="48" height="96" rx="6" fill="#fffcf3"/>
+    <rect x="128" y="17" width="16" height="2.5" rx="1.25" fill="#3d554c"/>
+    <rect x="120" y="32" width="32" height="42" rx="4" fill="#9b3c50"/><path d="M120 40L136 54L152 40" fill="none" stroke="#7d2f40" stroke-width="1.5"/>
+    <circle cx="136" cy="56" r="6" fill="#e3a83b"/><circle cx="136" cy="56" r="2.6" fill="#c98f2a"/>
+    <g fill="#e3a83b" stroke="#c98f2a" stroke-width="1.2"><rect x="124" y="98" width="24" height="7" rx="3.5"/><rect x="124" y="91" width="24" height="7" rx="3.5"/><rect x="124" y="84" width="24" height="7" rx="3.5"/></g>
+  </g>
+</svg>`;
 function renderPanel(st, err) {
   lastStatus = st || lastStatus; const s = lastStatus || {};
   panel.hidden = false;
   const dots = Array.from({ length: s.n || 0 }, (_, i) => `<i class="${i < (s.committed || 0) ? 'on' : ''}"></i>`).join('');
-  panel.innerHTML = `<small class="wt-cap">Wrong Turn · Solana devnet</small>
-    <h2>${err ? 'Something went wrong' : s.phase === 'locked' ? 'Sealed. Get in the taxi.' : 'Check your phone. Quietly.'}</h2>
-    <p>${err ? esc(err) : s.phase === 'locked' ? 'The imposter and every wager are committed on-chain. Nobody can change them now.'
-      : 'Everyone has a secret role. Hold your phone close, read it, and lock in a wager: everyone deposits the same stake, so nobody can tell how much you bet.'}</p>
-    ${err ? '' : `<div class="wt-dots">${dots}</div><p class="wt-sub">${s.msg ? esc(s.msg) : `${s.committed || 0} of ${s.n} wagers locked in · stake ${s.stakeSol ?? ''} SOL each`}</p>`}
+  const sealed = s.phase === 'locked';
+  panel.innerHTML = `${err ? '' : WT_ART}<small class="wt-cap">Wrong Turn</small>
+    <h2>${err ? 'Something went wrong' : sealed ? 'Wagers locked. Get in the taxi.' : 'Check your role and wager.'}</h2>
+    ${err ? `<p>${esc(err)}</p>` : `<div class="wt-dots">${dots}</div><p class="wt-sub">${s.msg ? esc(s.msg) : `${s.committed || 0} of ${s.n} locked in`}</p>`}
     <button class="gt-ghost" id="wt-cancel">${err ? 'Back to the lobby' : 'Cancel and refund'}</button>`;
   $('wt-cancel').onclick = () => { C.send({ t: 'dx-abort' }); if (err) { panel.hidden = true; phase = 'off' } };
 }
@@ -159,7 +169,7 @@ function renderReveal(f) {
 
 /* ---------- server messages ---------- */
 C.onDx = m => {
-  if (m.t === 'dx-avail') { avail = m.why; renderSwitch() }
+  if (m.t === 'dx-avail') avail = m.why || null;
   else if (m.t === 'dx-status') {
     if (phase === 'setup') renderPanel(m);
     else if (phase === 'vote' && voteMsg) renderVote(voteMsg, m);

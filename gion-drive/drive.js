@@ -221,6 +221,7 @@ function start(m) {
   emit('start', mode);
 }
 function stop(result) {
+  blindBy.clear(); if ($('gt-blind')) $('gt-blind').hidden = true;
   const was = driving;
   driving = false; window.PLAYER = null; document.body.classList.remove('gt-driving'); keys.clear(); clearRemote(); ping = null;
   $('gt-hud').hidden = true; $('gt-menu').hidden = false;
@@ -276,9 +277,21 @@ function openDoor() {
 // so a tap creeps, a short hold cruises and a long hold is flat out
 let kGas = 0;
 function pressKeys(dt) { kGas = keys.has('gas') ? Math.min(1, Math.max(kGas, .25) + dt * .4) : Math.max(0, kGas - dt * 3) }
+// the windshield: fog.js and shoot.js report when the glass is too covered to see through; until someone clears it the
+// gas does nothing (brakes and steering still work), and the HUD says why
+const blindBy = new Set();
+function blind(why, on) {
+  if (on === blindBy.has(why)) return;
+  if (on) blindBy.add(why); else blindBy.delete(why);
+  let el = $('gt-blind');
+  if (!el) { $('gt-hud').insertAdjacentHTML('beforeend', '<div id="gt-blind" class="gt-card" hidden></div>'); el = $('gt-blind') }
+  el.hidden = !blindBy.size || !driving;
+  el.innerHTML = blindBy.size ? `<b>Can’t see the road</b><span>${blindBy.has('fog') && blindBy.has('stickers') ? 'Rub off the fog and wipe the glass' : blindBy.has('fog') ? 'Rub off the fog' : 'Wipe the glass'} to drive on</span>` : '';
+  if (on) emit('blind', why);
+}
 function readInput() {
   const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0), r = remote.gear === 'R';
-  const cut = performance.now() < mods.gasCutUntil;   // Wrong Turn: a stall cuts the throttle for a moment
+  const cut = performance.now() < mods.gasCutUntil || blindBy.size > 0;   // Wrong Turn: a stall cuts the throttle; so does a windshield you can't see through
   return { gas: cut ? 0 : Math.max(kGas, r ? 0 : remote.gas), back: cut || !r ? 0 : remote.gas,
     brake: keys.has('brake') ? 1 : 0, stopper: remote.brake * mods.brakeScale, turn: Math.max(-1, Math.min(1, kTurn + remote.turn + mods.turnBias)) };
 }
@@ -467,7 +480,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
-  start, stop, preview, money, moneyLabel: MONEY.label, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
+  start, stop, preview, blind, money, moneyLabel: MONEY.label, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
   get car() { return car }, get driving() { return driving }, get cam() { return cam }, get mode() { return mode },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },

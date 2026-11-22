@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tandem · Test lab</title>
+<!-- Test lab: play every mode on one screen. The laptop game runs on the left; up to four phone controllers
+     (pad.html, each with its own player id) run beside it, joined to the game's room automatically.
+     Served at /test by server.js. Nothing here changes the game: it only drives the same pages a real crew uses. -->
+<style>
+:root{--ink:#263c35;--paper:#f6efe0;--panel:#fffcf3;--rule:#263c3526;--muted:#5d6b63;--rust:#ac4931;--green:#36594b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);font:14px/1.35 system-ui,-apple-system,sans-serif}
+body{display:grid;grid-template-rows:auto 1fr;height:100vh}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:10px 16px;border-bottom:1px solid var(--rule);background:var(--panel)}
+header h1{margin:0;font:600 17px Georgia,serif}
+header h1 span{color:var(--muted);font-weight:400}
+.grp{display:flex;align-items:center;gap:6px}
+.grp>small{color:var(--muted);font-size:12px;margin-right:2px}
+.seg{display:flex;border:1px solid var(--rule);border-radius:9px;overflow:hidden}
+.seg button{border:0;border-left:1px solid var(--rule);background:transparent;padding:6px 11px;font:inherit;color:var(--ink);cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--panel)}
+.seg button:disabled{opacity:.35;cursor:default}
+select{font:inherit;padding:5px 8px;border:1px solid var(--rule);border-radius:9px;background:var(--panel);color:var(--ink)}
+.act{border:1px solid var(--ink);background:var(--panel);color:var(--ink);border-radius:9px;padding:6px 12px;font:600 13px system-ui;cursor:pointer}
+.act.go{background:var(--rust);border-color:var(--rust);color:#fff}
+.act:disabled{opacity:.35;cursor:default}
+#status{color:var(--muted);font-size:12px;margin-left:auto}
+main{display:flex;min-height:0}
+#gameBox{flex:1;min-width:0;position:relative;background:#e9dfc9}
+#game{width:100%;height:100%;border:0;display:block}
+#empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted)}
+#empty[hidden]{display:none}
+#game[hidden]{display:none}
+#empty b{display:block;font:600 22px Georgia,serif;color:var(--ink);margin-bottom:6px}
+#phones{width:var(--pw);flex:none;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;border-left:1px solid var(--rule)}
+#phones:empty{display:none}
+.phone{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:6px}
+.phone header{all:unset;display:flex;align-items:center;gap:6px;padding:0 2px 5px;font-size:12px}
+.phone header b{font:600 13px Georgia,serif}
+.phone header span{color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.phone header button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 4px}
+.phone header button:hover{color:var(--ink)}
+.phone.big{position:fixed;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:0;border:0;background:#1f2a26;padding:14px}
+.phone.big header{color:#fffcf3;padding-bottom:10px}
+.phone.big header span,.phone.big header button{color:#fffcf3b0}
+.phone.big .screen{border-radius:18px;box-shadow:0 20px 60px #0008}
+#view button .gc-char{margin-right:4px}
+.screen{width:calc(844px * var(--k));height:calc(390px * var(--k));overflow:hidden;border-radius:9px;background:#000}
+.screen iframe{width:844px;height:390px;border:0;transform:scale(var(--k));transform-origin:0 0;display:block}
+</style>
+</head>
+<body>
+<header>
+  <h1>tandem <span>· Test lab</span></h1>
+  <div class="grp"><small>City</small><select id="city">
+    <option value="gion-taxi.html">Kyoto</option><option value="taxi-london.html">London</option>
+    <option value="taxi-toronto.html">Toronto</option><option value="taxi-amsterdam.html">Amsterdam</option></select></div>
+  <div class="grp"><small>Mode</small><div class="seg" id="mode">
+    <button data-v="solo">Solo</button><button data-v="taxi" aria-pressed="true" title="Wrong Turn (imposter mode) is always on; bots fill seats below 3 phones">Taxi shift · Wrong Turn</button>
+    <button data-v="bowling">Joyride</button></div></div>
+  <div class="grp"><small>Phones</small><div class="seg" id="count">
+    <button data-v="1">1</button><button data-v="2" aria-pressed="true">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
+  <button class="act go" id="launch">Launch</button>
+  <button class="act" id="readyAll" disabled>All ready</button>
+  <button class="act" id="start" disabled>Start</button>
+  <div class="grp"><small>View</small><div class="seg" id="view"></div></div>
+  <span id="status"></span>
+</header>
+<main>
+  <div id="gameBox"><iframe id="game" title="The laptop screen" hidden></iframe>
+    <div id="empty"><div><b>Pick a city, a mode and a crew size, then Launch.</b>Phones appear on the right, already joined. Click a phone to use its controls, or pick a player under View (⤢) to see their phone full size. The keyboard still drives the taxi.</div></div></div>
+  <aside id="phones"></aside>
+</main>
+<script src="crew.js"></script>
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+const game = $('game'), phonesEl = $('phones');
+const ROLE = { steer: 'Wheel', pedals: 'Pedals', ops: 'Doors', shoot: 'Shooter', wipe: 'Wipers', fog: 'Fog', nav: 'Navigator' };
+let mode = 'taxi', count = 2, run = 0, phones = [];   // phones: [{ pid, el, frame }]
+
+// the settings survive a reload of the lab
+try { const s = JSON.parse(localStorage.getItem('tandemLab') || '{}'); if (s.city) $('city').value = s.city; if (s.mode) mode = s.mode === 'wt' ? 'taxi' : s.mode; if (s.count) count = s.count } catch {}
+const save = () => { try { localStorage.setItem('tandemLab', JSON.stringify({ city: $('city').value, mode, count })) } catch {} };
+function seg(el, get, set) {
+  const paint = () => { for (const b of el.children) b.setAttribute('aria-pressed', b.dataset.v === String(get())) };
+  el.onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; set(b.dataset.v); paint(); save() };
+  paint(); return paint;
+}
+const paintMode = seg($('mode'), () => mode, v => { mode = v; syncCount() });
+const paintCount = seg($('count'), () => count, v => { count = +v; if (live()) resizeCrew() });
+function syncCount() {
+  for (const b of $('count').children) b.disabled = mode === 'solo';
+  $('count').style.opacity = mode === 'solo' ? .4 : 1;
+}
+syncCount();
+
+const gw = () => { try { return game.contentWindow } catch { return null } };
+const gq = sel => { try { return game.contentDocument.querySelector(sel) } catch { return null } };
+const live = () => !game.hidden && mode !== 'solo' && gw()?.GionCrew?.room;
+const status = t => { $('status').textContent = t };
+const wait = (test, ms = 20000) => new Promise((ok, no) => { const t0 = Date.now(); const f = () => { const v = test(); if (v) return ok(v); if (Date.now() - t0 > ms) return no(new Error('timeout')); setTimeout(f, 150) }; f() });
+
+// phone frames: each is pad.html at iPhone landscape size, scaled to the column, with its own player id
+function layout() {
+  const w = Math.max(260, Math.min(420, innerWidth * .3));
+  document.documentElement.style.setProperty('--pw', w + 'px');
+  document.documentElement.style.setProperty('--k', ((w - 34) / 844).toFixed(4));
+}
+addEventListener('resize', layout); layout();
+function addPhone(room, i) {
+  const pid = `testlab${run}p${i}x`;   // pad.html takes 8–32 lowercase letters and digits
+  const el = document.createElement('section'); el.className = 'phone';
+  el.innerHTML = `<header><i class="face"></i><b>Phone ${i + 1}</b><span>joining…</span><button class="big-btn" title="See this player's phone full size">⤢</button><button class="reload" title="Reload this phone">↻</button></header><div class="screen"><iframe title="Phone ${i + 1}" allow="fullscreen 'none'"></iframe></div>`;
+  const frame = el.querySelector('iframe');
+  frame.src = `pad.html?r=${room}&pid=${pid}`;
+  el.querySelector('.reload').onclick = () => { frame.src = `pad.html?r=${room}&pid=${pid}` };
+  el.querySelector('.big-btn').onclick = () => setView(view === pid ? 'laptop' : pid);
+  phonesEl.append(el);
+  phones.push({ pid, el, frame });
+}
+function removePhone() {
+  const p = phones.pop(); if (!p) return;
+  const crew = gw()?.GionCrew?.crew || [], i = crew.findIndex(c => c.pid === p.pid);
+  p.frame.src = 'about:blank'; p.el.remove();
+  if (i >= 0) gq(`[data-kick="${i}"]`)?.click();   // free the seat at once instead of waiting out the grace period
+  if (view === p.pid) setView('laptop');
+}
+function resizeCrew() {
+  const room = gw().GionCrew.room;
+  while (phones.length > count) removePhone();
+  while (phones.length < count) addPhone(room, phones.length);
+  applyMode();
+}
+
+// mode switches inside the game's lobby (the same buttons a player would press)
+function applyMode() {
+  if (mode === 'solo') return;
+  gq(`.gt-modes [data-game="${mode === 'bowling' ? 'bowling' : 'taxi'}"]`)?.click();   // Wrong Turn is always on in a taxi shift (wt.js)
+}
+
+// views: the laptop, or any one player's phone shown full size over it (the frame is only moved and scaled, never
+// reloaded, so the phone keeps its seat and its state)
+let view = 'laptop';
+function setView(v) {
+  view = phones.some(p => p.pid === v) ? v : 'laptop';
+  const r = $('gameBox').getBoundingClientRect();
+  for (const p of phones) {
+    const big = p.pid === view;
+    p.el.classList.toggle('big', big);
+    if (big) {
+      Object.assign(p.el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+      p.el.style.setProperty('--k', Math.min((r.width - 28) / 844, (r.height - 70) / 390).toFixed(4));
+      p.el.querySelector('.big-btn').textContent = '⤡';
+    } else { p.el.removeAttribute('style'); p.el.querySelector('.big-btn').textContent = '⤢' }
+  }
+  paintView();
+}
+function paintView() {
+  const crew = gw()?.GionCrew?.crew || [];
+  const tabs = [['laptop', 'Laptop']].concat(phones.map((p, i) => { const c = crew.find(x => x.pid === p.pid); return [p.pid, (c && window.GionCrew ? GionCrew.icon(c.color, 16) : '') + (c ? c.name : 'Phone ' + (i + 1))] }));
+  // rebuild only when something changed (each icon carries a fresh id, so comparing the HTML would rebuild every time)
+  const key = view + '|' + phones.map(p => { const c = crew.find(x => x.pid === p.pid); return p.pid + (c ? c.color + c.name : '') }).join(',');
+  if ($('view').dataset.key === key) return;
+  $('view').dataset.key = key;
+  $('view').innerHTML = tabs.map(([v, label]) => `<button data-v="${v}" aria-pressed="${v === view}">${label}</button>`).join('');
+}
+$('view').onclick = e => { const b = e.target.closest('button'); if (b) setView(b.dataset.v) };
+addEventListener('resize', () => setView(view));
+addEventListener('keydown', e => { if (e.key === 'Escape' && view !== 'laptop') setView('laptop') });
+
+async function launch() {
+  const my = ++run;
+  while (phones.length) { const p = phones.pop(); p.frame.src = 'about:blank'; p.el.remove() }
+  setView('laptop');
+  try { sessionStorage.removeItem('gtRoom') } catch {}   // a fresh room each launch: mp.js would otherwise take back the last one, old phones and all
+  $('empty').hidden = true; game.hidden = false;
+  game.src = `${$('city').value}?play=${mode === 'solo' ? 'solo' : 'crew'}&lab=${my}`;   // lab= tells the new page from the old one while it loads
+  $('readyAll').disabled = $('start').disabled = true;
+  if (mode === 'solo') { status('Solo: the keyboard drives. Click the game first so it gets the keys.'); return }
+  status('Opening a room…');
+  let room;
+  try { room = await wait(() => my === run && gw()?.location.search.includes('lab=' + my) && gw().GionCrew?.room) } catch { if (my === run) status('No room: is the crew server running?'); return }
+  if (my !== run) return;
+  for (let i = 0; i < count; i++) addPhone(room, i);
+  await wait(() => gq('.gt-modes'), 5000).catch(() => {});
+  applyMode();
+  $('readyAll').disabled = $('start').disabled = false;
+  status(`Room ${room}`);
+}
+$('launch').onclick = () => { save(); launch() };
+$('readyAll').onclick = () => {
+  for (const p of phones) { try { const b = p.frame.contentDocument.getElementById('ready'); if (b && b.getAttribute('aria-pressed') !== 'true' && b.offsetParent) b.click() } catch {} }
+};
+$('start').onclick = () => { applyMode(); gq('#gt-lstart')?.click() };
+
+// phone headers: who sits there and what they hold, read from the laptop
+setInterval(() => {
+  const g = gw(), crew = g?.GionCrew?.crew; if (!crew) return;
+  for (const p of phones) {
+    const c = crew.find(x => x.pid === p.pid), h = p.el.querySelector('header');
+    const face = h.querySelector('.face');
+    const key = c ? c.color + c.on : '';
+    if (face.dataset.k !== key) { face.dataset.k = key; face.innerHTML = c && window.GionCrew ? GionCrew.icon(c.color, 22) : '' }
+    h.querySelector('b').textContent = c ? c.name : 'Phone';
+    h.querySelector('span').textContent = !c ? 'joining…' : !c.on ? 'reconnecting…' : c.roles.map(r => ROLE[r] || r).join(' + ') + (c.ready ? ' · ready' : '');
+  }
+  paintView();
+  if (g.GionCrew.phase && g.GionCrew.room) status(`Room ${g.GionCrew.room} · ${g.GionCrew.phase}`);
+}, 500);
+
+paintMode(); paintCount(); paintView();
+if (location.hash === '#go') launch();
+})();
+</script>
+</body>
+</html>

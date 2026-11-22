@@ -19,7 +19,7 @@ the taxi. window.GT_CITY (and GT_CITY inside the worker) carries the city's sett
 mp.css, shoot.css, wt.css, theme.css, qr.js, drive.js, cuties.js, crew.js, shoot.js, fog.js, mp.js, wt.js, flow.js) go in before </body>. pad.html, pad-shoot.js, wt-pad.js
 (the phone controller) and server.js are served beside the pages by `node server.js`; they aren't part of the build.
 """
-import argparse, json, os, re, subprocess, sys, tempfile
+import argparse, base64, json, os, re, subprocess, sys, tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -123,6 +123,11 @@ def build(cid):
         if html.count(new) == 1: continue
         if html.count(old) != 1: sys.exit(f'{cid}: patch anchor not found exactly once (the skill changed?): {old[:60]}')
         html = html.replace(old, new)
+    # tandem's logo (logo/, concepts in logo/index.html): the crew cab sticker in the top bar, the cab icon in the browser tab
+    html = re.sub(r'<span class="brand-icon">.*?</svg></span>', lambda m: '<span class="brand-icon">' + src('logo/cab.svg').strip() + '</span>', html, count=1, flags=re.S)
+    if 'rel="icon"' not in html:
+        icon = base64.b64encode(src('logo/favicon.svg').strip().encode()).decode()
+        html = html.replace(f'<title>{b}</title>', f'<title>{b}</title><link rel="icon" href="data:image/svg+xml;base64,{icon}">', 1)
 
     script = lambda name: '<script>\n' + src(name).replace('</script', '<\\/script') + '\n</script>\n'
     # shoot.js goes before mp.js so it hears the 'stop' event first and can add the shooter's stats to the results

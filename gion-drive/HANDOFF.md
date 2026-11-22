@@ -36,6 +36,39 @@ the network connected to the start, so every fare is reachable (tested: 16/16 fa
 In every camera the worker hides trees over the taxi and between it and the camera, and draws buildings in front of it
 see-through (x-ray), so canal elms and tall buildings never hide the taxi.
 
+**Glass, lobby and Wrong Turn (2026-11-22, later):**
+- Stickers (`cuties.js`) redrawn like the map and crew.js: faceted flat parts, hard light/shade split, blue-violet
+  shadow, dot eyes; no cream rim, blush or shine. Only a couple at a time (`LV` in shoot.js: 1–3 flying, 2–3 stuck).
+- Fog (`fog.js render()`, `pad-fog.js`) is a smooth, see-through mist (alpha ≤ .86, two-step upscale + blur, a drifting
+  second layer) instead of posterised bands.
+- `GionTaxi.blind(why, on)` (drive.js): while the glass is full of stickers (stuck = level cap) or fog covers over half
+  of it (off again below 38%), the gas does nothing and a "Can’t see the road" card says what to clear.
+- Lobby card: no wordmark heading, subtitle, phone-count note, Wi-Fi notes or Wrong Turn box. Mode tabs on top, QR +
+  room left, seats + Start right; Start reads "Scan the code to join" / "Waiting for N to get ready" until it's ready.
+- **Wrong Turn is always on** for a taxi shift (wt.js): no switch, bots fill seats below 3 phones; if the server says the
+  Solana part is unavailable, the shift runs as a normal one with a toast. Joyride is unchanged.
+- Wager screen (wt-pad.js `showRole`): the left card only says "Hold here to reveal role"; the right card is the amount,
+  a shuttle slider (`shuttle()`: a pill track, a dark round knob that starts at the far left, chevrons that light up as it's
+  pushed right, a spring follow with a small overshoot, snaps to 5 % steps, arrow/Home/End keys) and Lock in wager. The
+  explanation paragraphs are gone.
+- Role card (wt-pad.js): the back shows the player's crew character and "Hold to reveal"; holding flips it (3D) to
+  "Imposter" (rose, one line + sabotage chips) or "Crew" (mint, one line). No "Wager" header; the amount is in the
+  display font. `WTPadAPI.me` (pad.html) gives the seat for the character. City name removed from the top bar (drive.css).
+- Test lab: a View bar (and ⤢ on each phone) shows any player's phone full size over the laptop; Esc returns. The lab's
+  "Taxi shift · Wrong Turn" mode replaces the separate Wrong Turn button.
+
+**Test lab and seat characters (2026-11-22):**
+- `test.html`, served at `/test` (and linked as "Test lab" on the title when served): pick a city, a mode (Solo, Taxi shift,
+  Joyride, Wrong Turn) and 1–4 phones, then Launch. The laptop page runs on the left and the phones (`pad.html` at 844×390,
+  scaled, each with its own `pid`) on the right, already joined. **All ready** taps every phone's Ready; **Start** presses
+  the lobby's Start. Wrong Turn with fewer than 3 phones ticks "fill with bots". Each launch opens a fresh room (it clears
+  `sessionStorage.gtRoom`). Phone frames have `allow="fullscreen 'none'"` so Ready can't take over the window.
+  Checked in headless Chrome: Taxi shift with 2 phones, Joyride with 4 and Taxi shift with 1 all start driving; Wrong Turn
+  with 3 phones reaches the wager step; Solo drives; no page errors.
+- The lobby's seats show the crew characters from `crew.js` (fox, bear, owl, raccoon by seat colour) instead of a colour
+  dot; empty seats show the characters still free, faded, with no "Seat N · Waiting for a phone" text. The phone's role list
+  uses them too (`pad.html` loads `/crew.js`). `mp.js` keeps crew.js's helpers on `window.GionCrew` (it used to overwrite them).
+
 **Phone screens are controls only (2026-11-22):** anything the laptop shows (time, yen, fares, task, speed, the taxi
 meter, toasts for bumps/fares/pins/hits/levels, results, the crew list, hint text, the shooter's level/score counter)
 is left off the phone; it still buzzes. What remains: the controls, door + camera, the aim and wipe panels, a corner
@@ -217,7 +250,7 @@ and best score (`localStorage.gionTaxiBest`).
 - **Lobby:** a QR code of `http://<LAN-IP>:<port>/join?r=ROOM` (never localhost; the address list from `/info`
   refreshes every 5 s), the room code as text, four seats (colour, name, roles, ready or reconnecting), ⇅ to swap
   roles, × to kick, and **Start shift** (enabled only when every phone is connected and ready).
-- **Roles by crew size:** `ROLE_SETS` in `mp.js` (1: steer+pedals+ops, 2: steer+ops+wipe / pedals+shoot,
+- **Roles by crew size:** `ROLE_SETS` in `mp.js` (1: steer+pedals+ops, 2: steer+ops / pedals+shoot, 3: steer / pedals / shoot+ops, 4: steer / pedals+ops / shoot / fog; no crew has wipers any more, stuck visitors clear after 10 s; older notes below
   3: steer / pedals / shoot+ops+wipe, 4: steer / pedals / shoot / ops+wipe). The shooter replaced the navigator (§11). Roles follow seat order and are recomputed when the crew changes.
 - **Doors:** `GionTaxi.doorNeeded` is true while a connected phone holds `ops`. At a lantern (within 3.2 m and
   below 2.5 m/s) the fare then waits (`fare.atDoor`) until `openDoor()`, which opens a 1.2 s window. With no

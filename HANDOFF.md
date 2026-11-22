@@ -1,6 +1,6 @@
 # Handoff: Harry's work on Hack Western 13
 
-Last updated: 2026-11-22 (Gion Taxi "Wrong Turn" deception mode with Solana devnet wagers, pushed on branch `gion-deception`, not in `main` yet). Repo: https://github.com/harryyangzy/hackwestern-13
+Last updated: 2026-11-22 (tandem logo: crew cab in the top bar, title screen and favicon, branch `tandem-logo`). Repo: https://github.com/harryyangzy/hackwestern-13
 
 This file is the single source of truth on what Harry is working on. It is written so that any Claude Code
 session (or teammate) can read it and brief the team. **When you update the team, use only what is in this
@@ -51,6 +51,13 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   `crew.js`); an animated hero on the title screen (`index.template.html`) with Multiplayer / Single player choices;
   one Wrong Turn sabotage per role. Note: `crew.js` and `mp.js` both set `window.GionCrew` (mp.js wins on city pages),
   so the characters aren't shown in-game yet, only on the title screen.
+- **Logo (branch `tandem-logo`, pushed, PR pending):** the crew cab: the map's red taxi with the gold fare lantern and
+  four sticker cuties (neko, sparrow, mochi, ladybug) behind the windshield, with a cream die-cut edge like the cuties.
+  It now sits beside the wordmark top-left on the title screen and in every city's top bar, and is the favicon on all
+  pages including the phone controller. Files in `gion-drive/logo/`: `cab.svg` (top bar), `icon.svg` + `icon-512.png`
+  / `icon-180.png` (app icon), `favicon.svg` / `favicon-32.png`; concepts in `logo/index.html`, where each version goes
+  in `logo/mockup.html`. `build.py` puts the cab and favicon back on every rebuild. The wordmark is live text in the
+  display font (Zimula InkSpot, an unlicensed trial), so no logo file has the font baked in.
 - **Cities:** `gion-taxi.html` (Gion), `taxi-london.html` (Western main campus: University College to Middlesex College,
   paths drivable), `taxi-toronto.html` (Nathan Phillips Square, City Hall), `taxi-amsterdam.html` (Reguliersgracht ×
   Keizersgracht). `python3 gion-drive/build.py` builds all four (`--city` for one); the server serves `/london` etc.
