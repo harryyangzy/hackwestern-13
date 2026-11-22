@@ -31,8 +31,8 @@ read = lambda p: open(p, encoding='utf-8').read()
 src = lambda name: read(os.path.join(HERE, name))
 
 # brand: the game's name (tandem, in every city); bowl: the bonus mode's name (Joyride); drivePaths: the taxi may also use footpaths
-# (Western's main campus is almost all paths); open: drive anywhere on the plot except through buildings (London: the
-# paths are only ~2.6 m wide, too skinny to be fun); blurb: the menu's first line.
+# (Western's main campus is almost all paths, widened for the taxi by cities/london/widen.py); open: drive anywhere on the
+# plot except through buildings (unused now); blurb: the menu's first line.
 # money: scores are kept in yen (the fare rules were tuned in yen) and shown in the city's currency, at a rate that makes
 # a typical ~¥2,500 fare look like a real short taxi ride there ($25 in Ontario, €15 in Amsterdam)
 YEN = dict(sym='¥', rate=1, dec=0, label='Yen')
@@ -42,7 +42,7 @@ CITIES = {
     'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Kyoto', place='Gion Shirakawa', brand='tandem',
                  bowl='Joyride', money=YEN, blurb='Drive a taxi through the lanes of Gion, Kyoto.', drivePaths=False),
     'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', place='Western University, Ontario', brand='tandem',
-                   bowl='Joyride', money=CAD, blurb='Drive a taxi across Western University’s main campus in London, Ontario: the whole campus is open, just not through the buildings.', drivePaths=True, open=True),
+                   bowl='Joyride', money=CAD, blurb='Drive a taxi across Western University’s main campus in London, Ontario: the roads and the campus paths are all yours.', drivePaths=True),
     'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', place='Nathan Phillips Square', brand='tandem',
                     bowl='Joyride', money=CAD, blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False),
     'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', place='Reguliersgracht × Keizersgracht', brand='tandem',

@@ -43,6 +43,13 @@ chip (seat colour, name, connection light), the Ready button with one line per r
 (reconnecting, rotate, swipe-up full screen, tilt-aim errors). Most of it is one CSS block in pad.html
 ("simplified controller"); the hidden elements are still updated, so it's easy to bring one back.
 
+**Gas and London (2026-11-22):**
+- The gas sets a speed, not just a push: pedal depth picks a cruise speed (a quarter ≈ 10 km/h, half ≈ 25, the floor 61);
+  ease off and the taxi slows to it. Phones: how low you press the gas pedal is how hard (slide to change). Keyboard: holding
+  ↑ presses the pedal further down over ~2 s, letting go lifts it.
+- London is roads and paths again (not open driving), with the campus paths widened to 5–5.5 m and drawn that wide:
+  `cities/london/widen.py` reruns the skill's prep.py with wider footpaths (needs shapely), then `build.py --city london`.
+
 **Transitions (2026-11-22):** one continuous move from title to shift.
 - Start page: screens fade out (200 ms) before the next rises in, parts staggered; a chosen city card lifts, the rest fall
   back and the page fades to paper. Each city page opens on the same paper (`#gt-veil`, built in by build.py, with the

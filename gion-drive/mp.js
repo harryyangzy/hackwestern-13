@@ -75,7 +75,7 @@ function renderLobby() {
   if (url) {
     $('gt-qr').innerHTML = GTQR.svg(url);
     $('gt-url').textContent = url.replace(/^https?:\/\//, '').replace(/\?r=.*/, '');
-    $('gt-net').textContent = publicUrl ? 'Over the internet: any network works' : 'Same Wi-Fi as this laptop';
+    $('gt-net').textContent = publicUrl ? '' : 'Same Wi-Fi as this laptop';
   } else $('gt-qr').innerHTML = `<p class="gt-qrmsg">${!wsOk ? 'Connecting to the crew server…' : 'No network found. Connect this laptop to Wi-Fi or a phone’s hotspot.'}</p>`;
   $('gt-ip').hidden = ips.length < 2 || isLanHost() || !!publicUrl;
   $('gt-lobby').classList.toggle('public', !!publicUrl);

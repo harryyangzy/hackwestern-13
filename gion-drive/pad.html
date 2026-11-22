@@ -257,7 +257,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
     <p class="hint">Drag the rim round · let go to straighten</p>
   </div>
   <div class="comp pedal brake" id="c-brake"><span class="cap" style="left:auto;position:relative;top:0;margin-bottom:6px">Brake</span><div class="track" id="brakeTrack"><div class="fill"></div><div class="plate"><span>Brake</span></div></div><p class="hint">Hold to slow down and stop</p></div>
-  <div class="comp pedal gas" id="c-gas"><div class="gear" id="gear" role="group" aria-label="Gear"><button data-g="D" class="on" aria-pressed="true">D<small>Drive</small></button><button data-g="R" aria-pressed="false">R<small>Reverse</small></button></div><div class="track" id="gasTrack"><div class="fill"></div><div class="plate"><span>Gas</span></div></div><p class="hint" id="gasHint">Hold to go forward · slide up to ease off</p></div>
+  <div class="comp pedal gas" id="c-gas"><div class="gear" id="gear" role="group" aria-label="Gear"><button data-g="D" class="on" aria-pressed="true">D<small>Drive</small></button><button data-g="R" aria-pressed="false">R<small>Reverse</small></button></div><div class="track" id="gasTrack"><div class="fill"></div><div class="plate"><span>Gas</span></div></div><p class="hint" id="gasHint">Press lower to go faster · slide to set your speed</p></div>
   <div class="comp" id="c-speedo"><svg id="speedo" viewBox="-100 -78 200 130" aria-label="Speedometer">
       <path d="M-74.5 43A86 86 0 1 1 74.5 43" fill="none" stroke="#cfcfc0" stroke-width="6" stroke-linecap="round"/>
       <path id="spArc" d="M-74.5 43A86 86 0 1 1 74.5 43" fill="none" stroke="#36594b" stroke-width="6" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100"/>
@@ -481,8 +481,11 @@ for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) wheelEl.a
 function pedal(trackId, key) {
   const el = $(trackId); let held = null, y0 = 0;
   const set = v => { ctl[key] = v; el.querySelector('.fill').style.height = (v * 100) + '%'; el.querySelector('.plate').style.transform = `translateY(${v * 10}px) scaleY(${1 - v * .05})` };
-  el.addEventListener('pointerdown', e => { e.preventDefault(); if (held != null) return; held = e.pointerId; el.setPointerCapture(e.pointerId); y0 = e.clientY; set(1); buzz(8) });
-  el.addEventListener('pointermove', e => { if (e.pointerId !== held) return; const h = el.getBoundingClientRect().height; set(Math.max(.3, Math.min(1, 1 - (y0 - e.clientY) / (h * .5)))) });
+  // how far down the pedal you press is how hard: near the top is a light touch, the bottom is the floor; slide to change.
+  // The brake keeps its old feel (full on press, slide up to ease off)
+  const depth = e => { const r = el.getBoundingClientRect(); return Math.max(.15, Math.min(1, .15 + .85 * (e.clientY - r.top - r.height * .1) / (r.height * .75))) };
+  el.addEventListener('pointerdown', e => { e.preventDefault(); if (held != null) return; held = e.pointerId; el.setPointerCapture(e.pointerId); y0 = e.clientY; set(key === 'gas' ? depth(e) : 1); buzz(8) });
+  el.addEventListener('pointermove', e => { if (e.pointerId !== held) return; const h = el.getBoundingClientRect().height; set(key === 'gas' ? depth(e) : Math.max(.3, Math.min(1, 1 - (y0 - e.clientY) / (h * .5)))) });
   const up = e => { if (e.pointerId === held) { held = null; set(0) } };
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, up);
   return () => { held = null; set(0) };
@@ -494,7 +497,7 @@ function setGear(g) {
   for (const b of $('gear').children) { b.classList.toggle('on', b.dataset.g === g); b.setAttribute('aria-pressed', b.dataset.g === g) }
   $('c-gas').classList.toggle('rev', g === 'R');
   $('c-gas').querySelector('.plate span').textContent = g === 'R' ? 'Reverse' : 'Gas';
-  $('gasHint').textContent = g === 'R' ? 'Hold to back up · switch to D to go forward' : 'Hold to go forward · slide up to ease off';
+  $('gasHint').textContent = g === 'R' ? 'Hold to back up · switch to D to go forward' : 'Press lower to go faster · slide to set your speed';
 }
 $('gear').addEventListener('pointerdown', e => { const b = e.target.closest('[data-g]'); if (!b) return; e.preventDefault(); if (ctl.gear !== b.dataset.g) { setGear(b.dataset.g); buzz(15); sendNow() } });
 // let go of everything: on role change, disconnect, the end of a shift, or when the phone is put away
