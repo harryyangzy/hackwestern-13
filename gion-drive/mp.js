@@ -26,9 +26,8 @@ const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
 // one line per role for the briefing before a shift
-const ROLE_BRIEF = { steer: 'Wheel: steer the taxi.', pedals: 'Pedals: gas and brake; D/R to reverse.', nav: 'Navigator: call the turns.',
-  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.',
-  fog: 'Fog: rub the fog off the windshield so the driver can see.' };
+// in the briefing each player's line is just their jobs; their phone shows how
+const ROLE_BRIEF = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', shoot: 'Shooter', wipe: 'Wipers', ops: 'Doors', fog: 'Fog' };
 
 let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
 let phase = 'off';             // off | lobby | count | driving | results
@@ -94,7 +93,7 @@ function renderLobby() {
   // the Start button says what it's waiting for, so the card needs no notes
   $('gt-lstart').textContent = !crew.length ? 'Scan the code to join' : notReady ? `Waiting for ${notReady} to get ready` : (result ? 'Start next ' : 'Start ') + (game === 'bowling' ? 'round' : 'shift');
   for (const b of document.querySelectorAll('.gt-modes button')) b.setAttribute('aria-pressed', b.dataset.game === game);
-  $('gt-lnote').textContent = wsOk ? '' : 'Can’t reach the crew server. Is node gion-drive/server.js still running?';
+  $('gt-lnote').textContent = wsOk ? '' : 'Crew server offline.';
   $('gt-lnote').hidden = wsOk;
   // only redraw the results card for a new result, or its route animation would restart every time someone gets ready
   if ($('gt-lresult')._r !== result) { $('gt-lresult')._r = result; $('gt-lresult').innerHTML = result ? resultHTML(result) : '' }
@@ -301,9 +300,9 @@ function startCountdown(force) {
   if (window.GionBrief) {
     toPhones({ t: 'brief' });
     window.GionBrief({
-      title: game === 'bowling' ? GT.city.bowl : 'Crew shift',
-      objective: game === 'bowling' ? 'Knock over as many pedestrians as you can in 60 seconds.' : 'Pick up and deliver passengers together before the shift ends.',
-      lines: crew.map(p => ({ color: p.color, name: p.name, text: rolesOf(p).map(r => ROLE_BRIEF[r] || r).join(' ') })),
+      title: game === 'bowling' ? GT.city.bowl : GT.city.name,
+      objective: game === 'bowling' ? 'Knock over as many people as you can.' : 'Orange lantern to gold lantern.',
+      lines: crew.map(p => ({ color: p.color, name: p.name, text: rolesOf(p).map(r => ROLE_BRIEF[r] || r).join(' · ') })),
       onCount: n => toPhones({ t: 'count', n }), abort: () => phase !== 'count',
     }).then(() => { if (phase !== 'count') return; GT.lockMenu = false; GT.start(game) });
     return;

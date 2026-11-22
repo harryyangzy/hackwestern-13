@@ -331,7 +331,7 @@ function frame(now) {
   // HUD line
   const bar = $('gt-shootbar');
   bar.hidden = !shooter && !stuck.length;
-  bar.innerHTML = `<b>Lv ${level + 1}</b><span>✶ ${stats.hits} popped</span><span class="${stuck.length >= LV[level].cap ? 'full' : ''}">${stuck.length ? `${stuck.length} on the glass` : 'Glass clear'}</span>`;
+  bar.innerHTML = `<b>Lv ${level + 1}</b><span>${stats.hits} popped</span><span class="${stuck.length >= LV[level].cap ? 'full' : ''}">${stuck.length ? `${stuck.length} on the glass` : 'Glass clear'}</span>`;
   // the 10 Hz picture for the phones
   if (now - sendT > 100) {
     sendT = now;

@@ -256,7 +256,8 @@ body { background: var(--paper); }
 .gt-stats > div:nth-child(2) { background: var(--ice); }
 .gt-task, #gt-call { background: var(--ice); font-style: normal; }
 #gt-map { border-radius: 16px; }
-#wt-goal, .wt-switch.on { background: var(--rose); }
+#wt-goal { background: #fffcf3; border: 1.5px solid #e3d6bc; border-radius: 22px; box-shadow: 0 5px 0 #dcc6a2; }
+.wt-switch.on { background: var(--rose); }
 .wt-switch { border-color: var(--rule); }
 .wt-switch.on { border-color: #dcafbc; }
 .wt-switch em, .wt-sub, .wt-subhead, .pad-ui #task { font-style: normal; }
@@ -333,19 +334,6 @@ body { background: var(--paper); }
 #gt-menu .gt-ticket h2 {
   margin: 2px 0 0;
   font: 500 clamp(34px, 5vw, 52px)/1 var(--display);
-}
-.gt-ticket-sticker {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 62px;
-  height: 62px;
-  border: 3px solid var(--panel);
-  border-radius: 18px;
-  background: var(--color-accent-100);
-  box-shadow: var(--dock-shadow);
-  font-size: 36px;
-  transform: rotate(-10deg);
 }
 #gt-menu {
   width: min(470px, calc(100% - 24px));
