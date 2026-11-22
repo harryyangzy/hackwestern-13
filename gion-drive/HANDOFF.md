@@ -36,6 +36,13 @@ the network connected to the start, so every fare is reachable (tested: 16/16 fa
 In every camera the worker hides trees over the taxi and between it and the camera, and draws buildings in front of it
 see-through (x-ray), so canal elms and tall buildings never hide the taxi.
 
+**Phone screens are controls only (2026-11-22):** anything the laptop shows (time, yen, fares, task, speed, the taxi
+meter, toasts for bumps/fares/pins/hits/levels, results, the crew list, hint text, the shooter's level/score counter)
+is left off the phone; it still buzzes. What remains: the controls, door + camera, the aim and wipe panels, a corner
+chip (seat colour, name, connection light), the Ready button with one line per role, and essential prompts
+(reconnecting, rotate, swipe-up full screen, tilt-aim errors). Most of it is one CSS block in pad.html
+("simplified controller"); the hidden elements are still updated, so it's easy to bring one back.
+
 ## 1. What it is
 
 A browser driving game on Pocket City's illustrated isometric diorama of a 200 m × 200 m patch of Gion Shirakawa,

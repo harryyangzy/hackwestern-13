@@ -78,7 +78,7 @@ function updateHints() {
     : mode === 'drag' ? 'Drag to move the crosshair · tap to shoot' : 'Tap “Tilt to aim” to aim with the phone, or drag here';
 }
 $('aimTilt').addEventListener('click', e => { e.stopPropagation(); enableTilt() });
-$('aimCentre').addEventListener('click', e => { e.stopPropagation(); recentre(); P.buzz(10); P.toast('Centred', true) });
+$('aimCentre').addEventListener('click', e => { e.stopPropagation(); recentre(); P.buzz(10) });
 for (const b of ['aimTilt', 'aimCentre']) $(b).addEventListener('pointerdown', e => e.stopPropagation());
 
 // the panel is the trigger; in drag mode it is also a trackpad (a short, still touch is a shot)
@@ -136,10 +136,8 @@ function wipeNow(d) {
 window.GionPadExt = m => {
   if (m.t === 'sh') { sh = m; return }
   if (m.t !== 'sx') return;
-  if (m.k === 'hit' && has('shoot')) P.toast(m.combo > 2 ? `Popped! ${m.combo} in a row` : 'Popped!', true);
-  else if (m.k === 'stick' && has('wipe')) { P.buzz([30, 40, 30]); glass.classList.remove('shot'); void glass.offsetWidth; glass.classList.add('shot') }
-  else if (m.k === 'stick' && has('shoot')) P.toast('One got through to the glass');
-  else if (m.k === 'level') P.toast(`Level ${m.lv}`, true);
+  // hits, misses and levels show on the laptop: the phones only feel them
+  if (m.k === 'stick' && has('wipe')) { P.buzz([30, 40, 30]); glass.classList.remove('shot'); void glass.offsetWidth; glass.classList.add('shot') }
 };
 
 /* ---------- drawing the two small panels ---------- */
@@ -163,8 +161,7 @@ function drawAim() {
   if (sh) {
     for (const [, k, x, y, s, c] of sh.tg) mini(g, SPR[k] || SPR[0], R.x + x * R.w, R.y + y * R.h, Math.max(4, 8 * s), c, .9);
     for (const [, k, x, y, , c] of sh.st) mini(g, k === 0 ? STUCK_CAT : SPR[k] || SPR[0], R.x + x * R.w, R.y + y * R.h, 9, c, .45);
-    g.font = '12px Helvetica Neue,Arial,sans-serif'; g.fillStyle = '#626c60'; g.textAlign = 'left';
-    g.fillText(`Lv ${sh.lv} · ${sh.hits} popped${sh.shots ? ` · ${Math.round(sh.hits / sh.shots * 100)}%` : ''}`, 12, 32);
+    // level and score are on the laptop
   }
   // my crosshair, with a small kick on each shot
   const cx = R.x + (.5 + aimX * .5) * R.w, cy = R.y + (.5 + aimY * .5) * R.h - kick * 4, r = 9 * (1 + kick * .3);
