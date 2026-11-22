@@ -165,6 +165,20 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 @keyframes shot{from{box-shadow:inset 0 0 0 3px var(--me)}to{box-shadow:inset 0 2px 8px #263c3514}}
 #wipeCount{position:absolute;top:6px;right:10px;font:600 15px var(--serif)}
 #wipeCount.full{color:var(--rust)}
+/* simplified controller: anything the laptop already shows is left off the phone. Only the controls, the door and
+   camera, a corner chip (seat colour, name, connection) and essential prompts remain. */
+.comp>.cap,.comp .hint,.steerbar,#hubKmh,#hubUnit,#wipeCount,#task,.bar .stats,#barRoles,.meter,#c-speedo{display:none!important}
+#drive{gap:0}
+.bar{position:absolute;top:max(6px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));z-index:6;padding:4px 10px;gap:8px;border-radius:999px;box-shadow:0 3px 10px #263c3518}
+.bar .who b{font-size:14px}
+#panels{padding-top:40px}
+#panels.duo .pedal{flex:1 1 0;max-width:none}
+#panels.duo{gap:14vw}
+/* the wipers' glass: a faint two-way swipe arrow instead of instructions */
+#c-wipe::after{content:'⟷';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:min(22vh,90px);color:#263c3524;pointer-events:none}
+.gear button small{display:none}
+.gear button{padding:8px 0}
+.you .roles span{font-size:13px}
 /* countdown + banner */
 #count{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:600 34vh var(--serif);color:var(--ink);text-shadow:0 0 30px #fffcf3;z-index:40;pointer-events:none}
 #count.pop{animation:pop .9s ease-out}
@@ -191,11 +205,10 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
     <header><i class="seatdot"></i><div><small id="youRoom">Room</small><h1 id="youName">Player</h1></div></header>
     <div id="result"></div>
     <ul class="roles" id="roleList"></ul>
-    <p class="goal"><b>The shift:</b> 90 seconds, one taxi, the whole crew. Pick up at the orange lantern, drop off at the gold one. Every fare pays yen and adds time; bumps cost both.</p>
   </div>
   <div class="side">
     <div class="card readybox"><button id="ready" aria-pressed="false">Ready</button><p id="lobbyMsg">Tap when you’re ready to drive.</p></div>
-    <div class="card mates" id="mates"></div>
+    <div id="mates" hidden></div>
   </div>
 </section>
 
@@ -222,7 +235,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
         <rect x="-5" y="-98" width="10" height="20" rx="3" fill="#ac4931"/>
       </g>
       <text id="hubKmh" y="4" text-anchor="middle" font-family="Iowan Old Style,Palatino,Georgia,serif" font-weight="600" font-size="20" fill="#263c35">0</text>
-      <text y="17" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-size="6.5" letter-spacing=".8" fill="#626c60">KM/H</text>
+      <text id="hubUnit" y="17" text-anchor="middle" font-family="Helvetica Neue,Arial,sans-serif" font-size="6.5" letter-spacing=".8" fill="#626c60">KM/H</text>
     </svg></div>
     <div class="steerbar"><span style="left:0">◀</span><span style="right:0">▶</span><i id="steerDot"></i></div>
     <p class="hint">Drag the rim round · let go to straighten</p>
@@ -278,12 +291,12 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 (() => {
 const $ = id => document.getElementById(id);
 const ROLE_INFO = {
-  steer: ['Wheel', 'Steer the taxi through the lanes. Drag the wheel round; let go and it straightens.', '<circle cx="15" cy="15" r="11" stroke-width="3"/><path d="M4 16h7m8 0h7M15 19v7" stroke-width="3"/><circle cx="15" cy="15" r="3.5"/>'],
-  pedals: ['Pedals', 'Gas and brake. Keep holding brake to reverse. Stop gently at the lanterns.', '<rect x="4" y="6" width="9" height="19" rx="2.5"/><rect x="17" y="10" width="9" height="15" rx="2.5"/><path d="M6 11h5M6 15h5M6 19h5M19 15h5M19 19h5"/>'],
+  steer: ['Wheel', 'Turn the wheel to steer.', '<circle cx="15" cy="15" r="11" stroke-width="3"/><path d="M4 16h7m8 0h7M15 19v7" stroke-width="3"/><circle cx="15" cy="15" r="3.5"/>'],
+  pedals: ['Pedals', 'Gas, brake, and D/R to reverse.', '<rect x="4" y="6" width="9" height="19" rx="2.5"/><rect x="17" y="10" width="9" height="15" rx="2.5"/><path d="M6 11h5M6 15h5M6 19h5M19 15h5M19 19h5"/>'],
   nav: ['Navigator', 'Read the map, call the turns, tap the map to mark a spot on the laptop.', '<path d="m3 8 8-3 8 3 8-3v17l-8 3-8-3-8 3Z"/><path d="M11 5v17M19 8v17"/><circle cx="15" cy="13" r="2.4" fill="#ac4931" stroke="none"/>'],
-  shoot: ['Shooter', 'Tilt the phone to move the crosshair on the laptop, tap to pop whatever flies at the taxi before it sticks to the glass.', '<circle cx="15" cy="15" r="9"/><path d="M15 2v7M15 21v7M2 15h7M21 15h7"/><circle cx="15" cy="15" r="1.6" fill="#ac4931" stroke="none"/>'],
-  wipe: ['Wipers', 'Whatever gets past the shooter sticks to the windshield. Swipe across the glass to clear the driver’s view.', '<path d="M4 25h22"/><path d="M15 25 6 9" stroke-width="3"/><path d="M8 7c4-3 10-3 14 0"/>'],
-  ops: ['Doors & camera', 'Open the door when the taxi stops at a lantern, so passengers can get in and out. Switch the laptop’s camera.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
+  shoot: ['Shooter', 'Aim on the laptop, tap to shoot.', '<circle cx="15" cy="15" r="9"/><path d="M15 2v7M15 21v7M2 15h7M21 15h7"/><circle cx="15" cy="15" r="1.6" fill="#ac4931" stroke="none"/>'],
+  wipe: ['Wipers', 'Swipe to clear the windshield.', '<path d="M4 25h22"/><path d="M15 25 6 9" stroke-width="3"/><path d="M8 7c4-3 10-3 14 0"/>'],
+  ops: ['Doors & camera', 'Open the door at the lantern. Switch cameras.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
 };
 const CALL_TEXT = { left: 'Turn left', right: 'Turn right', straight: 'Straight on', uturn: 'Turn around', stop: 'Stop here' };
 const params = new URLSearchParams(location.search);
@@ -368,10 +381,9 @@ function onLobby(m) {
   $('roleList').innerHTML = roles.map(r => `<li><svg viewBox="0 0 30 30" fill="none" stroke="#263c35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ROLE_INFO[r][2]}</svg><div><b>${ROLE_INFO[r][0]}</b><span>${ROLE_INFO[r][1]}</span></div></li>`).join('');
   $('ready').classList.toggle('on', ready); $('ready').setAttribute('aria-pressed', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
   const waiting = m.seats.filter(s => !s.ready || !s.on).length;
-  $('lobbyMsg').textContent = !me ? 'The laptop is finding you a seat…' : !ready ? (m.result ? 'Ready for another shift?' : 'Tap when you’re ready to drive.')
-    : waiting ? `Waiting for ${waiting} more…` : 'Everyone’s ready. The host starts the shift.';
+  $('lobbyMsg').textContent = !me ? 'Finding you a seat…' : !ready ? '' : waiting ? `Waiting for ${waiting} more…` : 'Starting soon…';
   $('mates').innerHTML = m.seats.map(s => `<div><i style="background:${s.color}"></i><span>${s.pid === pid ? 'You' : s.name} · ${s.roles.map(r => ROLE_INFO[r][0]).join(', ')}</span><span class="${s.on && s.ready ? 'ok' : 'no'}">${!s.on ? 'offline' : s.ready ? 'ready' : 'not ready'}</span></div>`).join('');
-  $('result').innerHTML = m.result && (phase === 'results' || phase === 'lobby') ? resultHTML(m.result) : '';
+  $('result').innerHTML = '';   // results are on the laptop
   if (phase === 'driving' || phase === 'count') { if (screen !== 'drive') show('drive') }
   else if (screen !== 'lobby') { show('lobby'); release() }
   setConn();
@@ -401,11 +413,12 @@ const comp = id => $('c-' + id);
 function layout() {
   const has = r => myRoles.includes(r), order = [];
   if (has('pedals') && has('steer')) order.push('wheel', ...(has('ops') ? ['ops'] : []), 'brake', 'gas');   // one phone does it all
-  else if (has('pedals')) { order.push('brake'); if (has('nav')) order.push('map'); if (has('ops')) order.push('ops'); if (!has('nav') && !has('ops')) order.push('speedo'); order.push('gas') }
+  else if (has('pedals')) { order.push('brake'); if (has('nav')) order.push('map'); if (has('ops')) order.push('ops'); order.push('gas') }
   else { if (has('steer')) order.push('wheel'); if (has('nav')) order.push('map'); if (has('ops')) order.push('ops') }
   if (has('shoot')) { const i = order.indexOf('gas'); i >= 0 ? order.splice(i, 0, 'aim') : order.splice(has('steer') ? 1 : 0, 0, 'aim'); const sp = order.indexOf('speedo'); if (sp >= 0) order.splice(sp, 1) }
   if (has('wipe')) { const i = order.indexOf('ops'); i >= 0 ? order.splice(i + 1, 0, 'wipe') : order.push('wipe') }
   const P = $('panels'), parts = $('parts');
+  P.classList.toggle('duo', order.length === 2 && order[0] === 'brake' && order[1] === 'gas');
   for (const c of [...P.children]) parts.appendChild(c);
   for (const id of order) P.appendChild(comp(id));
   requestAnimationFrame(sizeMap);
@@ -502,7 +515,7 @@ function onState(m) {
   $('flag').innerHTML = pick ? '<span lang="ja">空車</span><small>For hire</small>' : '<span lang="ja">賃走</span><small>Hired</small>';
   $('fareYen').textContent = pick ? '—' : '¥' + m.fareEst.toLocaleString();
   const door = $('door'); door.disabled = !m.doorNeeded; door.classList.toggle('call', !!m.atDoor && m.doorNeeded);
-  $('doorLabel').textContent = m.atDoor ? (pick ? 'Let them in' : 'Let them out') : 'Door';
+  $('doorLabel').textContent = 'Door';
   $('opsHint').textContent = m.atDoor ? 'They’re waiting: open the door!' : pick ? 'Open the door when the taxi stops at the orange lantern' : 'Open the door at the gold lantern';
   for (const b of $('cam').children) b.classList.toggle('on', b.dataset.cam === m.cam);
   if (m.atDoor && !atDoorBefore && myRoles.includes('ops')) buzz([40, 60, 40]);
@@ -510,12 +523,13 @@ function onState(m) {
 }
 let atDoorBefore = false;
 function onEvent(m) {
-  if (m.k === 'bump') { toast(m.kind === 'ped' ? 'Watch the pedestrians! −¥' + m.cost : m.kind === 'bike' ? 'Clipped a bike! −¥' + m.cost : 'Fender bender! −¥' + m.cost); if (myRoles.includes('steer') || myRoles.includes('pedals')) buzz(120) }
+  // the laptop shows every message; the phones only feel them
+  if (m.k === 'bump') { if (myRoles.includes('steer') || myRoles.includes('pedals')) buzz(120) }
   else if (m.k === 'scrape') { if (myRoles.includes('steer')) buzz(50) }
-  else if (m.k === 'pin') { toast((m.combo >= 3 ? 'Strike ×' + Math.min(m.combo, 5) + '! +' : 'Strike! +') + m.pts, true); buzz(25) }
-  else if (m.k === 'pickup') { toast('Passenger aboard!', true); buzz(30) }
-  else if (m.k === 'dropoff') { toast('Fare paid ¥' + m.pay + ' · +' + m.bonus + ' s', true); buzz([30, 50, 30]) }
-  else if (m.k === 'call' && !myRoles.includes('nav')) toast('Navigator: ' + (CALL_TEXT[m.d] || ''), true);
+  else if (m.k === 'pin') buzz(25);
+  else if (m.k === 'pickup') buzz(30);
+  else if (m.k === 'dropoff') buzz([30, 50, 30]);
+
   else if (m.k === 'ping') { const g = $('mping'); g.setAttribute('transform', `translate(${m.x} ${-m.y})`); g.setAttribute('visibility', 'visible'); clearTimeout(onEvent.p); onEvent.p = setTimeout(() => g.setAttribute('visibility', 'hidden'), 6000) }
 }
 
@@ -555,7 +569,7 @@ $('map').addEventListener('pointerup', e => {
   send({ t: 'ping', x, y }); buzz(15);
   const g = $('mping'); g.setAttribute('transform', `translate(${x} ${-y})`); g.setAttribute('visibility', 'visible');
   g.children[0].setAttribute('stroke', getComputedStyle(document.documentElement).getPropertyValue('--me')); g.children[1].setAttribute('fill', getComputedStyle(document.documentElement).getPropertyValue('--me'));
-  toast('Marked on the laptop', true);
+
 });
 $('calls').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b || phase !== 'driving') return;
