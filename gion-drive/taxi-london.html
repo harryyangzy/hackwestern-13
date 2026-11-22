@@ -5247,10 +5247,8 @@ let voteT = null;
 function renderVote(m, st) {
   voteEl.hidden = false;
   const s = st || {}, left = Math.max(0, Math.ceil((m.until - Date.now()) / 1000));
-  voteEl.innerHTML = `<small class="wt-cap">Shift over</small>
-    <h2>Who took the wrong turn?</h2>
+  voteEl.innerHTML = `<h2>Who took the wrong turn?</h2>
     <p class="wt-tripline ${m.success ? 'ok' : 'bad'}">${m.success ? `Made it: ${yen(m.yen)} of ${yen(m.goal)}` : `Fell short: ${yen(m.yen)} of ${yen(m.goal)}`}</p>
-    <ul class="wt-seats">${m.seats.map(p => `<li style="--c:${p.color}"><i></i>${esc(p.name)}</li>`).join('')}</ul>
     <p class="wt-sub">${s.voted ?? 0} of ${m.seats.length} voted · ${left} s</p>`;
 }
 let voteMsg = null;

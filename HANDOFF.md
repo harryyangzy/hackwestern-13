@@ -164,3 +164,4 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 - Countdown briefing (flow.js `GionBrief`, drive.css `#gt-brief`): flat paper card with a solid edge, the objective in a cream pill, one tile per player with their crew mascot, name and job, and the 3-2-1 in a solid rust badge ("Get ready" is a cream pill first).
 - Phone countdown (pad.html `#brief` / `#count`): no "Your job" text, just the player's crew mascot on flat paper and the 3-2-1 in a solid rust badge, matching the laptop briefing.
 - Known issue: the crew server can crash on an unhandled Solana devnet `429 Too Many Requests` from web3.js (seen 22 Nov); restart `node gion-drive/server.js` if the lobby says it can't reach the server.
+- Vote panel (laptop, wt.js `renderVote`): no "Shift over" caption and no list of player names; just the question, the trip line and the vote count/timer.
