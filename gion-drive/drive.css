@@ -78,3 +78,6 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 #gt-hud:not([hidden]) .gt-task{animation:gt-in .45s .08s cubic-bezier(.2,.7,.2,1) both}
 #gt-hud:not([hidden]) #gt-map{animation:gt-in .45s .16s cubic-bezier(.2,.7,.2,1) both}
 @media (prefers-reduced-motion:reduce){#gt-menu,#gt-lobby,#gt-brief,#gt-brief li,#gt-seats li,#gt-hud *,.top,.foot,.rail{animation:none!important;transition:none!important}}
+
+/* the top bar shows only the tandem logo: no city name beside it */
+.top .city-nav{display:none!important}

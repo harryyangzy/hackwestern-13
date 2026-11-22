@@ -51,6 +51,9 @@ see-through (x-ray), so canal elms and tall buildings never hide the taxi.
   a shuttle slider (`shuttle()`: a pill track, a dark round knob that starts at the far left, chevrons that light up as it's
   pushed right, a spring follow with a small overshoot, snaps to 5 % steps, arrow/Home/End keys) and Lock in wager. The
   explanation paragraphs are gone.
+- Role card (wt-pad.js): the back shows the player's crew character and "Hold to reveal"; holding flips it (3D) to
+  "Imposter" (rose, one line + sabotage chips) or "Crew" (mint, one line). No "Wager" header; the amount is in the
+  display font. `WTPadAPI.me` (pad.html) gives the seat for the character. City name removed from the top bar (drive.css).
 - Test lab: a View bar (and ⤢ on each phone) shows any player's phone full size over the laptop; Esc returns. The lab's
   "Taxi shift · Wrong Turn" mode replaces the separate Wrong Turn button.
 

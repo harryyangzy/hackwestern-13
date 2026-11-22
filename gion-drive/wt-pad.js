@@ -42,17 +42,26 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 .wt-box{padding:14px 18px;display:flex;flex-direction:column;gap:8px;justify-content:center;min-height:0;overflow:auto}
 .wt-box h2{font-size:22px}
 .wt-box p{margin:0;color:var(--muted);font-size:14px}
-#wt-peek{flex:1;border-radius:12px;border:2px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:14px;touch-action:none;-webkit-user-select:none;user-select:none}
-#wt-peek .wt-hold{font:italic 17px var(--serif);color:var(--muted)}
-#wt-peek .wt-secret{display:none}
-#wt-peek.show{border-style:solid;border-color:var(--ink);background:#fff}
-#wt-peek.show.imp{background:var(--rust);border-color:var(--rust);color:#fff}
-#wt-peek.show .wt-hold{display:none}#wt-peek.show .wt-secret{display:flex;flex-direction:column;gap:6px}
-.wt-secret b{font:600 26px var(--serif)}
-.wt-secret span{font-size:13px;line-height:1.35}
-#wt-peek.imp .wt-secret span{color:#fffe}
-.wt-amt{font:600 30px var(--serif);font-variant-numeric:tabular-nums;color:var(--rust)}
-.wt-amt small{font:13px var(--sans);color:var(--muted);text-transform:none;letter-spacing:0;margin-left:4px}
+/* the role card: the player's character on the back; holding it flips it over to the role */
+#wt-box-role{padding:10px}
+#wt-peek{flex:1;min-height:0;perspective:1100px;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer}
+.wt-flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.3,1.25,.45,1)}
+#wt-peek.show .wt-flip{transform:rotateY(180deg)}
+.wt-face{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px;text-align:center}
+.wt-back{background:radial-gradient(120% 90% at 70% 10%,#fffdf6 0,#f6efe0 55%,#ece3cf 100%);border:1px solid var(--rule);box-shadow:inset 0 1px 0 #fff,0 6px 18px #263c3514}
+.wt-back .gc-char{animation:wt-breathe 2.6s ease-in-out infinite;filter:drop-shadow(0 6px 10px #4a4f8a22)}
+.wt-back b{font:500 24px/1.1 var(--display,var(--serif));color:var(--ink)}
+@keyframes wt-breathe{50%{transform:translateY(-4px) scale(1.03)}}
+.wt-front{transform:rotateY(180deg);background:var(--mint,#e3f1e7);border:1px solid #b9dcc6;color:var(--ink)}
+.wt-front.imp{background:var(--rose,#f9dce5);border-color:#dcafbc}
+.wt-front b{font:500 40px/1 var(--display,var(--serif));color:var(--green)}
+.wt-front.imp b{color:var(--rust)}
+.wt-front p{margin:0;font:500 15px/1.35 var(--sans);color:var(--ink);max-width:260px}
+.wt-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.wt-chips i{font:600 12px var(--sans);font-style:normal;padding:5px 11px;border-radius:999px;background:#fffcf3;border:1px solid #dcafbc;color:var(--rust)}
+@media (prefers-reduced-motion:reduce){.wt-flip{transition:none}.wt-back .gc-char{animation:none}}
+.wt-amt{font:500 40px/1 var(--display,var(--serif));font-variant-numeric:tabular-nums;color:var(--rust);display:flex;align-items:baseline;gap:8px}
+.wt-amt small{font:600 13px var(--sans);color:var(--muted);text-transform:none;letter-spacing:0}
 /* the wager: a shuttle slider, pushed from left to right; the chevrons light up the further it goes */
 .wt-shuttle{position:relative;height:60px;border-radius:999px;background:#ece4d1;box-shadow:inset 0 1px 3px #263c3524,inset 0 -1px 0 #fff8;touch-action:none;cursor:grab;outline:none;-webkit-user-select:none;user-select:none;margin:6px 0 4px}
 .wt-shuttle:focus-visible .wt-knob{box-shadow:0 0 0 3px #fffcf3,0 0 0 5px var(--rust)}
@@ -143,15 +152,18 @@ function shuttle(el, onChange) {
 }
 function showRole() {
   const r = role, imp = r.imposter, yen = window.GionMoney ? window.GionMoney(r.goal) : '¥' + r.goal.toLocaleString();   // the city's currency
-  const secret = imp
-    ? `<b>Imposter</b><span>Make the trip fall short of ${yen} without getting caught. Play your part as normal. You have ${r.charges} sabotages that look like bad luck: ${r.kinds.map(k => `<br>· <b style="font-size:14px">${KIND[k][0]}</b>: ${KIND[k][1]}`).join('')}</span>`
-    : `<b>Crew</b><span>Earn ${yen} before the clock runs out. Someone in this taxi wants the trip to fail. Watch who drives badly; you'll vote at the end.</span>`;
+  const front = imp
+    ? `<b>Imposter</b><p>Keep the fare under ${yen}. Don’t get caught.</p><div class="wt-chips">${r.kinds.map(k => `<i>${KIND[k][0]}</i>`).join('')}</div>`
+    : `<b>Crew</b><p>Reach ${yen}. Find the imposter.</p>`;
+  const me = A.me, face = me && window.GionCrew ? GionCrew.svg(me.color, { size: 104 }) : '';
   layer.hidden = false;
   const chev = '<svg viewBox="0 0 11 16" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l6 6-6 6"/></svg>';
   layer.innerHTML = `<div class="wt-grid">
+    <div class="card wt-box" id="wt-box-role">
+      <div id="wt-peek"><div class="wt-flip">
+        <div class="wt-face wt-back">${face}<b>Hold to reveal</b></div>
+        <div class="wt-face wt-front ${imp ? 'imp' : ''}">${front}</div></div></div></div>
     <div class="card wt-box">
-      <div id="wt-peek" class="${imp ? 'imp' : ''}"><span class="wt-hold">Hold here to reveal role</span><div class="wt-secret">${secret}</div></div></div>
-    <div class="card wt-box"><small>Wager</small>
       <div class="wt-amt" id="wt-amt"></div>
       <div class="wt-shuttle" id="wt-range" role="slider" tabindex="0" aria-label="Wager" aria-valuemin="10" aria-valuemax="100">
         <i class="wt-trail"></i><div class="wt-chev">${chev.repeat(9)}</div>

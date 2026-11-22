@@ -2647,6 +2647,9 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 #gt-hud:not([hidden]) .gt-task{animation:gt-in .45s .08s cubic-bezier(.2,.7,.2,1) both}
 #gt-hud:not([hidden]) #gt-map{animation:gt-in .45s .16s cubic-bezier(.2,.7,.2,1) both}
 @media (prefers-reduced-motion:reduce){#gt-menu,#gt-lobby,#gt-brief,#gt-brief li,#gt-seats li,#gt-hud *,.top,.foot,.rail{animation:none!important;transition:none!important}}
+
+/* the top bar shows only the tandem logo: no city name beside it */
+.top .city-nav{display:none!important}
 /* Gion Taxi crew play: the lobby card, the countdown, the navigator's callout and the crew strip.
    Same cards, inks and type as drive.css (Pocket City's :root tokens), nothing new in the palette. */
 .gt-ghost{margin:8px 0 0 8px;background:transparent;color:var(--ink);border:1px solid var(--rust);border-radius:999px;padding:9px 20px;font-weight:600;font-size:15px}
