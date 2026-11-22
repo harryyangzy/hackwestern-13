@@ -12,7 +12,7 @@ phones sharing one taxi.
 
 ## Solo
 
-Open `gion-taxi.html` in a browser (it works offline, no server needed) and press **Start driving**.
+Open `index.html` in a browser (it works offline, no server needed), press **Play Solo** and pick a city.
 Arrows/WASD drive (hold ↓ to brake, then reverse), `C` cycles the camera (kart → chase → overhead), `Esc` ends the shift.
 The red and cream kerbs mark the road; dark and cream ones mark the edge of the map.
 
@@ -27,9 +27,9 @@ node gion-drive/server.js
 
 Node 18 or newer, no `npm install`. Then:
 
-1. On the laptop, open **http://localhost:8090** and press **Play with phones**.
+1. On the laptop, open **http://localhost:8090**: the title screen. Press **Play with Friends** and choose a city; the lobby opens with a QR code.
 2. Each phone scans the QR code (or opens the address under it and types the room code).
-3. Turn the phones sideways. Everyone taps **Ready**, then the laptop presses **Start shift**.
+3. Turn the phones sideways. Phones can tap a role to take it. Everyone taps **Ready**, then the laptop presses **Start shift**: a short briefing and a 3-2-1, then the shift.
 
 | Phones | Roles |
 |---|---|

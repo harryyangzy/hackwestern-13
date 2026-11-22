@@ -63,7 +63,15 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 #ready{width:min(132px,30vh);height:min(132px,30vh);border-radius:50%;border:2px solid var(--rust);color:var(--rust);font:600 20px var(--serif);background:#fff9;box-shadow:inset 0 -4px 0 #ac493122;transition:background .2s,color .2s,border-color .2s}
 #ready.on{background:var(--green);border-color:var(--green);color:#fff;box-shadow:inset 0 -4px 0 #0003}
 #lobbyMsg{font:italic 15px var(--serif);color:var(--muted);text-align:center;margin:0}
-.mates{padding:8px 12px;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.mates{padding:8px 10px;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.mates small{padding:0 2px}
+.mates button{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--rule);border-radius:10px;background:#fff9;text-align:left}
+.mates button.mine{border-color:var(--me);box-shadow:inset 0 0 0 1px var(--me)}
+.mates button b{font:600 14px var(--serif);flex:1}
+#brief{position:fixed;inset:0;z-index:39;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8vh;background:var(--paper);text-align:center;gap:4px}
+#brief[hidden]{display:none}
+#brief h2{font-size:30px}
+#brief p{font:italic 17px var(--serif);color:var(--muted);margin:0;max-width:520px}
 .mates div{display:flex;align-items:center;gap:7px}
 .mates i{width:8px;height:8px;border-radius:50%}
 .mates .ok{margin-left:auto;color:var(--green);font-weight:600}
@@ -208,7 +216,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
   </div>
   <div class="side">
     <div class="card readybox"><button id="ready" aria-pressed="false">Ready</button><p id="lobbyMsg">Tap when you’re ready to drive.</p></div>
-    <div id="mates" hidden></div>
+    <div class="card mates" id="mates"></div>
   </div>
 </section>
 
@@ -283,6 +291,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
   </div>
 </div>
 <div id="swipe" aria-live="polite"><svg viewBox="0 0 48 48" fill="none" stroke="#263c35" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M24 40V10m-9 9 9-9 9 9"/></svg><h2>Swipe up for full screen</h2><p>One swipe up hides Safari’s bars so the controls fill the screen. If the bars come back, swipe up again.</p><button id="swipeSkip">Not now</button></div>
+<div id="brief" hidden><small>Your job</small><h2 id="briefRole"></h2><p id="briefText"></p></div>
 <div id="count" hidden></div>
 <div id="banner" class="card" hidden></div>
 <div id="toast"></div>
@@ -364,6 +373,7 @@ function onMsg(m) {
     case 's': onState(m); break;
     case 'route': route = m; drawRoute(); break;
     case 'count': countdown(m.n); break;
+    case 'brief': showBrief(); break;
     case 'ev': onEvent(m); break;
     default: if (window.GionPadExt) window.GionPadExt(m);
   }
@@ -384,7 +394,7 @@ function onLobby(m) {
   $('ready').classList.toggle('on', ready); $('ready').setAttribute('aria-pressed', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
   const waiting = m.seats.filter(s => !s.ready || !s.on).length;
   $('lobbyMsg').textContent = !me ? 'Finding you a seat…' : !ready ? '' : waiting ? `Waiting for ${waiting} more…` : 'Starting soon…';
-  $('mates').innerHTML = m.seats.map(s => `<div><i style="background:${s.color}"></i><span>${s.pid === pid ? 'You' : s.name} · ${s.roles.map(r => ROLE_INFO[r][0]).join(', ')}</span><span class="${s.on && s.ready ? 'ok' : 'no'}">${!s.on ? 'offline' : s.ready ? 'ready' : 'not ready'}</span></div>`).join('');
+  $('mates').innerHTML = (m.seats.length > 1 ? '<small>Roles · tap one to take it</small>' : '') + m.seats.map((s, i) => `<button data-seat="${i}" class="${s.pid === pid ? 'mine' : ''}"><i style="background:${s.color}"></i><b>${s.roles.map(r => ROLE_INFO[r][0]).join(' + ')}</b><span>${s.pid === pid ? 'You' : s.name}${s.on && s.ready ? ' ✓' : ''}</span></button>`).join('');
   $('result').innerHTML = '';   // results are on the laptop
   if (phase === 'driving' || phase === 'count') { if (screen !== 'drive') show('drive') }
   else if (screen !== 'lobby') { show('lobby'); release() }
@@ -396,6 +406,7 @@ function resultHTML(r) {
   const n = r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0;
   return `<div class="card res"><b class="t">Shift over</b><span class="stars">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span><div class="row"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div><div><small>Bumps</small><b>${r.bumps}</b></div></div></div>`;
 }
+$('mates').addEventListener('click', e => { const b = e.target.closest('[data-seat]'); if (!b || b.classList.contains('mine') || (phase !== 'lobby' && phase !== 'results')) return; send({ t: 'seat', i: +b.dataset.seat }); buzz(12) });
 $('ready').onclick = () => {
   if (!me) return;
   ready = !ready; send({ t: 'ready', v: ready }); buzz(15);
@@ -404,7 +415,16 @@ $('ready').onclick = () => {
   if (ready && document.documentElement.requestFullscreen && !document.fullscreenElement)
     document.documentElement.requestFullscreen().then(() => window.screen.orientation && window.screen.orientation.lock && window.screen.orientation.lock('landscape')).catch(() => {});
 };
+// before a shift: this phone's job, under the countdown
+function showBrief() {
+  if (!myRoles.length) return;
+  $('briefRole').textContent = myRoles.map(r => ROLE_INFO[r][0]).join(' + ');
+  $('briefText').textContent = myRoles.map(r => ROLE_INFO[r][1]).join(' ');
+  $('brief').hidden = false; buzz(20);
+  clearTimeout(showBrief.t); showBrief.t = setTimeout(() => { $('brief').hidden = true }, 6500);
+}
 function countdown(n) {
+  if (n === 1) { clearTimeout(showBrief.t); showBrief.t = setTimeout(() => { $('brief').hidden = true }, 900) }
   const c = $('count'); c.textContent = n; c.hidden = false; c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop'); buzz(25);
   if (screen !== 'drive') show('drive');
   clearTimeout(countdown.t); countdown.t = setTimeout(() => { c.hidden = true }, 950);

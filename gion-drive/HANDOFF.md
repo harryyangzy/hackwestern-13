@@ -43,6 +43,17 @@ chip (seat colour, name, connection light), the Ready button with one line per r
 (reconnecting, rotate, swipe-up full screen, tilt-aim errors). Most of it is one CSS block in pad.html
 ("simplified controller"); the hidden elements are still updated, so it's easy to bring one back.
 
+**Opening flow (2026-11-22):** Title → City selection → (crew) lobby → briefing + 3-2-1 → shift; solo skips the lobby.
+- `index.html` (built from `index.template.html` by build.py, with a map preview of each city drawn from its scene) is the
+  title screen and city selection; the server serves it at `/`. `#crew` / `#solo` in its address picks the mode.
+- A city is opened as `taxi-<city>.html?play=solo|crew` (Gion: `gion-taxi.html`). `flow.js` (built into every city page,
+  last) hides the old instruction card, opens the crew lobby at once (`GionCrew.open`), or runs the solo briefing and
+  starts the shift. Without `?play` a city page goes back to the title. The card now only shows a shift's result
+  (Drive again, ← Choose another city). "← Cities" in the lobby closes the room on the server, then goes back.
+- `window.GionBrief` (flow.js) shows the objective and each player's job, waits 2.6 s, then counts 3-2-1; `mp.js`'s Start
+  uses it and sends the phones `brief` (each shows its own job) and `count`. Wrong Turn's wager step still runs first.
+- Phones pick roles in the lobby: tapping a role sends `seat`, and the laptop swaps the two seats (lobby phases only).
+
 **Cleaner page and more speed (2026-11-22):**
 - Always autumn: `drive.js` calls the page's `selectSeason('autumn')`; the season picker, the bottom view bar, "Simulation
   live" and the view-name label are hidden in `drive.css`.

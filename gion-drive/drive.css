@@ -36,3 +36,19 @@
 body.gt-driving .top,body.gt-driving .foot,body.gt-driving .rail,body.gt-driving .tools,body.gt-driving .compass,body.gt-driving .stage>.mark{display:none!important}
 body.gt-driving .workspace{height:100%}
 body.gt-driving .stage{left:0;right:0;top:0;bottom:0}
+/* tandem opening flow (flow.js): the old card only shows a shift's result; the briefing before each shift */
+body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
+body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weight:600;color:var(--rust)}
+#gt-brief{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 28px));padding:22px 28px;z-index:7;text-align:center}
+#gt-brief[hidden]{display:none}
+#gt-brief small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+#gt-brief h2{font:600 30px var(--serif);margin:2px 0 6px}
+#gt-brief p{margin:0 0 14px;font:italic 17px var(--serif)}
+#gt-brief ul{list-style:none;margin:0 0 10px;padding:0;text-align:left;display:flex;flex-direction:column;gap:6px}
+#gt-brief li{display:flex;align-items:baseline;gap:8px}
+#gt-brief li i{width:10px;height:10px;border-radius:50%;flex:none;transform:translateY(1px)}
+#gt-brief li b{font:600 15px var(--serif);white-space:nowrap}
+#gt-brief li span{color:var(--muted)}
+#gt-bcount{display:block;font:600 64px/1 var(--serif);color:var(--rust);min-height:64px}
+#gt-bcount.ready{font:italic 22px/64px var(--serif);color:var(--muted)}
+#gt-bcount.pop{animation:gt-pop .9s ease-out}

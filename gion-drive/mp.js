@@ -22,6 +22,9 @@ const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'D
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
+// one line per role for the briefing before a shift
+const ROLE_BRIEF = { steer: 'Wheel: steer the taxi.', pedals: 'Pedals: gas and brake; D/R to reverse.', nav: 'Navigator: call the turns.',
+  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.' };
 
 let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
 let phase = 'off';             // off | lobby | count | driving | results
@@ -186,6 +189,13 @@ function onPhone(p, m) {
   const roles = rolesOf(p);
   switch (m.t) {
     case 'hello': sendMap(p.pid); broadcastLobby(); if (lastRoute) toPhones(lastRoute, p.pid); break;
+    case 'seat': {   // a phone picks a role set: it swaps seats with whoever holds it (lobby only)
+      const i = m.i, j = crew.indexOf(p);
+      if ((phase === 'lobby' || phase === 'results') && Number.isInteger(i) && i >= 0 && i < crew.length && i !== j) {
+        [crew[i], crew[j]] = [crew[j], crew[i]]; crew[i].ready = crew[j].ready = false; rolesChanged(); broadcastLobby();
+      }
+      break;
+    }
     case 'ready':
       if (phase === 'lobby' || phase === 'results') { p.ready = !!m.v; broadcastLobby() }
       break;
@@ -252,6 +262,17 @@ function startCountdown(force) {
   if (force !== true && window.GionCrew.beforeStart?.()) return;   // Wrong Turn: wagers are locked in first, then it calls startCountdown(true)
   phase = 'count'; for (const p of crew) p.ready = false;
   showLobby(false); menu.hidden = true; broadcastLobby();
+  // the briefing (flow.js): the objective and each player's job, then a 3-2-1 the phones follow
+  if (window.GionBrief) {
+    toPhones({ t: 'brief' });
+    window.GionBrief({
+      title: game === 'bowling' ? GT.city.bowl : 'Crew shift',
+      objective: game === 'bowling' ? 'Knock over as many pedestrians as you can in 60 seconds.' : 'Pick up and deliver passengers together before the shift ends.',
+      lines: crew.map(p => ({ color: p.color, name: p.name, text: rolesOf(p).map(r => ROLE_BRIEF[r] || r).join(' ') })),
+      onCount: n => toPhones({ t: 'count', n }), abort: () => phase !== 'count',
+    }).then(() => { if (phase !== 'count') return; GT.lockMenu = false; GT.start(game) });
+    return;
+  }
   let n = 3; const el = $('gt-count');
   const tick = () => {
     if (phase !== 'count') { el.hidden = true; return }
@@ -276,7 +297,8 @@ for (const k of ['bump', 'pickup', 'dropoff', 'scrape', 'door', 'atdoor', 'pin']
 GT.on('cam', cam => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', cam }) });
 
 if (served) $('gt-mp').onclick = openRoom;
-$('gt-lclose').onclick = closeRoom;
+// close the room; on a ?play=crew page (flow.js) go back to city selection, so no room is left behind
+$('gt-lclose').onclick = () => { const home = $('gt-lclose').dataset.home; closeRoom(); if (home) location.href = home };
 $('gt-lstart').onclick = () => startCountdown();
 document.querySelector('.gt-modes').onclick = e => { const b = e.target.closest('[data-game]'); if (b && (phase === 'lobby' || phase === 'results')) { game = b.dataset.game; broadcastLobby() } };
 $('gt-ip').onclick = () => { ipIndex++; renderLobby() };
@@ -319,7 +341,7 @@ setInterval(() => {
   if (gone.length && wsOk) { for (const p of gone) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1) } rolesChanged(); broadcastLobby() }
 }, 100);
 setInterval(() => send({ t: 'hb' }), 2000);
-window.GionCrew = { toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
+window.GionCrew = { open: openRoom, toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
   // used by Wrong Turn mode (wt.js)
   send, canStart, startCountdown, get game() { return game }, get wsOk() { return wsOk }, onDx: null };
 })();

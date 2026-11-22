@@ -69,7 +69,7 @@ process.on('exit', () => { if (tunnelProc) tunnelProc.kill() });
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(0));
 
 // ---------- static files ----------
-const FILES = { '/': 'gion-taxi.html', '/index.html': 'gion-taxi.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/wt-pad.js': 'wt-pad.js' };
+const FILES = { '/': 'index.html', '/index.html': 'index.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/wt-pad.js': 'wt-pad.js' };
 function handler(req, res) {
   const url = req.url.split('?')[0];
   if (url === '/info') {
