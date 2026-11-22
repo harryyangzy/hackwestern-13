@@ -49,16 +49,91 @@ main.leave{opacity:0;transform:translateY(-8px);transition:opacity .2s ease,tran
 body{transition:opacity .38s cubic-bezier(.4,0,.2,1)}
 body.going{opacity:0}
 @media (prefers-reduced-motion:reduce){main.enter>*,main.enter .city{animation:none}main.leave,.city,body{transition:none}}
+
+/* ---------- the hero (the title screen): a painted morning, the city rolling past, the whole crew in one taxi ---------- */
+#title.hero{position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0;min-height:max(100svh,640px);overflow:hidden;
+  background:linear-gradient(180deg,#b9d8dc 0%,#d3e6e0 38%,#efeedd 70%,#f6efdc 100%)}
+.hero .sky{position:absolute;inset:0;pointer-events:none}
+.hero .sun{position:absolute;right:9%;top:13%;width:clamp(110px,14vw,210px);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#fbe4b6 0 58%,#fbe4b600 72%);opacity:.9}
+.hero .grid{position:absolute;inset:0;background-image:linear-gradient(#ffffff38 1px,transparent 1px),linear-gradient(90deg,#ffffff38 1px,transparent 1px);
+  background-size:56px 56px;-webkit-mask-image:linear-gradient(180deg,#000 0,#0000 62%);mask-image:linear-gradient(180deg,#000 0,#0000 62%)}
+.hero .nav{position:relative;z-index:3;display:flex;justify-content:space-between;align-items:center;padding:20px clamp(20px,4vw,48px) 8px}
+.hero .mark{font:500 27px/1 var(--display);letter-spacing:-.01em}
+.hero .stops{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.hero .stops span{font:600 12px/1 var(--sans);letter-spacing:.04em;padding:7px 11px;border-radius:999px;background:#fffcf3b8;border:1px solid #ffffffa0;color:var(--muted)}
+.hero .copy{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;text-align:center;padding:clamp(4px,2vh,28px) 20px clamp(12px,3vh,36px)}
+.hero .eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 12px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-accent-700);
+  background:#fffcf3d0;border:1px solid #fff;border-radius:999px;padding:6px 12px 6px 6px;box-shadow:0 2px 10px #263c3510}
+.hero .eyebrow .faces{display:flex}.hero .eyebrow .faces svg{margin-left:-5px;background:#f6efdc;border-radius:50%}.hero .eyebrow .faces svg:first-child{margin-left:0}
+.hero h1{font:500 clamp(40px,5vw,74px)/1 var(--display);letter-spacing:-.015em;margin:14px 0 0;max-width:15ch;text-wrap:balance}
+.hero h1 em{font-style:normal;color:var(--color-accent-500)}
+.hero .lede{font:400 clamp(16px,1.3vw,18px)/1.5 var(--sans);color:#3f5049;max-width:540px;margin:14px 0 22px;text-wrap:pretty}
+.hero .modes{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.mode{display:flex;align-items:center;gap:14px;text-align:left;border-radius:20px;padding:12px 22px 12px 12px;min-width:250px;border:1px solid;
+  transition:transform .25s cubic-bezier(.2,.7,.2,1),box-shadow .25s,background .25s}
+.mode .pic{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:14px;flex:none}
+.mode .pic.four{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:3px}
+.mode small{display:block;font:600 11px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;opacity:.75;margin-bottom:5px}
+.mode b{display:block;font:500 22px/1.05 var(--display)}
+.mode i{display:block;font:400 13px/1.3 var(--sans);font-style:normal;opacity:.8;margin-top:4px}
+.mode.multi{background:var(--gradient-button-primary-default);border-color:var(--color-accent-600);color:#fff;box-shadow:0 10px 28px #91382a40}
+.mode.multi .pic{background:#fff3e2}
+.mode.solo{background:#fffcf3e8;border-color:#fff;color:var(--ink);box-shadow:0 10px 28px #263c3516}
+.mode.solo .pic{background:#f0e6cf}
+.mode:hover:not(:disabled){transform:translateY(-3px)}
+.mode.multi:hover:not(:disabled){background:var(--gradient-button-primary-hover);box-shadow:0 14px 34px #91382a55}
+.mode.solo:hover{background:#fffcf3;box-shadow:0 14px 34px #263c3524}
+.mode:disabled{background:#e9e2d2;border-color:var(--rule);color:var(--muted);box-shadow:none;cursor:default}
+.mode:disabled .pic{filter:grayscale(1);opacity:.6}
+.hero .note{max-width:420px;margin-top:10px}
+/* the moving picture: each layer is two copies of one strip, slid left by one copy and looped */
+.hero .scene{--W:max(100vw,1100px);position:relative;flex:none;margin-top:auto;height:calc(var(--W) * .2);min-height:230px;pointer-events:none}
+.hero .layer{position:absolute;left:0;width:calc(var(--W) * 2);display:flex;animation:pan var(--t) linear infinite;will-change:transform}
+.hero .layer svg{width:50%;height:auto;display:block;flex:none}
+.hero .clouds{bottom:calc(var(--W) * .2);--t:150s;opacity:.95}
+.hero .far{bottom:calc(var(--W) * .118);--t:110s}
+.hero .mid{bottom:calc(var(--W) * .0925);--t:46s}
+.hero .street{bottom:0;--t:9s}
+@keyframes pan{to{transform:translateX(-50%)}}
+.hero .taxi{position:absolute;left:50%;bottom:calc(var(--W) * .002);width:calc(var(--W) * .2125);transform:translateX(-50%);animation:cruise 9s ease-in-out infinite}
+.hero .taxi svg{display:block;width:100%;height:auto;overflow:visible}
+@keyframes cruise{0%,100%{transform:translateX(-52%)}50%{transform:translateX(-46%)}}
+.taxi .rig{animation:bob .42s ease-in-out infinite alternate}
+@keyframes bob{to{transform:translateY(-1.6px)}}
+.taxi .nod{animation:nod 1.3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes nod{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-1.5px) rotate(2deg)}}
+.taxi .lookout{animation:look 2.6s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 100%}
+@keyframes look{from{transform:rotate(-7deg)}to{transform:rotate(6deg) translateY(-2px)}}
+.taxi .spin{animation:spin .55s linear infinite;transform-box:fill-box;transform-origin:center}
+@keyframes spin{to{transform:rotate(360deg)}}
+.taxi .puff{animation:puff 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center;opacity:0}
+.taxi .puff:nth-of-type(2){animation-delay:.47s}.taxi .puff:nth-of-type(3){animation-delay:.94s}
+@keyframes puff{0%{opacity:.75;transform:translate(0,0) scale(.5)}100%{opacity:0;transform:translate(-46px,-14px) scale(1.6)}}
+.hero .street .glow{animation:glow 2.4s ease-in-out infinite alternate}
+@keyframes glow{from{opacity:.25}to{opacity:.5}}
+@media (max-width:640px){.hero .stops{display:none}.mode{min-width:0;width:100%}.hero .modes{width:100%;max-width:360px}.hero .eyebrow{font-size:10.5px;letter-spacing:.06em}.hero .scene{--W:900px;min-height:0;height:180px}.hero .sun{top:auto;bottom:250px;right:6%;width:90px}}
+
+@media (prefers-reduced-motion:reduce){.hero .layer,.hero .taxi,.taxi *,.hero .street .glow{animation-play-state:paused!important}}
 </style></head>
 <body>
-<main id="title">
-  <h1>tandem</h1>
-  <p class="tag">One taxi, the whole crew. Pick up and deliver passengers together before the shift ends.</p>
-  <div class="actions">
-    <button class="primary" id="crew">Play with Friends</button>
+<main id="title" class="hero">
+  <div class="sky" aria-hidden="true"><div class="grid"></div><div class="sun"></div></div>
+  <header class="nav">
+    <span class="mark">tandem</span>
+    <nav class="stops" aria-label="Cities"><span>Kyoto</span><span>London</span><span>Toronto</span><span>Amsterdam</span></nav>
+  </header>
+  <div class="copy">
+    <span class="eyebrow"><span class="faces" id="faces"></span>A co-op taxi game for 1–4 players</span>
+    <h1>Get lost in a new city, <em>together</em>.</h1>
+    <p class="lede">Pile your friends into one taxi and learn the streets of Kyoto, London, Toronto and Amsterdam, one fare at a time. Your phones are the wheel, the pedals and the wipers.</p>
+    <div class="modes">
+      <button class="mode multi" id="crew"><span class="pic four" id="crewPic"></span><span><small>Multiplayer</small><b>Play with friends</b><i>2–4 phones, one taxi</i></span></button>
+      <button class="mode solo" id="solo"><span class="pic" id="soloPic"></span><span><small>Single player</small><b>Drive solo</b><i>Just you and the keyboard</i></span></button>
+    </div>
     <p class="note" id="crewNote" hidden>Playing with friends needs the crew server: run <code>node gion-drive/server.js</code> and open the address it prints.</p>
-    <button class="secondary" id="solo">Play Solo</button>
   </div>
+  <div class="scene" aria-hidden="true" id="scene"></div>
 </main>
 <main id="pick" hidden>
   <h2>Choose a city</h2>
@@ -71,6 +146,137 @@ body.going{opacity:0}
   </div>
   <button class="back" id="back">← Back</button>
 </main>
+<script src="crew.js"></script>
+<script>
+/* the hero's picture, drawn once as SVG strips: far landmarks (one per city, with a pin), a street of shops and autumn
+   trees, the road with lanterns, and the taxi with the crew aboard. Each strip is 1600 units wide and tiles seamlessly. */
+(() => {
+const scene = document.getElementById('scene'); if (!scene) return;
+const C = window.GionCrew && window.GionCrew.svg ? window.GionCrew : null;
+let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 };
+const pick = a => a[Math.floor(rnd() * a.length)], range = (a, b) => a + rnd() * (b - a);
+const mix = (hex, k) => { const n = parseInt(hex.slice(1), 16), c = [n >> 16 & 255, n >> 8 & 255, n & 255], t = k > 0 ? 255 : 30;
+  return '#' + c.map(v => Math.round(v + (t - v) * Math.abs(k)).toString(16).padStart(2, '0')).join('') };
+const poly = (pts, fill, extra = '') => `<path d="M${pts.map(p => p.join(' ')).join('L')}Z" fill="${fill}"${extra}/>`;
+const rect = (x, y, w, h, fill, extra = '') => `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${fill}"${extra}/>`;
+const oct = (x, y, r, fill) => { const k = r * .42; return poly([[x - k, y - r], [x + k, y - r], [x + r, y - k], [x + r, y + k], [x + k, y + r], [x - k, y + r], [x - r, y + k], [x - r, y - k]], fill) };
+const strip = (vh, body, cls) => { const svg = `<svg viewBox="0 0 1600 ${vh}" preserveAspectRatio="xMidYMax meet">${body}</svg>`;
+  scene.insertAdjacentHTML('beforeend', `<div class="layer ${cls}">${svg}${svg}</div>`) };
+
+/* clouds: soft flat stacks */
+let cl = '';
+for (const [x, y, s] of [[120, 90, 1], [520, 40, .7], [860, 120, 1.25], [1240, 60, .85], [1480, 140, .6]]) {
+  const g = (dx, dy, w, h) => `<rect x="${x + dx * s}" y="${y + dy * s}" width="${w * s}" height="${h * s}" rx="${h * s / 2}" fill="#fffcf3"/>`;
+  cl += `<g opacity=".9">${g(0, 30, 220, 44)}${g(40, 6, 110, 50)}${g(110, 16, 90, 40)}</g>`;
+}
+strip(260, cl, 'clouds');
+
+/* far: a hazy skyline with one landmark per city and a pin naming it */
+const HAZE = '#c3d7d3', LAND = '#a9c3bf', GY = 260;
+let far = '';
+for (let x = 0; x < 1600;) { const w = Math.min(range(40, 90), 1600 - x), h = range(26, 86); far += rect(x, GY - h, w + .5, h, HAZE); x += w }
+const pin = (x, y, name) => `<g transform="translate(${x} ${y})"><path d="M0 0V18" stroke="#8fa9a5" stroke-width="2"/>` +
+  `<rect x="${-name.length * 4.2 - 14}" y="-26" width="${name.length * 8.4 + 28}" height="26" rx="13" fill="#fffcf3"/>` +
+  `<circle cx="${-name.length * 4.2 - 3}" cy="-13" r="4" fill="#c8513a"/>` +
+  `<text x="${5}" y="-8.5" text-anchor="middle" font-family="Suisse Intl, Inter, Arial, sans-serif" font-size="13" font-weight="600" fill="#263c35">${name}</text></g>`;
+// Kyoto: a five-tier pagoda
+{ const cx = 190; let y = GY; far += rect(cx - 34, y - 12, 68, 12, LAND); y -= 12;
+  for (let i = 0; i < 5; i++) { const w = 74 - i * 9; far += rect(cx - w * .32, y - 16, w * .64, 16, LAND); y -= 16;
+    far += poly([[cx - w / 2 - 12, y + 2], [cx - w / 2 + 4, y - 9], [cx + w / 2 - 4, y - 9], [cx + w / 2 + 12, y + 2]], LAND); y -= 9 }
+  far += rect(cx - 1.5, y - 34, 3, 34, LAND); far += pin(cx, y - 70, 'Kyoto') }
+// London (Western University): a gothic stone tower with pinnacles and a clock
+{ const cx = 590; far += rect(cx - 70, GY - 70, 140, 70, LAND) + poly([[cx - 70, GY - 70], [cx - 50, GY - 88], [cx + 50, GY - 88], [cx + 70, GY - 70]], LAND);
+  far += rect(cx - 22, GY - 170, 44, 170, LAND);
+  for (const dx of [-22, 14]) far += poly([[cx + dx, GY - 170], [cx + dx + 4, GY - 192], [cx + dx + 8, GY - 170]], LAND);
+  far += poly([[cx - 12, GY - 170], [cx, GY - 186], [cx + 12, GY - 170]], LAND);
+  far += `<circle cx="${cx}" cy="${GY - 140}" r="9" fill="${HAZE}"/>`; far += pin(cx, GY - 226, 'London') }
+// Toronto: the CN Tower and City Hall's two curved towers
+{ const cx = 990; far += poly([[cx - 9, GY], [cx - 3, GY - 170], [cx + 3, GY - 170], [cx + 9, GY]], LAND);
+  far += poly([[cx - 20, GY - 158], [cx + 20, GY - 158], [cx + 14, GY - 146], [cx - 14, GY - 146]], LAND) + rect(cx - 5, GY - 186, 10, 16, LAND) + rect(cx - 1, GY - 222, 2, 36, LAND);
+  const hx = 1080; far += `<path d="M${hx - 50} ${GY}V${GY - 74}Q${hx - 30} ${GY - 82} ${hx - 14} ${GY - 70}V${GY}Z" fill="${LAND}"/>`;
+  far += `<path d="M${hx + 50} ${GY}V${GY - 96}Q${hx + 30} ${GY - 104} ${hx + 14} ${GY - 90}V${GY}Z" fill="${LAND}"/>`;
+  far += `<path d="M${hx - 18} ${GY - 30}Q${hx} ${GY - 50} ${hx + 18} ${GY - 30}Z" fill="${LAND}"/>` + rect(hx - 60, GY - 26, 120, 26, LAND);
+  far += pin(cx, GY - 250, 'Toronto') }
+// Amsterdam: a row of narrow canal houses with step and bell gables
+{ let x = 1300; for (const [w, h, g] of [[30, 92, 's'], [26, 104, 'b'], [32, 86, 't'], [26, 110, 's'], [30, 96, 'b']]) {
+    far += rect(x, GY - h, w, h, LAND);
+    if (g === 's') far += rect(x + 4, GY - h - 8, w - 8, 8, LAND) + rect(x + 9, GY - h - 16, w - 18, 8, LAND);
+    else if (g === 'b') far += `<path d="M${x + 2} ${GY - h}Q${x + 4} ${GY - h - 12} ${x + w / 2} ${GY - h - 20}Q${x + w - 4} ${GY - h - 12} ${x + w - 2} ${GY - h}Z" fill="${LAND}"/>`;
+    else far += poly([[x, GY - h], [x + w / 2, GY - h - 18], [x + w, GY - h]], LAND);
+    x += w + 1 }
+  far += pin(1370, GY - 160, 'Amsterdam') }
+strip(GY, far, 'far');
+
+/* mid: a street of shops and houses, light from the upper right like the game's map, with autumn trees between */
+const WALLS = ['#efdfbd', '#e6c99f', '#dcb98f', '#d3dcc6', '#ecc8b0', '#f3e7cb', '#cfdcd8'], ROOF = ['#9b5a43', '#5e7b6e', '#7a5a49', '#b06a4a'];
+const LEAF = ['#e0702c', '#d9a23a', '#c8513a', '#e8b04a'], MY = 200;
+let mid = '';
+for (let x = 0; x < 1600;) {
+  if (rnd() < .28 && x < 1540) { const t = x + 22, h = range(38, 56), c = pick(LEAF);   // a tree
+    mid += rect(t - 2.5, MY - 22, 5, 22, '#7a5a3c') + oct(t, MY - h, range(15, 20), c) + oct(t + 4, MY - h - 4, 8, mix(c, .25)); x += 44; continue }
+  let w = Math.round(range(72, 150)); if (1600 - x - w < 72) w = 1600 - x;
+  const h = Math.round(range(62, 128)), wall = pick(WALLS), top = MY - h;
+  mid += rect(x, top, w, h, wall) + rect(x, top, Math.min(12, w * .14), h, mix(wall, -.1));
+  const r = rnd();
+  if (r < .4) mid += poly([[x - 5, top], [x + w / 2, top - Math.min(36, w * .32)], [x + w + 5, top]], pick(ROOF));
+  else if (r < .75) mid += rect(x - 4, top - 7, w + 8, 7, mix(wall, -.22));
+  else mid += rect(x + w * .2, top - 14, w * .6, 14, mix(wall, -.06)) + rect(x + w * .2 - 3, top - 18, w * .6 + 6, 5, mix(wall, -.22));
+  const cols = Math.max(1, Math.floor((w - 18) / 24)), rows = Math.max(1, Math.floor((h - 44) / 30)), gx = (w - cols * 12) / (cols + 1);
+  for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++)
+    mid += rect(x + gx + j * (12 + gx), top + 14 + i * 30, 12, 16, rnd() < .18 ? '#f7dc9a' : '#a8bfbb', ' rx="1.5"');
+  if (rnd() < .55) { const aw = Math.min(w - 16, 64), ax = x + (w - aw) / 2, ac = pick(['#c8513a', '#36594b', '#4f6d8a', '#c9932c']);   // a shop awning
+    mid += poly([[ax, MY - 36], [ax + aw, MY - 36], [ax + aw + 4, MY - 26], [ax - 4, MY - 26]], ac) + rect(ax + 4, MY - 26, aw - 8, 26, '#5d6f6a') }
+  else mid += rect(x + w / 2 - 8, MY - 24, 16, 24, mix(wall, -.3));
+  x += w;
+}
+strip(MY, mid, 'mid');
+
+/* street: sidewalk, curb, road with dashes, and paper lanterns on posts */
+const RY = 150;
+let st = rect(0, RY, 1600, 24, '#ebe1cb') + rect(0, RY + 22, 1600, 5, '#cdbfa3') + rect(0, RY + 27, 1600, 123, '#646e68') + rect(0, RY + 27, 1600, 4, '#58615c');
+for (let i = 0; i < 20; i++) st += rect(i * 80 + 18, 238, 44, 4, '#f3e6cc', ' rx="2" opacity=".85"');
+for (let i = 0; i < 5; i++) { const x = i * 320 + 150;
+  st += rect(x - 2, 46, 4, RY + 10 - 46, '#3d4a46') + rect(x - 2, 46, 22, 3, '#3d4a46') + rect(x + 17, 49, 1.5, 6, '#3d4a46');
+  st += `<circle class="glow" cx="${x + 18}" cy="70" r="20" fill="#f9cf7a"/>`;
+  st += `<rect x="${x + 9}" y="55" width="18" height="26" rx="7" fill="#c8513a"/>` + rect(x + 9, 64, 18, 3, '#f3e6cc', ' opacity=".7"') + rect(x + 12, 53, 12, 3, '#3d4a46') + rect(x + 12, 80, 12, 3, '#3d4a46');
+  st += oct(x + 90, RY - 6, 10, '#7f9d7f') + oct(x + 104, RY - 4, 8, '#6d8f70') }
+strip(300, st, 'street');
+
+/* the taxi: facing right, the fox driving, the bear and owl in the back, the raccoon out of the sunroof */
+const head = (kind, x, y, size, cls, delay = 0) => C ? `<g transform="translate(${x} ${y})"><g class="${cls}" style="animation-delay:${delay}s">${C.svg(kind, { size, shadow: false, title: false })}</g></g>` : '';
+const GOLD = '#e3a83b', GOLD_D = '#c98f2a', WIN = '#dcebe8';
+const taxi = `<svg viewBox="0 0 340 170">
+  <defs><clipPath id="hw-rear"><path d="M100 84L130 42H182V84Z"/></clipPath><clipPath id="hw-front"><path d="M190 42H240L272 84H190Z"/></clipPath></defs>
+  <ellipse cx="172" cy="158" rx="150" ry="8" fill="#263c35" opacity=".2"/>
+  <g><circle class="puff" cx="6" cy="128" r="7" fill="#fffcf3"/><circle class="puff" cx="6" cy="128" r="7" fill="#fffcf3"/><circle class="puff" cx="6" cy="128" r="7" fill="#fffcf3"/></g>
+  <g class="rig">
+    ${head('raccoon', 134, -8, 50, 'lookout')}
+    <path d="M14 128V100L28 88L92 82L126 34H246L284 82L318 88L330 100V128Z" fill="${GOLD}" stroke="${GOLD}" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M14 108H330V128H14Z" fill="${GOLD_D}" stroke="${GOLD_D}" stroke-width="6" stroke-linejoin="round"/>
+    <rect x="18" y="98" width="308" height="7" fill="#c8513a"/>
+    <path d="M100 84L130 42H182V84Z" fill="${WIN}"/><path d="M190 42H240L272 84H190Z" fill="${WIN}"/>
+    <g clip-path="url(#hw-rear)">${head('bear', 116, 50, 40, 'nod', -.45)}${head('owl', 146, 50, 40, 'nod', -.9)}</g>
+    <g clip-path="url(#hw-front)">${head('fox', 204, 48, 40, 'nod')}</g>
+    <path d="M120 84V42M186 84V40" stroke="${GOLD_D}" stroke-width="4"/>
+    <path d="M186 88V124" stroke="${GOLD_D}" stroke-width="1.5" opacity=".7"/><rect x="166" y="90" width="12" height="3" rx="1.5" fill="${GOLD_D}"/><rect x="232" y="90" width="12" height="3" rx="1.5" fill="${GOLD_D}"/>
+    <path d="M200 34L206 20H248L254 34Z" fill="#fffcf3"/><text x="227" y="31" text-anchor="middle" font-family="Zimula InkSpot Display, Suisse Intl, Arial" font-size="11" fill="#263c35">tandem</text>
+    <rect x="316" y="92" width="14" height="8" rx="2" fill="#fbe4b6"/><rect x="12" y="92" width="8" height="10" rx="2" fill="#c8513a"/>
+    <rect x="6" y="122" width="40" height="10" rx="4" fill="#3d4a46"/><rect x="298" y="122" width="40" height="10" rx="4" fill="#3d4a46"/>
+  </g>
+  ${[86, 262].map(x => `<g transform="translate(${x} 132)"><circle r="23" fill="#2f3b37"/><circle r="11" fill="#e9dfca"/>
+    <g class="spin"><circle r="11" fill="none"/><path d="M-9 0H9M0 -9V9" stroke="#8a948d" stroke-width="2.5" stroke-linecap="round"/></g><circle r="3" fill="#3d4a46"/></g>`).join('')}
+</svg>`;
+scene.insertAdjacentHTML('beforeend', `<div class="taxi">${taxi}</div>`);
+
+/* the faces on the eyebrow and the two choices */
+if (C) {
+  const KINDS = ['fox', 'bear', 'owl', 'raccoon'];
+  document.getElementById('faces').innerHTML = KINDS.map(k => C.svg(k, { size: 26, shadow: false, title: false })).join('');
+  document.getElementById('crewPic').innerHTML = KINDS.map(k => C.svg(k, { size: 23, shadow: false, title: false })).join('');
+  document.getElementById('soloPic').innerHTML = C.svg('fox', { size: 42, shadow: false, title: false });
+}
+})();
+</script>
 <script>
 (() => {
 const $ = id => document.getElementById(id);

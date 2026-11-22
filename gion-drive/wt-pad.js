@@ -81,6 +81,9 @@ const KIND = {
   stall: ['Stall', 'the engine cuts out for a second and a half'],
   decoy: ['Decoy', 'a fake marker appears on the map, as if the navigator dropped it'],
   jam: ['Jam', 'the door sticks the next time it opens'],
+  fog: ['Fog bank', 'a thick bank of fog rolls over the windshield'],
+  flurry: ['Flurry', 'a gust slaps three stickers onto the windshield at once'],
+  seize: ['Seize', 'the wipers stick and won\'t move for four seconds'],
 };
 let role = null, status = {}, voted = false, revealSent = false, sab = { left: 0, wait: 0, at: 0 };
 const store = g => { try { return JSON.parse(localStorage.getItem('wt:' + g) || 'null') } catch { return null } };

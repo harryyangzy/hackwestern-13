@@ -64,7 +64,7 @@ const inCore = (x, y) => ((x - .5) / .17) ** 2 + ((y - .56) / .30) ** 2 < 1;   /
 const underHud = (x, y) => y < .2 || (x > .8 && y < .34) || (x < .22 && y > .8) || (x > .76 && y > .82);   // stats, minimap, crew strip, shooter bar
 
 function reset() {
-  targets = []; stuck = []; parts = []; fx = []; wipe = null; aim = null; aimShown = null; level = 0; spawnT = 1.6; combo = 0; recoil = 0;
+  targets = []; stuck = []; parts = []; fx = []; wipe = null; seizeUntil = 0; aim = null; aimShown = null; level = 0; spawnT = 1.6; combo = 0; recoil = 0;
   lastFares = 0; stats = resetStats(); $('gt-shootbar').hidden = true; g.clearRect(0, 0, cv.width, cv.height);
 }
 GT.on('start', reset);
@@ -155,10 +155,28 @@ function arrive(o) {
   stuck.push(o); stats.stuck++; combo = 0; sound.splat();
   toPhones({ t: 'sx', k: 'stick', kind: o.kind });
 }
+// Wrong Turn: a gust slaps a few visitors straight onto the glass, past the shooter (looks like a bad wave)
+function flurry(n = 3) {
+  if (!on) return;
+  const L = LV[level], colors = PALETTE[pal];
+  let kind = null;
+  for (let i = 0; i < n && stuck.length < L.cap + 2; i++) {
+    kind = L.kinds[Math.floor(Math.random() * L.kinds.length)];
+    const [x, y] = pickFinal();
+    stuck.push({ id: nextId++, kind, move: 'drift', t: 0, T: 1, fx: x, fy: y, x, y, s: 1, ph: Math.random() * 6.28, flash: 0,
+      color: colors[Math.floor(Math.random() * colors.length)], hp: SPR[kind].hp || 1, stuckAt: 0, slide: 0 });
+    stats.stuck++;
+  }
+  if (!kind) return;
+  combo = 0; sound.splat(); toPhones({ t: 'sx', k: 'stick', kind });
+}
 const PIVOT = () => ({ x: .5 * W, y: H * 1.12 });
 const WIPE_S = .55, SWEEP = 72 * Math.PI / 180;
+let seizeUntil = 0, seizeToldAt = 0;   // Wrong Turn: the wiper motor seizes for a few seconds
 function startWipe(dir) {
   if (wipe) return;   // one sweep at a time
+  const now = performance.now();
+  if (now < seizeUntil) { if (now - seizeToldAt > 1500) { seizeToldAt = now; GT.toast('The wipers are stuck!') } toPhones({ t: 'sx', k: 'seized' }); return }
   wipe = { t: 0, dir: dir < 0 ? -1 : 1, done: new Set() };
   sound.swish(); toPhones({ t: 'sx', k: 'wipe' });
 }
@@ -330,6 +348,7 @@ requestAnimationFrame(frame);
 cv.hidden = true;
 window.GionShoot = {
   get targets() { return targets }, get stuck() { return stuck }, get stats() { return stats }, get level() { return level + 1 }, get on() { return on },
-  get palette() { return pal }, fire: (x, y) => fire(x, y, aimColor), wipe: d => startWipe(d || 1), SPR, KINDS, PALETTE,
+  get palette() { return pal }, fire: (x, y) => fire(x, y, aimColor), wipe: d => startWipe(d || 1),
+  flurry, seize: ms => { seizeUntil = performance.now() + (ms || 4000) }, SPR, KINDS, PALETTE,
 };
 })();

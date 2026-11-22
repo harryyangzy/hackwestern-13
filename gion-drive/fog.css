@@ -1,0 +1,6 @@
+/* Gion Taxi crew play: the fog layer and its small HUD line (fog.js). Same cards, inks and type as drive.css. */
+#gt-fog{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#gt-fog[hidden],#gt-fogbar[hidden]{display:none}
+#gt-fogbar{position:absolute;right:14px;bottom:58px;display:flex;gap:10px;align-items:baseline;padding:5px 12px;font:13px var(--sans);color:var(--muted)}
+#gt-fogbar b{font:600 15px var(--serif);color:var(--ink)}
+#gt-fogbar .full{color:var(--rust);font-weight:600}

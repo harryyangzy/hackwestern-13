@@ -204,6 +204,45 @@ body { background: var(--paper); }
 #gt-seats li.empty { background: var(--color-background-primary-hover); }
 #gt-seats .st { font-style: normal; }
 #gt-qr { background: #fff; border-color: var(--rule); border-radius: 14px; }
+
+/* The taxi silhouette frames the QR without covering its quiet zone. */
+#gt-qr:has(> svg) {
+  box-sizing: content-box;
+  position: relative;
+  margin: 16px 0 9px;
+  padding: 8px 8px 16px;
+  overflow: visible;
+  border: 3px solid #fff;
+  border-radius: 30px 30px 24px 24px;
+  background: #f9ca65;
+  color: var(--ink);
+  box-shadow: 0 3px 0 #d3a34a, 0 7px 13px #263c3524;
+}
+#gt-qr:has(> svg)::before {
+  content: "";
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 66px;
+  height: 13px;
+  border: 3px solid #fff;
+  border-bottom: 0;
+  border-radius: 14px 14px 0 0;
+  background: #f9ca65;
+}
+#gt-qr:has(> svg)::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 8px;
+  background: conic-gradient(currentColor 25%, transparent 0 50%, currentColor 0 75%, transparent 0)
+              0 0 / 8px 8px;
+}
+#gt-qr > svg { border-radius: 18px; }
 #gt-room, .gt-stats b, #wt-goal b, .gt-resrow b, .pad-ui .stats b {
   font-variant-numeric: tabular-nums;
   letter-spacing: -.025em;

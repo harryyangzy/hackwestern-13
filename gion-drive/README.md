@@ -86,8 +86,9 @@ A deception mode for 3–4 phones. Tick **Wrong Turn** in the crew lobby before 
 2. **Wagers.** Everyone deposits the same stake (0.01 devnet SOL by default) and picks a wager of 10–100 % of it. The phone
    commits a salted hash; the amount and salt stay on the phone until after the trip.
 3. **The trip.** The crew must earn ¥3,000. The imposter plays their normal role and has 3 press-and-hold sabotages,
-   12 s apart, that look like bad luck: *drift* (wheel pulls; steering or shooter), *stall* (engine cuts out; pedals),
-   *jam* (door sticks; doors or wipers).
+   12 s apart, that look like bad luck, one per role: *drift* (wheel pulls; steering), *stall* (engine cuts out; pedals),
+   *jam* (door sticks; doors), *flurry* (three stickers slap onto the glass at once; shooter), *seize* (wipers won't
+   move for 4 s; wipers), *fog bank* (a thick bank rolls over the glass; fog).
    Limits keep it to timing, not brute force: brakes fade when held away from a lantern, and doors open on their own.
 4. **Vote.** After the shift, everyone votes on their phone (25 s). The crew wins if the trip made ¥3,000 **or** a strict
    majority named the imposter. Otherwise the imposter wins.

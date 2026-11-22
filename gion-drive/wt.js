@@ -97,6 +97,9 @@ function glitch(kind) {
   if (kind === 'drift') { GT.mods.turnBias = (Math.random() < .5 ? -1 : 1) * .45; setTimeout(() => GT.mods.turnBias = 0, 900) }
   else if (kind === 'stall') GT.mods.gasCutUntil = now + 1500;
   else if (kind === 'jam') GT.mods.doorJamUntil = now + 3000;
+  else if (kind === 'fog') window.GionFog?.bank(true);   // a thick bank rolls over the glass
+  else if (kind === 'flurry') window.GionShoot?.flurry(3);   // a gust of stickers lands on the glass at once
+  else if (kind === 'seize') window.GionShoot?.seize(4000);   // the wipers won't move for 4 s
   else if (kind === 'decoy') {   // a marker "from the navigator" somewhere plausible and wrong
     const st = GT.state(); if (!st) return;
     const pts = GT.scene.roads.flat(2).filter(p => { const d = Math.hypot(p[0] - st.x, p[1] - st.y); return d > 25 && d < 80 && Math.hypot(p[0] - st.tx, p[1] - st.ty) > 30 });

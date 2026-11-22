@@ -135,6 +135,7 @@ window.GionPadExt = m => {
   if (m.t !== 'sx') return;
   // hits, misses and levels show on the laptop: the phones only feel them
   if (m.k === 'stick' && has('wipe')) { P.buzz([30, 40, 30]); glass.classList.remove('shot'); void glass.offsetWidth; glass.classList.add('shot') }
+  if (m.k === 'seized' && has('wipe')) P.buzz([80, 60, 80]);   // Wrong Turn: the wiper motor is stuck
 };
 
 /* ---------- drawing the two small panels ---------- */
