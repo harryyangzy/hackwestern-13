@@ -2750,12 +2750,15 @@ body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weig
 .wt-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--rule);transition:background .3s,border-color .3s}
 .wt-dots i.on{background:var(--green);border-color:var(--green)}
 .wt-sub{font:italic 14px var(--serif)}
-#wt-goal{position:absolute;left:14px;top:14px;padding:8px 14px;display:flex;flex-direction:column;z-index:4;max-width:190px}
-#wt-goal small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-#wt-goal b{font:600 22px var(--serif);font-variant-numeric:tabular-nums}
-#wt-goal b.ok{color:var(--green)}
-#wt-goal span{font-size:12px;color:var(--muted)}
-#wt-goal em{margin-top:6px;padding-top:6px;border-top:1px solid var(--rule);font:italic 13px var(--serif);color:var(--rust)}
+#wt-goal{position:absolute;left:14px;top:14px;z-index:4;display:flex;flex-direction:column;gap:6px;padding:14px 16px 13px;min-width:150px;max-width:220px}
+#wt-goal small{display:flex;align-items:center;gap:6px;font:700 14px var(--sans);color:#c8402f}
+#wt-goal small svg{width:11px;height:15px}
+#wt-goal b{display:flex;gap:3px;align-items:flex-end;font:700 30px/1 var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
+#wt-goal b i{position:relative;font-style:normal;min-width:26px;padding:7px 3px 6px;text-align:center;background:linear-gradient(#efe4cf 0 calc(50% - 1px),#fffcf3 0 calc(50% + 1px),#e9dcc3 0);border-radius:7px;box-shadow:0 2px 0 #dcc6a2}
+#wt-goal b u{text-decoration:none;font-size:18px;padding-bottom:5px;color:var(--muted)}
+#wt-goal b.ok i{background:linear-gradient(#dcebd5 0 calc(50% - 1px),#fffcf3 0 calc(50% + 1px),#cfe2c6 0);box-shadow:0 2px 0 #a9c79e;color:#24644e}
+#wt-goal span{font:500 13px var(--sans);color:var(--muted)}
+#wt-goal em{font:600 13px var(--sans);font-style:normal;color:#c8402f}
 .wt-tripline{font:600 17px var(--serif)!important}
 .wt-tripline.ok{color:var(--green)!important}.wt-tripline.bad{color:var(--rust)!important}
 .wt-seats{list-style:none;padding:0;margin:12px 0;display:flex;justify-content:center;flex-wrap:wrap;gap:8px 16px}
@@ -3049,7 +3052,8 @@ body { background: var(--paper); }
 .gt-stats > div:nth-child(2) { background: var(--ice); }
 .gt-task, #gt-call { background: var(--ice); font-style: normal; }
 #gt-map { border-radius: 16px; }
-#wt-goal, .wt-switch.on { background: var(--rose); }
+#wt-goal { background: #fffcf3; border: 1.5px solid #e3d6bc; border-radius: 22px; box-shadow: 0 5px 0 #dcc6a2; }
+.wt-switch.on { background: var(--rose); }
 .wt-switch { border-color: var(--rule); }
 .wt-switch.on { border-color: #dcafbc; }
 .wt-switch em, .wt-sub, .wt-subhead, .pad-ui #task { font-style: normal; }
@@ -4945,6 +4949,8 @@ const GOAL = 3000;
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const sol = l => (l / 1e9).toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
 const yen = v => GT.money ? GT.money(v) : '¥' + Math.round(v).toLocaleString();   // the city's currency
+const flaps = t => [...t].map(c => /[\d]/.test(c) ? `<i>${c}</i>` : `<u>${c}</u>`).join('');   // split-flap digits
+const LANTERN = '<svg viewBox="0 0 12 16" aria-hidden="true"><rect x="4" y="0" width="4" height="2" rx="1" fill="#263c35"/><rect x="1" y="2" width="10" height="12" rx="4" fill="#f2c94c" stroke="#263c35" stroke-width="1.4"/><path d="M1.7 8h8.6" stroke="#d9a72e" stroke-width="1.4"/><rect x="4" y="14" width="4" height="2" rx="1" fill="#263c35"/></svg>';
 
 let on = true, avail = null, phase = 'off', withBots = false;   // off | setup | driving | vote | final
 let goal = GOAL, lastStatus = null;
@@ -5034,7 +5040,7 @@ setInterval(() => {
   // the door opens by itself after a while: holding it shut only buys a few seconds
   atDoorT = st.atDoor ? atDoorT + dt : 0;
   if (atDoorT > 4.5) { atDoorT = 2.5; GT.openDoor() }
-  goalEl.innerHTML = `<small>Trip goal</small><b class="${st.yen >= goal ? 'ok' : ''}">${yen(st.yen)}</b><span>of ${yen(goal)}</span><em>Someone in this taxi is lying.</em>`;
+  goalEl.innerHTML = `<small>${LANTERN}Fare</small><b class="${st.yen >= goal ? 'ok' : ''}">${flaps(yen(st.yen))}</b><span>of ${yen(goal)}</span><em>Someone is lying.</em>`;
 }, 100);
 
 // a glitch looks like bad luck or bad driving; the server never says whose phone sent it
