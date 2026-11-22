@@ -20,7 +20,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 
 | Project | What it is | Where | On GitHub? |
 |---|---|---|---|
-| Gion Taxi | Driving game on an isometric map of Gion, Kyoto; solo or a crew of 1–4 phones sharing one taxi | `gion-drive/` | Yes, in `main` (solo PR #1, crew play PR #6) |
+| Gion Taxi | Driving game on isometric maps of Gion (Kyoto), Western's campus (London ON), Nathan Phillips Sq (Toronto) and the Amsterdam canal ring; solo or a crew of 1–4 phones sharing one taxi (wheel, pedals, shooter, doors & wipers) | `gion-drive/` | Yes, in `main` (solo PR #1, crew play PR #6, shooter PR #8); cities, kart camera and handling in PR #9 |
 | GripSense (iOS) | Estimates grip force from how much the hand damps the phone's vibration | `GripSense/` | Yes, in `main` (build 2, via PR #4) |
 | Grip Sense Web | Browser version of GripSense for phones (vibrates on Android only) | `web/index.html` | Yes, in `main` (via PR #4) |
 | Laptop Shooter | Phone is the gun, laptop screen is the target | `shooter/` | Yes, in `main` (PR #4, with two-corner calibration) |
@@ -44,19 +44,18 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   `~/Downloads/pocket-city`, or pass `--skill PATH`).
 - **Tested:** in headless Chrome: driving, steering, pickup, drop-off, payment, season switching, ending a shift;
   no page errors. **Not tested on a real phone yet.**
-- **Status:** solo game merged via PR #1, crew play via PR #6; both in `main`.
-- **Crew play:** `node gion-drive/server.js` (Node 18+, no install), open
-  http://localhost:8090, press *Play with phones*. Phones scan the QR code (plain HTTP, no certificate) and get roles
-  by crew size: wheel, pedals, navigator (map with route, turn calls, pings shown on the laptop), and doors & camera
-  (passengers wait at the lantern until the door is opened). The lobby has ready-up, a 3-2-1 start, a results card,
-  and replay without reconnecting. The laptop runs everything; the keyboard still works. Visible "Pocket City"
-  branding was replaced by "Gion Taxi" (MIT credit kept in the field notes). `build.py` now also rebuilds without
-  the Pocket City skill (the skill is missing from `~/Downloads/pocket-city` on the Mac this was built on). Details:
-  `gion-drive/HANDOFF.md` and `gion-drive/README.md`.
-- **Crew play tested:** automatically only (headless Chrome with four emulated phones: 74 end-to-end checks, plus
-  30 server protocol checks; the lobby QR decodes to the right LAN URL; keyboard physics bit-identical to before).
-  **Not tried on real phones or campus Wi-Fi yet.** Same Wi-Fi caveat as Laptop Shooter: use a phone's hotspot if
-  phones can't reach the laptop.
+- **Status:** solo game PR #1, crew play PR #6, shooter and wipers PR #8 (all in `main`); cities, kart camera,
+  retuned handling, D/R gear, phone full screen and Gion Bowling in PR #9 (`gion-multiplayer`).
+- **Cities:** `gion-taxi.html` (Gion), `taxi-london.html` (Western main campus: University College to Middlesex College,
+  paths drivable), `taxi-toronto.html` (Nathan Phillips Square, City Hall), `taxi-amsterdam.html` (Reguliersgracht ×
+  Keizersgracht). `python3 gion-drive/build.py` builds all four (`--city` for one); the server serves `/london` etc.
+- **Crew play:** `node gion-drive/server.js` (Node 18+, no install; `--tunnel` for campus Wi-Fi), open
+  http://localhost:8090, press *Play with phones*, phones scan the QR code. Roles by crew size: wheel, pedals (D/R gear),
+  shooter (tilt or drag to pop what flies at the taxi; tilt needs the HTTPS port 8490), doors & camera, wipers. Lobby
+  with ready-up, Taxi shift / Bowling switch, 3-2-1 start, results, replay without reconnecting; the room survives the
+  host switching city. Details: `gion-drive/HANDOFF.md` and `gion-drive/README.md`.
+- **Tested:** automatically only (headless Chrome with emulated phones, plus server protocol checks).
+  **Not tried on real phones or campus Wi-Fi yet.**
 
 ### GripSense iOS app (`GripSense/`)
 - **Idea:** the phone vibrates; a tighter grip damps the vibration, so the accelerometer/gyro energy drops.

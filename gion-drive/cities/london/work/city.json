@@ -1,0 +1,376 @@
+{
+ "name": "London",
+ "title": "Western University, London, Ontario",
+ "region": "Ontario",
+ "place": "University College × Middlesex College",
+ "timezone": "America/Toronto",
+ "level": 3.6,
+ "styles": {
+  "default": {
+   "facade": "civic",
+   "wall": [
+    "#d8ccb0",
+    "#d1c4a7",
+    "#ddd2b8"
+   ],
+   "trim": "#efe7d3",
+   "roof": "flat",
+   "flatRoof": "#8d8f88",
+   "levels": 3,
+   "floor": 3.8,
+   "bay": 3.2,
+   "shop": "none",
+   "parapet": 0.9
+  },
+  "rules": [
+   {
+    "if": {
+     "minLevels": 5
+    },
+    "set": {
+     "facade": "office",
+     "wall": [
+      "#cfc9bb",
+      "#d9d3c6"
+     ],
+     "parapet": 0.6
+    }
+   }
+  ]
+ },
+ "buildings": {},
+ "palette": {
+  "ground": "#e8e1cd",
+  "road": "#a9a7a6",
+  "pavement": "#ddd6c6",
+  "walk": "#d9d1bf",
+  "grass": "#9fcf6e",
+  "slab": "#d4c8ad",
+  "marking": "#f4efe2",
+  "kerb": "#d7d1c3",
+  "paving": "#c4bba9",
+  "water": "#8fb7b0"
+ },
+ "paving": {
+  "style": "tiles",
+  "size": 0.9
+ },
+ "lamp": {
+  "colour": "#3f4548",
+  "height": 5.0,
+  "head": "#f3ead0"
+ },
+ "trees": {
+  "default": {
+   "style": 3,
+   "colours": [
+    "#7fb35c",
+    "#93c066"
+   ],
+   "height": 12,
+   "autumn": "#e08a3c"
+  },
+  "rules": [
+   {
+    "match": "Garden tree|Park tree|Woodland",
+    "vary": 0.35,
+    "mix": [
+     {
+      "style": 3,
+      "colours": [
+       "#7fb35c",
+       "#8fbd62"
+      ],
+      "height": 13,
+      "autumn": "#e0773a",
+      "share": 3
+     },
+     {
+      "style": 1,
+      "colours": [
+       "#86b860"
+      ],
+      "height": 15,
+      "autumn": "#e9b33f",
+      "share": 2
+     },
+     {
+      "style": 5,
+      "colours": [
+       "#5e8f57"
+      ],
+      "height": 12,
+      "evergreen": true,
+      "share": 1
+     }
+    ]
+   },
+   {
+    "match": "Ginkgo",
+    "style": 1,
+    "colours": [
+     "#9fcb5e"
+    ],
+    "height": 14,
+    "autumn": "#f2c53d"
+   }
+  ],
+  "extra": []
+ },
+ "people": {
+  "clothes": [
+   "#3d4a5e",
+   "#e7e2d6",
+   "#6b7f94",
+   "#a64a3c",
+   "#4f6b4f",
+   "#d8b56a",
+   "#5c4b78",
+   "#2f3238"
+  ],
+  "umbrellas": [
+   "#2f3238",
+   "#3d4a5e",
+   "#a64a3c",
+   "#e7e2d6"
+  ]
+ },
+ "vehicles": {
+  "kinds": [
+   "hatch",
+   "sedan",
+   "mpv",
+   "sedan"
+  ],
+  "colours": [
+   "#f2f2ee",
+   "#2e3139",
+   "#99a3ae",
+   "#7a2f3a",
+   "#3d4f6b"
+  ],
+  "plate": "#f2f2ee"
+ },
+ "seasonLabel": "Season",
+ "seasons": [
+  {
+   "id": "spring",
+   "label": "Spring",
+   "leaves": "spring",
+   "crowd": 1.1,
+   "note": {
+    "text": "Western's Sherwood Fox Arboretum takes in every planted tree and shrub on the campus lawns.",
+    "source": "Western University Biology",
+    "url": "https://uwo.ca/biology/research/biology-facilities/arboretum.html"
+   }
+  },
+  {
+   "id": "summer",
+   "label": "Summer",
+   "leaves": "summer",
+   "crowd": 0.7,
+   "note": {
+    "text": "University College was finished in summer 1924, in time for summer school classes.",
+    "source": "Ivey Business School history",
+    "url": "https://www.ivey.uwo.ca/about/history/virtual-history/archives/campus-foundations/1924-1991/1924-university-college/"
+   }
+  },
+  {
+   "id": "autumn",
+   "label": "Autumn",
+   "leaves": "autumn",
+   "crowd": 1.3,
+   "note": {
+    "text": "Western's oldest and largest ginkgo, planted in 1924, stands on the southeast lawn of University College.",
+    "source": "Western Sustainability",
+    "url": "https://sustainability.uwo.ca/campus/green-space/explore-the-core.html"
+   }
+  },
+  {
+   "id": "winter",
+   "label": "Winter",
+   "leaves": "bare",
+   "coats": true,
+   "crowd": 0.9,
+   "note": {
+    "text": "London's snowy season runs from about early November to mid-April.",
+    "source": "WeatherSpark (London airport)",
+    "url": "https://weatherspark.com/y/146857/Average-Weather-at-London-International-Airport-Ontario-Canada-Year-Round"
+   }
+  },
+  {
+   "id": "snow",
+   "label": "Snow",
+   "sub": "winter",
+   "leaves": "bare",
+   "snow": true,
+   "wx": "snow",
+   "coats": true,
+   "crowd": 0.7,
+   "note": {
+    "text": "January is London's snowiest month.",
+    "source": "WeatherSpark (London airport)",
+    "url": "https://weatherspark.com/y/146857/Average-Weather-at-London-International-Airport-Ontario-Canada-Year-Round"
+   }
+  }
+ ],
+ "occasionLabel": "Special scenes",
+ "occasions": [
+  {
+   "id": "homecoming",
+   "label": "Homecoming",
+   "leaves": "summer",
+   "crowd": 2.0,
+   "icon": "autumn",
+   "dress": {
+    "colours": [
+     "#4f2683",
+     "#4f2683",
+     "#807f83",
+     "#f4f2ef"
+    ],
+    "share": 0.65
+   },
+   "decor": {
+    "flags": [
+     "#4f2683",
+     "#f4f2ef"
+    ]
+   },
+   "note": {
+    "text": "Western's Homecoming is back in its traditional late-September weekend.",
+    "source": "Western News",
+    "url": "https://news.westernu.ca/2025/09/homecoming-2025-photos/"
+   }
+  }
+ ],
+ "months": [
+  "winter",
+  "winter",
+  "winter",
+  "spring",
+  "spring",
+  "summer",
+  "summer",
+  "summer",
+  "autumn",
+  "autumn",
+  "autumn",
+  "winter"
+ ],
+ "views": [
+  {
+   "id": "uc",
+   "label": "University College",
+   "camera": {
+    "yaw": -60,
+    "pitch": 30,
+    "zoom": 2.2,
+    "x": -115,
+    "y": -60,
+    "z": 10
+   }
+  },
+  {
+   "id": "mx",
+   "label": "Middlesex College",
+   "camera": {
+    "yaw": -150,
+    "pitch": 28,
+    "zoom": 2.2,
+    "x": 105,
+    "y": 55,
+    "z": 12
+   }
+  },
+  {
+   "id": "hill",
+   "label": "UC Hill",
+   "camera": {
+    "yaw": -30,
+    "pitch": 26,
+    "zoom": 1.6,
+    "x": 0,
+    "y": -10,
+    "z": 4
+   }
+  }
+ ],
+ "legend": [
+  {
+   "name": "University College",
+   "source": "Hand-built · photos",
+   "count": "",
+   "icon": "landmark",
+   "camera": {
+    "yaw": -60,
+    "pitch": 30,
+    "zoom": 2.6,
+    "x": -115,
+    "y": -60,
+    "z": 12
+   }
+  },
+  {
+   "name": "Middlesex College",
+   "source": "Hand-built · photos",
+   "count": "",
+   "icon": "landmark",
+   "camera": {
+    "yaw": -150,
+    "pitch": 28,
+    "zoom": 2.6,
+    "x": 110,
+    "y": 45,
+    "z": 14
+   }
+  },
+  {
+   "name": "UC Hill lawns",
+   "source": "OpenStreetMap",
+   "count": "",
+   "icon": "trees",
+   "camera": {
+    "yaw": -30,
+    "pitch": 26,
+    "zoom": 1.6,
+    "x": 0,
+    "y": -10,
+    "z": 4
+   }
+  }
+ ],
+ "notes": [
+  {
+   "title": "University College",
+   "text": "A Collegiate Gothic building by John M. Moore, with Frederick H. Spier on the tower and auditorium. Its tower, the Middlesex Memorial Tower, honours the men of Middlesex County who fought in the First World War.",
+   "links": [
+    {
+     "label": "Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/University_College_(University_of_Western_Ontario)"
+    }
+   ]
+  },
+  {
+   "title": "Middlesex College",
+   "text": "Collegiate Gothic, with its ground broken in 1959 and opened in fall 1960; known for its spire and clock tower, whose clock faces and Gillett & Johnston bells were installed in 1960.",
+   "links": [
+    {
+     "label": "Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Middlesex_College_(University_of_Western_Ontario)"
+    }
+   ]
+  },
+  {
+   "title": "What is illustrative",
+   "text": "Measured from OpenStreetMap: footprints, roads and paths. Drawn by eye: building heights, both towers' proportions, the Middlesex clock tower's place on the building and its spire (no source gives them), each lawn tree, people, traffic and the Homecoming crowd's purple.",
+   "links": [
+    {
+     "label": "OpenStreetMap",
+     "url": "https://www.openstreetmap.org/#map=18/43.0090/-81.2735"
+    }
+   ]
+  }
+ ],
+ "vivid": true
+}
