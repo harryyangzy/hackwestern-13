@@ -31,12 +31,13 @@ read = lambda p: open(p, encoding='utf-8').read()
 src = lambda name: read(os.path.join(HERE, name))
 
 # brand: the game's name in that city; bowl: the bonus mode's name; drivePaths: the taxi may also use footpaths
-# (Western's main campus is almost all paths); blurb: the menu's first line.
+# (Western's main campus is almost all paths); open: drive anywhere on the plot except through buildings (London: the
+# paths are only ~2.6 m wide, too skinny to be fun); blurb: the menu's first line.
 CITIES = {
     'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Gion', brand='Gion Taxi',
                  bowl='Gion Bowling', blurb='Drive a taxi through the lanes of Gion, Kyoto.', drivePaths=False),
     'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', brand='London Taxi',
-                   bowl='Campus Bowling', blurb='Drive a taxi across Western University’s main campus in London, Ontario: on this campus the paths are fair game.', drivePaths=True),
+                   bowl='Campus Bowling', blurb='Drive a taxi across Western University’s main campus in London, Ontario: the whole campus is open, just not through the buildings.', drivePaths=True, open=True),
     'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', brand='Toronto Taxi',
                     bowl='Square Bowling', blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False),
     'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', brand='Amsterdam Taxi',
@@ -53,9 +54,10 @@ def build(cid):
     c = CITIES[cid]
     out = os.path.join(HERE, c['out'])
     cfg = {k: c[k] for k in ('name', 'brand', 'bowl', 'blurb', 'drivePaths')}
+    cfg['open'] = c.get('open', False)
     cfg['id'] = cid
     cfg['cities'] = [{'id': k, 'name': v['name'], 'href': v['out']} for k, v in CITIES.items()]
-    player = P_OPEN + 'const GT_CITY = ' + json.dumps({'drivePaths': c['drivePaths']}) + ';\n' + src('player.js') + P_CLOSE
+    player = P_OPEN + 'const GT_CITY = ' + json.dumps({'drivePaths': c['drivePaths'], 'open': c.get('open', False)}) + ';\n' + src('player.js') + P_CLOSE
     skill_build = os.path.join(a.skill, 'scripts', 'build.py')
     if not a.from_built and os.path.isfile(skill_build) and os.path.isfile(os.path.join(c['src'], 'scene.json')):
         mode = 'skill ' + a.skill

@@ -167,7 +167,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 #wipeCount.full{color:var(--rust)}
 /* simplified controller: anything the laptop already shows is left off the phone. Only the controls, the door and
    camera, a corner chip (seat colour, name, connection) and essential prompts remain. */
-.comp>.cap,.comp .hint,.steerbar,#hubKmh,#hubUnit,#wipeCount,#task,.bar .stats,#barRoles,.meter,#c-speedo{display:none!important}
+#cam,.comp>.cap,.comp .hint,.steerbar,#hubKmh,#hubUnit,#wipeCount,#task,.bar .stats,#barRoles,.meter,#c-speedo{display:none!important}
 #drive{gap:0}
 .bar{position:absolute;top:max(6px,env(safe-area-inset-top));left:max(8px,env(safe-area-inset-left));z-index:6;padding:4px 10px;gap:8px;border-radius:999px;box-shadow:0 3px 10px #263c3518}
 .bar .who b{font-size:14px}
@@ -296,7 +296,7 @@ const ROLE_INFO = {
   nav: ['Navigator', 'Read the map, call the turns, tap the map to mark a spot on the laptop.', '<path d="m3 8 8-3 8 3 8-3v17l-8 3-8-3-8 3Z"/><path d="M11 5v17M19 8v17"/><circle cx="15" cy="13" r="2.4" fill="#ac4931" stroke="none"/>'],
   shoot: ['Shooter', 'Aim on the laptop, tap to shoot.', '<circle cx="15" cy="15" r="9"/><path d="M15 2v7M15 21v7M2 15h7M21 15h7"/><circle cx="15" cy="15" r="1.6" fill="#ac4931" stroke="none"/>'],
   wipe: ['Wipers', 'Swipe to clear the windshield.', '<path d="M4 25h22"/><path d="M15 25 6 9" stroke-width="3"/><path d="M8 7c4-3 10-3 14 0"/>'],
-  ops: ['Doors & camera', 'Open the door at the lantern. Switch cameras.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
+  ops: ['Doors', 'Open the door at the lantern.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
 };
 const CALL_TEXT = { left: 'Turn left', right: 'Turn right', straight: 'Straight on', uturn: 'Turn around', stop: 'Stop here' };
 const params = new URLSearchParams(location.search);

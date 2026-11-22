@@ -42,7 +42,9 @@ function pingMarker(x, y, col, t) {
 let KERBS = null;
 function buildKerbs() {
   KERBS = [];
-  const H = SCENE.meta.half, DRIVE = SCENE.roads.concat(typeof GT_CITY === 'object' && GT_CITY.drivePaths ? (SCENE.paths || []) : []);
+  const G = typeof GT_CITY === 'object' ? GT_CITY : {}, H = SCENE.meta.half;
+  // an open city drives anywhere: the only kerb is the edge of the plot
+  const DRIVE = G.open ? [[[[-H, -H], [H, -H], [H, H], [-H, H]]]] : SCENE.roads.concat(G.drivePaths ? (SCENE.paths || []) : []);
   const onRoad = p => DRIVE.some(rs => { let c = false; for (const r of rs) if (inside(p, r)) c = !c; return c });
   let k = 0;
   for (const rs of DRIVE) for (const r of rs) for (let i = 0; i < r.length; i++) {
@@ -77,10 +79,20 @@ function popPart(x, y, f) {
   return { fp: rect(x, y, .3, .3), h: 1.5, draw: () => `<g opacity="${o}">` + shape(atZ(polygon(x, y, r, 14), .08), '#f2c94c', 0) + shape(atZ(polygon(x, y, r * .55, 10, f * 3), .9 + f), '#fffcf3', 0) + '</g>' };
 }
 // the people knocked over this round stay down: hide them from the street simulation (this also keeps them out of NEAR)
+// In a taxi shift people and cyclists step aside: within a few metres of the taxi they fade to see-through (the engine
+// draws alpha < 1 as transparency), so the taxi never seems to run anyone over.
 function hideHit() {
   if (!TRAFFIC || TRAFFIC.__gt) return;
   const to = TRAFFIC.to.bind(TRAFFIC);
-  TRAFFIC.to = t => { const all = to(t), h = self.HIT; return h && h.size ? all.filter(a => !h.has(a.kind + a.id)) : all };
+  TRAFFIC.to = t => {
+    let all = to(t); const h = self.HIT, me = self.PLAYER;
+    if (h && h.size) all = all.filter(a => !h.has(a.kind + a.id));
+    if (me && me.ghost) for (const a of all) if (a.kind !== 'car') {
+      const d = Math.hypot(a.p[0] - me.x, a.p[1] - me.y);
+      if (d < 6) a.alpha = Math.min(a.alpha, .25 + Math.max(0, d - 3) * .25);
+    }
+    return all;
+  };
   TRAFFIC.__gt = true;
 }
 // cutaway: in the close cameras, leave out the trees over the taxi and between it and the camera, so canal elms and

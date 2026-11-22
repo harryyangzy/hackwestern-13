@@ -18,7 +18,7 @@ const ROLE_SETS = {
   3: [['steer'], ['pedals'], ['shoot', 'ops', 'wipe']],
   4: [['steer'], ['pedals'], ['shoot'], ['ops', 'wipe']],
 };
-const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors & camera', shoot: 'Shooter', wipe: 'Wipers' };
+const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors', shoot: 'Shooter', wipe: 'Wipers' };
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;

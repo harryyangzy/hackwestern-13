@@ -43,6 +43,18 @@ chip (seat colour, name, connection light), the Ready button with one line per r
 (reconnecting, rotate, swipe-up full screen, tilt-aim errors). Most of it is one CSS block in pad.html
 ("simplified controller"); the hidden elements are still updated, so it's easy to bring one back.
 
+**Easier driving (2026-11-22, after playtesting):**
+- A taxi shift lasts 120 s. People and cyclists step aside: they can't be bumped, and the worker fades them to
+  see-through near the taxi (`hideHit` in player.js sets their alpha). Only cars bump, and only above walking pace:
+  a smaller box, ¥200, no time lost, `v *= .75`, 2 s between bumps. Gion Bowling keeps its old rules.
+- Pick-up and drop-off: within 4.5 m of the lantern and under 4 m/s.
+- The collision box is 3.8 × 1.4 m (the taxi is drawn 4.5 × 1.75): on Amsterdam's narrow quays the full box failed
+  at 18% of the points traffic drives through, which felt like invisible walls; now about 2%.
+- Head-on into a wall with no steering, the taxi pivots toward whichever side opens up instead of stopping dead.
+- London is `open` (build.py): drive anywhere on the plot except through buildings, because the campus paths are only
+  ~2.6 m wide. Its only kerb is the plot edge. Route grid: 2 m cells.
+- The phones no longer have the camera switch (the laptop's C key still cycles kart, chase, overhead).
+
 ## 1. What it is
 
 A browser driving game on Pocket City's illustrated isometric diorama of a 200 m × 200 m patch of Gion Shirakawa,
