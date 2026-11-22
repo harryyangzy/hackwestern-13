@@ -33,20 +33,25 @@ src = lambda name: read(os.path.join(HERE, name))
 # brand: the game's name (tandem, in every city); bowl: the bonus mode's name (Joyride); drivePaths: the taxi may also use footpaths
 # (Western's main campus is almost all paths, widened for the taxi by cities/london/widen.py); open: drive anywhere on the
 # plot except through buildings (unused now); blurb: the menu's first line.
+# globe: the (name, country) of the city's dot on the start page's globe, which makes it playable there; a city without
+# one (Kyoto, now replaced by Tokyo) still builds but isn't offered.
 # money: scores are kept in yen (the fare rules were tuned in yen) and shown in the city's currency, at a rate that makes
 # a typical ~¥2,500 fare look like a real short taxi ride there ($25 in Ontario, €15 in Amsterdam)
 YEN = dict(sym='¥', rate=1, dec=0, label='Yen')
 CAD = dict(sym='$', rate=.01, dec=2, label='Dollars')
 EUR = dict(sym='€', rate=.006, dec=2, label='Euros')
 CITIES = {
+    'tokyo': dict(src=os.path.join(HERE, 'cities', 'tokyo', 'work'), out='taxi-tokyo.html', name='Tokyo', place='Shibuya Crossing', brand='tandem',
+                  bowl='Joyride', money=YEN, blurb='Drive a taxi around Shibuya Crossing, the busiest scramble in Tokyo.', drivePaths=False,
+                  globe=('Tokyo', 'Japan')),
     'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Kyoto', place='Gion Shirakawa', brand='tandem',
                  bowl='Joyride', money=YEN, blurb='Drive a taxi through the lanes of Gion, Kyoto.', drivePaths=False),
     'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', place='Western University, Ontario', brand='tandem',
-                   bowl='Joyride', money=CAD, blurb='Drive a taxi across Western University’s main campus in London, Ontario: the roads and the campus paths are all yours.', drivePaths=True),
+                   bowl='Joyride', money=CAD, blurb='Drive a taxi across Western University’s main campus in London, Ontario: the roads and the campus paths are all yours.', drivePaths=True, globe=('London', 'Canada')),
     'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', place='Nathan Phillips Square', brand='tandem',
-                    bowl='Joyride', money=CAD, blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False),
+                    bowl='Joyride', money=CAD, blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False, globe=('Toronto', 'Canada')),
     'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', place='Reguliersgracht × Keizersgracht', brand='tandem',
-                      bowl='Joyride', money=EUR, blurb='Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.', drivePaths=False),
+                      bowl='Joyride', money=EUR, blurb='Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.', drivePaths=False, globe=('Amsterdam', 'Netherlands')),
 }
 P_OPEN, P_CLOSE = '/* <gion-taxi player.js> */\n', '\n/* </gion-taxi player.js> */'
 G_OPEN, G_CLOSE = '<!-- <gion-taxi game> -->\n', '<!-- </gion-taxi game> -->\n'
@@ -149,15 +154,20 @@ def preview(c):
 
 
 def build_index():
-    cards = []
+    """index.html: the title screen and the city-selection globe. The globe gets the world map (globe/world.js, from
+    Natural Earth) and every city with a `globe` entry, with its map preview."""
+    shifts = []
     for cid, c in CITIES.items():
-        playable = os.path.isfile(os.path.join(HERE, c['out']))
-        svg = preview(c) or ''
-        cards.append(f'<button class="city" data-href="{c["out"]}" {"" if playable else "disabled"}>{svg}'
-                     f'<span><b>{c["name"]}</b><small>{c["place"]}</small><em>{c["blurb"]}</em></span></button>')
-    html = read(os.path.join(HERE, 'index.template.html')).replace('<!--CITIES-->', '\n'.join(cards))
+        if not c.get('globe') or not os.path.isfile(os.path.join(HERE, c['out'])): continue
+        try: pl = json.load(open(os.path.join(c['src'], 'plot.json'), encoding='utf-8'))
+        except OSError: pl = {}
+        shifts.append(dict(id=cid, name=c['name'], place=c['place'], blurb=c['blurb'], href=c['out'], dot=list(c['globe']),
+                           lat=pl.get('lat'), lon=pl.get('lon'), preview=preview(c) or ''))
+    data = ('<script>\n' + src(os.path.join('globe', 'world.js')) + 'window.GT_SHIFTS = '
+            + json.dumps(shifts, ensure_ascii=False).replace('</', '<\\/') + ';\n</script>')
+    html = read(os.path.join(HERE, 'index.template.html')).replace('<!--WORLD-->', data)
     open(os.path.join(HERE, 'index.html'), 'w', encoding='utf-8').write(html)
-    print('Built index.html (title and city selection).')
+    print(f'Built index.html (title and the world map: {", ".join(x["name"] for x in shifts)}).')
 
 
 for cid in (CITIES if a.city == 'all' else [a.city]):

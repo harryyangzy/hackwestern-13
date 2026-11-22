@@ -1,0 +1,22 @@
+{
+ "lat": 35.6594953,
+ "lon": 139.700445,
+ "rotation": 6,
+ "size": 200.0,
+ "asked": {
+  "lat": 35.6595,
+  "lon": 139.7005
+ },
+ "moved_m": 5.0,
+ "famous_inside": [
+  "MAGNET SHIBUYA",
+  "Q-FRONT"
+ ],
+ "famous_cut": [
+  "way/904734439",
+  "渋谷"
+ ],
+ "keep_missing": [],
+ "place": "",
+ "osm_base": "2026-11-22T06:44:04Z"
+}
