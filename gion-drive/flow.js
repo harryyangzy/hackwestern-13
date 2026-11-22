@@ -30,7 +30,7 @@ if (lclose) { lclose.textContent = '← Cities'; lclose.setAttribute('aria-label
 
 /* ---------- the briefing: objective, each player's job, then a 3-2-1 ---------- */
 $('stage').insertAdjacentHTML('beforeend', `<div id="gt-brief" class="gt-card" hidden>
-  <small>Today’s shift</small><h2 id="gt-btitle"></h2><p id="gt-bobj"></p><ul id="gt-blines"></ul><b id="gt-bcount" aria-live="assertive"></b></div>`);
+  <h2 id="gt-btitle"></h2><p id="gt-bobj"></p><ul id="gt-blines"></ul><b id="gt-bcount" aria-live="assertive"></b></div>`);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let briefing = false;
 // returns a promise that resolves at "go"; onCount(n) fires on each number (mp.js sends it to the phones);
@@ -66,8 +66,8 @@ const whenLoaded = cb => { const f = () => ($('loading').hidden ? (cb(), request
 GT.on('stop', () => document.body.classList.remove('gt-focus'));
 if (play === 'solo') {
   whenLoaded(() => window.GionBrief({
-    title: GT.city.name, objective: 'Pick up passengers at the orange lantern and deliver them to the gold one before the shift ends.',
-    lines: [{ color: '#c8513a', name: 'You', text: '↑ / W gas · ↓ / S brake, then reverse · ← → steer · C camera · Esc ends the shift' }],
+    title: GT.city.name, objective: 'Orange lantern to gold lantern.',
+    lines: [{ color: '#c8513a', name: 'You', text: 'Arrows or WASD · C camera · Esc stop' }],
   }).then(() => { GT.lockMenu = false; if (!GT.driving) GT.start('taxi') }));
   // after a solo shift, the result card comes back with the page
 } else {

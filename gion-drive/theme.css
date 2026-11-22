@@ -205,44 +205,41 @@ body { background: var(--paper); }
 #gt-seats .st { font-style: normal; }
 #gt-qr { background: #fff; border-color: var(--rule); border-radius: 14px; }
 
-/* The taxi silhouette frames the QR without covering its quiet zone. */
+/* The QR sits in a kerb: the map's red and cream road edge, with the cuties' cream sticker rim. The fare lantern hangs
+   over it and a maple leaf is stuck on a corner; both stay on the kerb, clear of the code's quiet zone. */
 #gt-qr:has(> svg) {
   box-sizing: content-box;
   position: relative;
-  margin: 16px 0 9px;
-  padding: 8px 8px 16px;
+  margin: 20px 0 10px;
+  padding: 8px;
   overflow: visible;
-  border: 3px solid #fff;
-  border-radius: 30px 30px 24px 24px;
-  background: #f9ca65;
-  color: var(--ink);
-  box-shadow: 0 3px 0 #d3a34a, 0 7px 13px #263c3524;
+  border: 9px solid transparent;
+  border-radius: 22px;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    repeating-conic-gradient(#c8402f 0 25%, #fffcf3 0 50%) 0 0 / 18px 18px border-box;
+  box-shadow: 0 0 0 3px #fffcf3, 0 6px 14px #3d311e2e;
 }
 #gt-qr:has(> svg)::before {
   content: "";
   position: absolute;
-  top: -16px;
+  top: -34px;
   left: 50%;
   transform: translateX(-50%);
-  width: 66px;
-  height: 13px;
-  border: 3px solid #fff;
-  border-bottom: 0;
-  border-radius: 14px 14px 0 0;
-  background: #f9ca65;
+  width: 34px;
+  height: 41px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 48'%3E%3Cpath d='M20 0v6' stroke='%23263c35' stroke-width='2'/%3E%3Crect x='13' y='5' width='14' height='5' rx='2' fill='%23263c35' stroke='%23fffcf3' stroke-width='2.5' paint-order='stroke'/%3E%3Cellipse cx='20' cy='24' rx='16' ry='13' fill='%23f2c94c' stroke='%23fffcf3' stroke-width='3.5' paint-order='stroke'/%3E%3Cpath d='M6 20.5h28M5.5 27.5h29' stroke='%23d9a72e' stroke-width='1.6'/%3E%3Crect x='13' y='36' width='14' height='5' rx='2' fill='%23263c35' stroke='%23fffcf3' stroke-width='2.5' paint-order='stroke'/%3E%3C/svg%3E") center / contain no-repeat;
 }
 #gt-qr:has(> svg)::after {
   content: "";
   position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 64px;
-  height: 8px;
-  background: conic-gradient(currentColor 25%, transparent 0 50%, currentColor 0 75%, transparent 0)
-              0 0 / 8px 8px;
+  right: -20px;
+  bottom: -18px;
+  width: 38px;
+  height: 38px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-24 -24 48 48'%3E%3Cpath transform='rotate%2824%29' d='M0 -20L5 -9L15 -13L11 -2L20 2L9 6L11 14L2 9L0 20L-2 9L-11 14L-9 6L-20 2L-11 -2L-15 -13L-5 -9Z' fill='%23c9782e' stroke='%23fffcf3' stroke-width='3.5' stroke-linejoin='round' paint-order='stroke'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-#gt-qr > svg { border-radius: 18px; }
+#gt-qr > svg { border-radius: 8px; }
 #gt-room, .gt-stats b, #wt-goal b, .gt-resrow b, .pad-ui .stats b {
   font-variant-numeric: tabular-nums;
   letter-spacing: -.025em;
@@ -339,19 +336,6 @@ body { background: var(--paper); }
   margin: 2px 0 0;
   font: 500 clamp(34px, 5vw, 52px)/1 var(--display);
 }
-.gt-ticket-sticker {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 62px;
-  height: 62px;
-  border: 3px solid var(--panel);
-  border-radius: 18px;
-  background: var(--color-accent-100);
-  box-shadow: var(--dock-shadow);
-  font-size: 36px;
-  transform: rotate(-10deg);
-}
 #gt-menu {
   width: min(470px, calc(100% - 24px));
   padding: 16px;
@@ -428,5 +412,4 @@ dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
 }
 @media (max-height: 620px) {
   .gt-ticket { min-height: 76px; padding-block: 8px; }
-  .gt-ticket-sticker { width: 48px; height: 48px; font-size: 28px; }
-}
+  }
