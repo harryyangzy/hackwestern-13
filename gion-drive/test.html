@@ -161,8 +161,11 @@ function setView(v) {
 function paintView() {
   const crew = gw()?.GionCrew?.crew || [];
   const tabs = [['laptop', 'Laptop']].concat(phones.map((p, i) => { const c = crew.find(x => x.pid === p.pid); return [p.pid, (c && window.GionCrew ? GionCrew.icon(c.color, 16) : '') + (c ? c.name : 'Phone ' + (i + 1))] }));
-  const html = tabs.map(([v, label]) => `<button data-v="${v}" aria-pressed="${v === view}">${label}</button>`).join('');
-  if ($('view').innerHTML !== html) $('view').innerHTML = html;
+  // rebuild only when something changed (each icon carries a fresh id, so comparing the HTML would rebuild every time)
+  const key = view + '|' + phones.map(p => { const c = crew.find(x => x.pid === p.pid); return p.pid + (c ? c.color + c.name : '') }).join(',');
+  if ($('view').dataset.key === key) return;
+  $('view').dataset.key = key;
+  $('view').innerHTML = tabs.map(([v, label]) => `<button data-v="${v}" aria-pressed="${v === view}">${label}</button>`).join('');
 }
 $('view').onclick = e => { const b = e.target.closest('button'); if (b) setView(b.dataset.v) };
 addEventListener('resize', () => setView(view));
