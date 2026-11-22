@@ -114,6 +114,9 @@ function decodeFrame(buf) {
 const LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';   // no I or O: room codes are read aloud and typed
 const rooms = new Map();                        // code → { code, key, host, hostTimer, phones: Map pid → { pid, client } }
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
+// A Solana request that fails with nothing waiting on it (devnet's "429 Too Many Requests", most often) would otherwise
+// make Node exit and drop every room. Log it and keep serving: the Wrong Turn round shows its own error or refunds.
+process.on('unhandledRejection', e => log('a background request failed, server keeps running:', (e && e.message) || e));
 function newCode() {
   for (let n = 0; n < 1000; n++) {
     const c = Array.from(crypto.randomBytes(4), b => LETTERS[b % LETTERS.length]).join('');
