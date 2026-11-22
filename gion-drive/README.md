@@ -77,9 +77,34 @@ Without a tunnel:
   kept in `gion-drive/.cert`). **Tilt to aim** moves the shooter's phone there and keeps its seat; accept the certificate
   warning once. With `--tunnel` the address is already https. Drag-to-aim works everywhere.
 
+## Wrong Turn: one of you is the imposter (Solana devnet wagers)
+
+A deception mode for 3–4 phones. Tick **Wrong Turn** in the crew lobby before **Start shift**.
+
+1. **Secret roles.** The server picks one player at random to be the imposter and tells only that phone
+   (press and hold to read it, so neighbours can't see). The laptop doesn't know until the reveal.
+2. **Wagers.** Everyone deposits the same stake (0.01 devnet SOL by default) and picks a wager of 10–100 % of it. The phone
+   commits a salted hash; the amount and salt stay on the phone until after the trip.
+3. **The trip.** The crew must earn ¥3,000. The imposter plays their normal role and has 3 press-and-hold sabotages,
+   12 s apart, that look like bad luck: *drift* (wheel pulls; steering or shooter), *stall* (engine cuts out; pedals),
+   *jam* (door sticks; doors or wipers).
+   Limits keep it to timing, not brute force: brakes fade when held away from a lantern, and doors open on their own.
+4. **Vote.** After the shift, everyone votes on their phone (25 s). The crew wins if the trip made ¥3,000 **or** a strict
+   majority named the imposter. Otherwise the imposter wins.
+5. **Reveal and payout.** Phones reveal their wagers on-chain, the program pays out, and the laptop flips everyone's card.
+
+Payout: you always get back what you didn't wager; winners split the losers' wagers in proportion to their own; a player
+who doesn't reveal forfeits their whole stake to the winners; a cancelled trip refunds every stake. Details, the trust model
+and the program: `solana/README.md`.
+
+Setup (once): `npm install` in `gion-drive/` (adds `@solana/web3.js` for the server only), and the server wallet in
+`solana/.keys/server.json` needs devnet SOL (https://faucet.solana.com). Each game uses about 0.00002 SOL in fees; the stakes
+come back to the server wallet afterwards. `WT_STAKE=0.001 node gion-drive/server.js` sets a different stake.
+Plain crew play still needs no install. Keys never leave the server: each player gets a devnet burner wallet the server holds.
+
 ## Building
 
-`gion-taxi.html` is generated. Edit `drive.js`, `drive.css`, `mp.js`, `mp.css`, `qr.js` or `player.js`, then run:
+`gion-taxi.html` is generated. Edit `drive.js`, `drive.css`, `mp.js`, `mp.css`, `wt.js`, `wt.css`, `qr.js` or `player.js`, then run:
 
 ```bash
 python3 gion-drive/build.py
@@ -87,6 +112,6 @@ python3 gion-drive/build.py
 
 `python3 gion-drive/build.py --city london` builds one city. It uses the Pocket City skill at `~/Downloads/pocket-city` (or `--skill PATH`) when it's installed. Otherwise it rebuilds
 from the existing `gion-taxi.html`, swapping in the current files between its `<gion-taxi …>` markers.
-`pad.html` and `server.js` are served as they are and aren't built.
+`pad.html`, `wt-pad.js`, `server.js`, `wt-server.js` and `chain.js` are served or run as they are and aren't built.
 
 Credits: the city drawing engine and street simulation are Pocket City by April Zhu (MIT). Map data © OpenStreetMap contributors.

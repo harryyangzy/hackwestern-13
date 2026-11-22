@@ -158,6 +158,8 @@ const keys = new Set();
 let driving = false, cam = 'kart', mode = 'taxi', car, fare, yen = 0, fares = 0, clock = 90, last = 0, bumpCool = 0, toastT = 0, shake = 0, camYaw = 0, finished = false;
 // crew play (mp.js): phone inputs, the door the operator opens at a lantern, and shift stats for the results card
 const remote = { gas: 0, brake: 0, turn: 0, gear: 'D' };   // phone pedals: gas drives in the gear's direction, brake only brakes
+// Wrong Turn mode (wt.js) bends these; at their defaults the game is exactly as before
+const mods = { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 };
 let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
 // Gion Bowling: pedestrians knocked over this round (hidden by the render worker), score, combo, little dust pops
 let pins = 0, score = 0, combo = 0, comboT = 0, hit = new Set(), pops = [];
@@ -240,6 +242,7 @@ function toggleCam() { setCam(CAM_ORDER[(CAM_ORDER.indexOf(cam) + 1) % CAM_ORDER
 // The rear door: in crew play the operator opens it at a lantern; solo, the passenger lets themself in (doorNeeded = false)
 function openDoor() {
   if (!driving || !doorNeeded || !fare) return;
+  if (performance.now() < mods.doorJamUntil) { toast('The door is stuck!'); emit('jammed'); return }
   doorOpen = 1.2; emit('door');
   if (!fare.atDoor) toast('Door opened');
 }
@@ -250,8 +253,9 @@ function openDoor() {
 //   stopper  the phone's brake pedal: brakes to a stop and never reverses
 function readInput() {
   const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0), r = remote.gear === 'R';
-  return { gas: Math.max(keys.has('gas') ? 1 : 0, r ? 0 : remote.gas), back: r ? remote.gas : 0,
-    brake: keys.has('brake') ? 1 : 0, stopper: remote.brake, turn: Math.max(-1, Math.min(1, kTurn + remote.turn)) };
+  const cut = performance.now() < mods.gasCutUntil;   // Wrong Turn: a stall cuts the throttle for a moment
+  return { gas: cut ? 0 : Math.max(keys.has('gas') ? 1 : 0, r ? 0 : remote.gas), back: cut || !r ? 0 : remote.gas,
+    brake: keys.has('brake') ? 1 : 0, stopper: remote.brake * mods.brakeScale, turn: Math.max(-1, Math.min(1, kTurn + remote.turn + mods.turnBias)) };
 }
 for (const b of document.querySelectorAll('#gt-pad button')) {
   const k = b.dataset.k;
@@ -392,12 +396,12 @@ function frame(now) {
   arrow.style.top = (50 + CAMS[cam].low * 100) + '%';   // around the taxi, which the kart camera keeps below the middle
   arrow.style.transform = `translate(-50%,-50%) rotate(${Math.atan2(sx, -sy) * 180 / Math.PI}deg) translateY(-110px)`;
   arrow.querySelector('path').setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
-  arrow.style.opacity = Math.hypot(gx, gy) < 12 ? .25 : 1;
-  const mt = $('gt-mt'); mt.setAttribute('cx', target.x); mt.setAttribute('cy', target.y); mt.setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
+  arrow.style.opacity = mods.hideTarget ? 0 : Math.hypot(gx, gy) < 12 ? .25 : 1;
+  const mt = $('gt-mt'); mt.style.visibility = mods.hideTarget ? 'hidden' : ''; mt.setAttribute('cx', target.x); mt.setAttribute('cy', target.y); mt.setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
 }
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
-  start, stop, keys, remote, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
+  start, stop, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
   get car() { return car }, get driving() { return driving }, get cam() { return cam }, get mode() { return mode },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },

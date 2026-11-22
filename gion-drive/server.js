@@ -21,6 +21,7 @@ const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
 const { spawn, execFileSync } = require('child_process');
+const WT = require('./wt-server.js');   // Wrong Turn mode (Solana devnet wagers); works without it, see wt-server.js
 
 const PORT = +process.env.PORT || 8090;
 const HTTPS_PORT = +process.env.HTTPS_PORT || 8490;
@@ -68,7 +69,7 @@ process.on('exit', () => { if (tunnelProc) tunnelProc.kill() });
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(0));
 
 // ---------- static files ----------
-const FILES = { '/': 'gion-taxi.html', '/index.html': 'gion-taxi.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js' };
+const FILES = { '/': 'gion-taxi.html', '/index.html': 'gion-taxi.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/wt-pad.js': 'wt-pad.js' };
 function handler(req, res) {
   const url = req.url.split('?')[0];
   if (url === '/info') {
@@ -122,9 +123,15 @@ function newCode() {
 function closeRoom(room, why) {
   for (const p of room.phones.values()) if (p.client) { p.client.send({ t: 'err', code: 'closed', why }); p.client.room = null; p.client.close() }
   clearTimeout(room.hostTimer); rooms.delete(room.code); log(`room ${room.code} closed (${why})`);
+  wt.roomClosed(room);
 }
 const toHost = (room, msg) => room.host && room.host.send(msg);
 const isPid = v => typeof v === 'string' && /^[a-z0-9]{8,32}$/.test(v);
+const wt = WT.create({
+  toHost,
+  toPhone: (room, pid, msg) => { const p = room.phones.get(pid); if (p && p.client) p.client.send(msg) },
+  toPhones: (room, msg) => { for (const p of room.phones.values()) if (p.client) p.client.send(msg) },
+});
 
 function onMessage(client, text) {
   if (text.length > (client.role === 'host' ? MAX_HOST_MSG : MAX_MSG)) return;
@@ -175,6 +182,7 @@ function onMessage(client, text) {
 
   // --- laptop → phones ---
   if (client.role === 'host' && room.host === client) {
+    if (wt.fromHost(room, msg)) return;
     if (msg.t === 'to' && msg.m && typeof msg.m === 'object') {
       for (const p of room.phones.values()) if (p.client && (msg.to === '*' || msg.to === p.pid)) p.client.send(msg.m);
     } else if (msg.t === 'drop' && isPid(msg.pid)) {
@@ -185,7 +193,7 @@ function onMessage(client, text) {
   }
 
   // --- phone → laptop (the laptop validates the content) ---
-  if (client.role === 'phone' && room.phones.get(client.pid)?.client === client) toHost(room, { t: 'from', pid: client.pid, m: msg });
+  if (client.role === 'phone' && room.phones.get(client.pid)?.client === client && !wt.fromPhone(room, client.pid, msg)) toHost(room, { t: 'from', pid: client.pid, m: msg });
 }
 
 function onClose(client) {

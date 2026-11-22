@@ -177,7 +177,7 @@ function onServer(m) {
   } else if (m.t === 'from') {
     const p = find(m.pid);
     if (p) onPhone(p, m.m || {});
-  }
+  } else if (typeof m.t === 'string' && m.t.startsWith('dx-')) window.GionCrew.onDx?.(m);   // Wrong Turn (wt.js)
 }
 const num = v => typeof v === 'number' && Number.isFinite(v);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -247,8 +247,9 @@ function closeRoom() {
   phase = 'off'; room = null; crew = []; result = null; wsOk = false; applyInputs();
   showLobby(false); menu.hidden = false; renderCrewStrip();
 }
-function startCountdown() {
+function startCountdown(force) {
   if (!canStart()) return;
+  if (force !== true && window.GionCrew.beforeStart?.()) return;   // Wrong Turn: wagers are locked in first, then it calls startCountdown(true)
   phase = 'count'; for (const p of crew) p.ready = false;
   showLobby(false); menu.hidden = true; broadcastLobby();
   let n = 3; const el = $('gt-count');
@@ -276,7 +277,7 @@ GT.on('cam', cam => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', cam
 
 if (served) $('gt-mp').onclick = openRoom;
 $('gt-lclose').onclick = closeRoom;
-$('gt-lstart').onclick = startCountdown;
+$('gt-lstart').onclick = () => startCountdown();
 document.querySelector('.gt-modes').onclick = e => { const b = e.target.closest('[data-game]'); if (b && (phase === 'lobby' || phase === 'results')) { game = b.dataset.game; broadcastLobby() } };
 $('gt-ip').onclick = () => { ipIndex++; renderLobby() };
 $('gt-seats').onclick = e => {
@@ -318,5 +319,7 @@ setInterval(() => {
   if (gone.length && wsOk) { for (const p of gone) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1) } rolesChanged(); broadcastLobby() }
 }, 100);
 setInterval(() => send({ t: 'hb' }), 2000);
-window.GionCrew = { toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()) };
+window.GionCrew = { toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
+  // used by Wrong Turn mode (wt.js)
+  send, canStart, startCountdown, get game() { return game }, get wsOk() { return wsOk }, onDx: null };
 })();

@@ -1,0 +1,8 @@
+{
+  "name": "gion-taxi",
+  "private": true,
+  "description": "Gion Taxi crew server. Plain crew play needs no install; Wrong Turn mode (Solana devnet wagers) needs `npm install`.",
+  "dependencies": {
+    "@solana/web3.js": "^1.98.0"
+  }
+}
