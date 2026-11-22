@@ -34,12 +34,13 @@ function scenery() {
 }
 
 /* ---------- levels: gentle first, more and livelier with every fare delivered ---------- */
+// just a couple at a time: `live` fly at once, at most `cap` stick. A full glass (cap reached) stops the taxi until it's wiped.
 const LV = [
-  { every: 3.4, approach: 6.6, live: 3, cap: 4, kinds: ['blossom', 'lantern', 'neko'], moves: ['drift'], note: 'Level 1 · a few visitors' },
-  { every: 2.8, approach: 5.9, live: 4, cap: 4, kinds: ['blossom', 'lantern', 'neko', 'sparrow'], moves: ['drift', 'wobble'], note: 'Level 2 · sparrows join in' },
-  { every: 2.3, approach: 5.3, live: 5, cap: 5, kinds: ['blossom', 'lantern', 'neko', 'sparrow', 'leaf'], moves: ['drift', 'wobble', 'zigzag'], note: 'Level 3 · maple leaves zigzag' },
-  { every: 1.9, approach: 4.7, live: 6, cap: 5, kinds: KINDS, moves: ['drift', 'wobble', 'zigzag', 'orbit'], note: 'Level 4 · ladybugs and mochi circle in' },
-  { every: 1.55, approach: 4.2, live: 7, cap: 6, kinds: KINDS, moves: ['wobble', 'zigzag', 'orbit', 'dart'], note: 'Level 5 · everything darts' },
+  { every: 5.5, approach: 6.6, live: 1, cap: 2, kinds: ['blossom', 'lantern', 'neko'], moves: ['drift'], note: 'Level 1 · a visitor or two' },
+  { every: 5.0, approach: 6.0, live: 2, cap: 2, kinds: ['blossom', 'lantern', 'neko', 'sparrow'], moves: ['drift', 'wobble'], note: 'Level 2 · sparrows join in' },
+  { every: 4.5, approach: 5.4, live: 2, cap: 3, kinds: ['blossom', 'lantern', 'neko', 'sparrow', 'leaf'], moves: ['drift', 'wobble', 'zigzag'], note: 'Level 3 · maple leaves zigzag' },
+  { every: 4.0, approach: 4.9, live: 2, cap: 3, kinds: KINDS, moves: ['drift', 'wobble', 'zigzag', 'orbit'], note: 'Level 4 · ladybugs and mochi circle in' },
+  { every: 3.6, approach: 4.4, live: 3, cap: 3, kinds: KINDS, moves: ['wobble', 'zigzag', 'orbit', 'dart'], note: 'Level 5 · everything darts' },
 ];
 
 /* ---------- the layer ---------- */
@@ -160,7 +161,7 @@ function flurry(n = 3) {
   if (!on) return;
   const L = LV[level], colors = PALETTE[pal];
   let kind = null;
-  for (let i = 0; i < n && stuck.length < L.cap + 2; i++) {
+  for (let i = 0; i < n && stuck.length < L.cap; i++) {
     kind = L.kinds[Math.floor(Math.random() * L.kinds.length)];
     const [x, y] = pickFinal();
     stuck.push({ id: nextId++, kind, move: 'drift', t: 0, T: 1, fx: x, fy: y, x, y, s: 1, ph: Math.random() * 6.28, flash: 0,
@@ -303,7 +304,7 @@ function frame(now) {
   const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
   const c = crew(), driving = GT.driving && c && c.phase === 'driving';
   const shooter = driving && holder('shoot'), wiper = driving && holder('wipe');
-  if (!driving) { if (on) { on = false; reset() } cv.hidden = true; return }
+  if (!driving) { if (on) { on = false; reset() } GT.blind('stickers', false); cv.hidden = true; return }
   on = true; cv.hidden = false;
   const st = GT.state();
   pal = scenery();
@@ -320,6 +321,7 @@ function frame(now) {
   // with nobody on the wipers, the glass slowly clears itself
   if (!wiper) for (const o of [...stuck]) if (o.stuckAt > 10) { stuck.splice(stuck.indexOf(o), 1); burst(o, 1.45, .2) }
   stepWipe(dt);
+  GT.blind('stickers', stuck.length >= LV[level].cap);   // a full glass: the driver can't see, so the taxi won't go
   for (const q of parts) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 520 * dt; q.r += q.vr * dt }
   parts = parts.filter(q => q.t < q.life);
   for (const f of fx) f.t += dt; fx = fx.filter(f => f.t < .5);

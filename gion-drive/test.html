@@ -42,6 +42,11 @@ main{display:flex;min-height:0}
 .phone header span{color:var(--muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .phone header button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 4px}
 .phone header button:hover{color:var(--ink)}
+.phone.big{position:fixed;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:0;border:0;background:#1f2a26;padding:14px}
+.phone.big header{color:#fffcf3;padding-bottom:10px}
+.phone.big header span,.phone.big header button{color:#fffcf3b0}
+.phone.big .screen{border-radius:18px;box-shadow:0 20px 60px #0008}
+#view button .gc-char{margin-right:4px}
 .screen{width:calc(844px * var(--k));height:calc(390px * var(--k));overflow:hidden;border-radius:9px;background:#000}
 .screen iframe{width:844px;height:390px;border:0;transform:scale(var(--k));transform-origin:0 0;display:block}
 </style>
@@ -53,18 +58,19 @@ main{display:flex;min-height:0}
     <option value="gion-taxi.html">Kyoto</option><option value="taxi-london.html">London</option>
     <option value="taxi-toronto.html">Toronto</option><option value="taxi-amsterdam.html">Amsterdam</option></select></div>
   <div class="grp"><small>Mode</small><div class="seg" id="mode">
-    <button data-v="solo">Solo</button><button data-v="taxi" aria-pressed="true">Taxi shift</button>
-    <button data-v="bowling">Joyride</button><button data-v="wt">Wrong Turn</button></div></div>
+    <button data-v="solo">Solo</button><button data-v="taxi" aria-pressed="true" title="Wrong Turn (imposter mode) is always on; bots fill seats below 3 phones">Taxi shift · Wrong Turn</button>
+    <button data-v="bowling">Joyride</button></div></div>
   <div class="grp"><small>Phones</small><div class="seg" id="count">
     <button data-v="1">1</button><button data-v="2" aria-pressed="true">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
   <button class="act go" id="launch">Launch</button>
   <button class="act" id="readyAll" disabled>All ready</button>
   <button class="act" id="start" disabled>Start</button>
+  <div class="grp"><small>View</small><div class="seg" id="view"></div></div>
   <span id="status"></span>
 </header>
 <main>
   <div id="gameBox"><iframe id="game" title="The laptop screen" hidden></iframe>
-    <div id="empty"><div><b>Pick a city, a mode and a crew size, then Launch.</b>Phones appear on the right, already joined. Click a phone to use its controls; the keyboard still drives the taxi.</div></div></div>
+    <div id="empty"><div><b>Pick a city, a mode and a crew size, then Launch.</b>Phones appear on the right, already joined. Click a phone to use its controls, or pick a player under View (⤢) to see their phone full size. The keyboard still drives the taxi.</div></div></div>
   <aside id="phones"></aside>
 </main>
 <script src="crew.js"></script>
@@ -76,7 +82,7 @@ const ROLE = { steer: 'Wheel', pedals: 'Pedals', ops: 'Doors', shoot: 'Shooter',
 let mode = 'taxi', count = 2, run = 0, phones = [];   // phones: [{ pid, el, frame }]
 
 // the settings survive a reload of the lab
-try { const s = JSON.parse(localStorage.getItem('tandemLab') || '{}'); if (s.city) $('city').value = s.city; if (s.mode) mode = s.mode; if (s.count) count = s.count } catch {}
+try { const s = JSON.parse(localStorage.getItem('tandemLab') || '{}'); if (s.city) $('city').value = s.city; if (s.mode) mode = s.mode === 'wt' ? 'taxi' : s.mode; if (s.count) count = s.count } catch {}
 const save = () => { try { localStorage.setItem('tandemLab', JSON.stringify({ city: $('city').value, mode, count })) } catch {} };
 function seg(el, get, set) {
   const paint = () => { for (const b of el.children) b.setAttribute('aria-pressed', b.dataset.v === String(get())) };
@@ -107,10 +113,11 @@ addEventListener('resize', layout); layout();
 function addPhone(room, i) {
   const pid = `testlab${run}p${i}x`;   // pad.html takes 8–32 lowercase letters and digits
   const el = document.createElement('section'); el.className = 'phone';
-  el.innerHTML = `<header><i class="face"></i><b>Phone ${i + 1}</b><span>joining…</span><button title="Reload this phone">↻</button></header><div class="screen"><iframe title="Phone ${i + 1}" allow="fullscreen 'none'"></iframe></div>`;
+  el.innerHTML = `<header><i class="face"></i><b>Phone ${i + 1}</b><span>joining…</span><button class="big-btn" title="See this player's phone full size">⤢</button><button class="reload" title="Reload this phone">↻</button></header><div class="screen"><iframe title="Phone ${i + 1}" allow="fullscreen 'none'"></iframe></div>`;
   const frame = el.querySelector('iframe');
   frame.src = `pad.html?r=${room}&pid=${pid}`;
-  el.querySelector('button').onclick = () => { frame.src = `pad.html?r=${room}&pid=${pid}` };
+  el.querySelector('.reload').onclick = () => { frame.src = `pad.html?r=${room}&pid=${pid}` };
+  el.querySelector('.big-btn').onclick = () => setView(view === pid ? 'laptop' : pid);
   phonesEl.append(el);
   phones.push({ pid, el, frame });
 }
@@ -119,6 +126,7 @@ function removePhone() {
   const crew = gw()?.GionCrew?.crew || [], i = crew.findIndex(c => c.pid === p.pid);
   p.frame.src = 'about:blank'; p.el.remove();
   if (i >= 0) gq(`[data-kick="${i}"]`)?.click();   // free the seat at once instead of waiting out the grace period
+  if (view === p.pid) setView('laptop');
 }
 function resizeCrew() {
   const room = gw().GionCrew.room;
@@ -130,15 +138,40 @@ function resizeCrew() {
 // mode switches inside the game's lobby (the same buttons a player would press)
 function applyMode() {
   if (mode === 'solo') return;
-  gq(`.gt-modes [data-game="${mode === 'bowling' ? 'bowling' : 'taxi'}"]`)?.click();
-  const wt = gq('#wt-on'), bots = gq('#wt-bots');
-  if (wt && wt.checked !== (mode === 'wt')) { wt.checked = mode === 'wt'; wt.dispatchEvent(new Event('change')) }
-  if (bots && mode === 'wt' && bots.checked !== count < 3) { bots.checked = count < 3; bots.dispatchEvent(new Event('change')) }
+  gq(`.gt-modes [data-game="${mode === 'bowling' ? 'bowling' : 'taxi'}"]`)?.click();   // Wrong Turn is always on in a taxi shift (wt.js)
 }
+
+// views: the laptop, or any one player's phone shown full size over it (the frame is only moved and scaled, never
+// reloaded, so the phone keeps its seat and its state)
+let view = 'laptop';
+function setView(v) {
+  view = phones.some(p => p.pid === v) ? v : 'laptop';
+  const r = $('gameBox').getBoundingClientRect();
+  for (const p of phones) {
+    const big = p.pid === view;
+    p.el.classList.toggle('big', big);
+    if (big) {
+      Object.assign(p.el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+      p.el.style.setProperty('--k', Math.min((r.width - 28) / 844, (r.height - 70) / 390).toFixed(4));
+      p.el.querySelector('.big-btn').textContent = '⤡';
+    } else { p.el.removeAttribute('style'); p.el.querySelector('.big-btn').textContent = '⤢' }
+  }
+  paintView();
+}
+function paintView() {
+  const crew = gw()?.GionCrew?.crew || [];
+  const tabs = [['laptop', 'Laptop']].concat(phones.map((p, i) => { const c = crew.find(x => x.pid === p.pid); return [p.pid, (c && window.GionCrew ? GionCrew.icon(c.color, 16) : '') + (c ? c.name : 'Phone ' + (i + 1))] }));
+  const html = tabs.map(([v, label]) => `<button data-v="${v}" aria-pressed="${v === view}">${label}</button>`).join('');
+  if ($('view').innerHTML !== html) $('view').innerHTML = html;
+}
+$('view').onclick = e => { const b = e.target.closest('button'); if (b) setView(b.dataset.v) };
+addEventListener('resize', () => setView(view));
+addEventListener('keydown', e => { if (e.key === 'Escape' && view !== 'laptop') setView('laptop') });
 
 async function launch() {
   const my = ++run;
   while (phones.length) { const p = phones.pop(); p.frame.src = 'about:blank'; p.el.remove() }
+  setView('laptop');
   try { sessionStorage.removeItem('gtRoom') } catch {}   // a fresh room each launch: mp.js would otherwise take back the last one, old phones and all
   $('empty').hidden = true; game.hidden = false;
   game.src = `${$('city').value}?play=${mode === 'solo' ? 'solo' : 'crew'}&lab=${my}`;   // lab= tells the new page from the old one while it loads
@@ -171,10 +204,11 @@ setInterval(() => {
     h.querySelector('b').textContent = c ? c.name : 'Phone';
     h.querySelector('span').textContent = !c ? 'joining…' : !c.on ? 'reconnecting…' : c.roles.map(r => ROLE[r] || r).join(' + ') + (c.ready ? ' · ready' : '');
   }
+  paintView();
   if (g.GionCrew.phase && g.GionCrew.room) status(`Room ${g.GionCrew.room} · ${g.GionCrew.phase}`);
 }, 500);
 
-paintMode(); paintCount();
+paintMode(); paintCount(); paintView();
 if (location.hash === '#go') launch();
 })();
 </script>

@@ -76,9 +76,9 @@ function draw() {
   if (local) {
     if (cell.width !== lw || cell.height !== lh) { cell.width = lw; cell.height = lh }
     const im = cg.createImageData(lw, lh);
-    for (let i = 0; i < lw * lh; i++) { const v = local[i], o = i * 4; im.data[o] = 250; im.data[o + 1] = 245; im.data[o + 2] = 233; im.data[o + 3] = Math.round(Math.min(1, v * 1.5) * 245) }
+    for (let i = 0; i < lw * lh; i++) { const v = local[i], o = i * 4; im.data[o] = 250; im.data[o + 1] = 245; im.data[o + 2] = 233; const k = Math.max(0, Math.min(1, v / .8)); im.data[o + 3] = Math.round(k * k * (3 - 2 * k) * .86 * 255) }
     cg.putImageData(im, 0, 0);
-    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(cell, R.x, R.y, R.w, R.h);
+    g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; if ('filter' in g) g.filter = `blur(${Math.round(R.w / lw * .8)}px)`; g.drawImage(cell, R.x, R.y, R.w, R.h); if ('filter' in g) g.filter = 'none';
   }
   g.restore();
   g.strokeStyle = '#afb5a5'; g.lineWidth = 1; g.beginPath(); g.roundRect ? g.roundRect(R.x, R.y, R.w, R.h, 10) : g.rect(R.x, R.y, R.w, R.h); g.stroke();

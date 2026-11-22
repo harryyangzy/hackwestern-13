@@ -53,7 +53,17 @@ document.head.insertAdjacentHTML('beforeend', `<style>
 #wt-peek.imp .wt-secret span{color:#fffe}
 .wt-amt{font:600 30px var(--serif);font-variant-numeric:tabular-nums;color:var(--rust)}
 .wt-amt small{font:13px var(--sans);color:var(--muted);text-transform:none;letter-spacing:0;margin-left:4px}
-#wt-range{width:100%;accent-color:#ac4931;height:30px}
+/* the wager: a shuttle slider, pushed from left to right; the chevrons light up the further it goes */
+.wt-shuttle{position:relative;height:60px;border-radius:999px;background:#ece4d1;box-shadow:inset 0 1px 3px #263c3524,inset 0 -1px 0 #fff8;touch-action:none;cursor:grab;outline:none;-webkit-user-select:none;user-select:none;margin:6px 0 4px}
+.wt-shuttle:focus-visible .wt-knob{box-shadow:0 0 0 3px #fffcf3,0 0 0 5px var(--rust)}
+.wt-shuttle.drag{cursor:grabbing}
+.wt-trail{position:absolute;left:5px;top:5px;bottom:5px;border-radius:999px;background:linear-gradient(90deg,#ac493110,#ac49314d);pointer-events:none}
+.wt-chev{position:absolute;left:64px;right:22px;top:0;bottom:0;display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+.wt-chev svg{width:11px;height:16px;stroke:#263c35;opacity:.18;transition:opacity .18s,transform .25s cubic-bezier(.3,1.6,.5,1),stroke .18s}
+.wt-chev svg.on{stroke:var(--rust);opacity:1;transform:scale(1.18)}
+.wt-knob{position:absolute;top:5px;left:5px;width:50px;height:50px;border-radius:50%;background:var(--ink);display:grid;place-items:center;box-shadow:0 3px 10px #263c3540;pointer-events:none;transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.wt-shuttle.drag .wt-knob{transform:scale(1.08)}
+.wt-knob svg{width:22px;height:22px;stroke:#fffcf3}
 .wt-fine{font-size:12px!important}
 .wt-center{text-align:center;align-items:center;max-width:460px}
 .wt-dots{display:flex;gap:9px;justify-content:center;margin:4px 0}
@@ -86,32 +96,76 @@ const KIND = {
   seize: ['Seize', 'the wipers stick and won\'t move for four seconds'],
 };
 let role = null, status = {}, voted = false, revealSent = false, sab = { left: 0, wait: 0, at: 0 };
-const store = g => { try { return JSON.parse(localStorage.getItem('wt:' + g) || 'null') } catch { return null } };
+// the wager's secret, kept per game and per player (r.me is this seat's burner), so tabs in one browser don't overwrite each other
+const store = r => { try { return JSON.parse(localStorage.getItem('wt:' + r.game + ':' + r.me) || 'null') } catch { return null } };
 
+// the shuttle: drag the knob from left to right (or tap the track, or use the arrow keys); 10–100 % in steps of 5.
+// The knob follows on a spring, so it overshoots a touch and settles; letting go snaps it to the nearest step.
+function shuttle(el, onChange) {
+  const MIN = 10, MAX = 100, STEP = 5, knob = el.querySelector('.wt-knob'), trail = el.querySelector('.wt-trail'), chevs = [...el.querySelectorAll('.wt-chev svg')];
+  const api = { value: MIN };
+  let target = 0, pos = 0, vel = 0, raf = 0, last = 0, drag = null;
+  const span = () => el.clientWidth - 60;   // the knob's travel in px
+  const toValue = p => Math.round((MIN + p * (MAX - MIN)) / STEP) * STEP;
+  const toPos = v => (v - MIN) / (MAX - MIN);
+  function paint() {
+    const x = Math.max(-.04, Math.min(1.04, pos)) * span();
+    knob.style.left = 5 + x + 'px'; trail.style.width = x + 50 + 'px';
+    const lit = Math.max(0, Math.min(1, pos)) * chevs.length;
+    chevs.forEach((c, i) => c.classList.toggle('on', i < lit - .35));
+  }
+  function set(p, snap) {
+    target = Math.max(0, Math.min(1, p));
+    const v = toValue(target); if (snap) target = toPos(v);
+    if (v !== api.value) { api.value = v; el.setAttribute('aria-valuenow', v); el.setAttribute('aria-valuetext', v + '%'); A.buzz(4); onChange(v) }
+    if (!raf) { last = performance.now(); raf = requestAnimationFrame(tick) }
+  }
+  function tick(now) {
+    const dt = Math.min(.032, (now - last) / 1000); last = now;
+    const k = 520, c = 26;   // stiff and a little under-damped: a small overshoot, then it settles
+    vel += ((target - pos) * k - vel * c) * dt; pos += vel * dt; paint();
+    if (Math.abs(target - pos) < .0005 && Math.abs(vel) < .002) { pos = target; paint(); raf = 0; return }
+    raf = requestAnimationFrame(tick);
+  }
+  const at = e => { const r = el.getBoundingClientRect(); return (e.clientX - r.left - 30) / span() };
+  el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture(e.pointerId); el.classList.add('drag'); el.focus(); drag = e.pointerId; set(at(e)) });
+  el.addEventListener('pointermove', e => { if (drag === e.pointerId) set(at(e)) });
+  for (const ev of ['pointerup', 'pointercancel']) el.addEventListener(ev, e => { if (drag !== e.pointerId) return; drag = null; el.classList.remove('drag'); set(target, true) });
+  el.addEventListener('keydown', e => {
+    const d = { ArrowRight: STEP, ArrowUp: STEP, ArrowLeft: -STEP, ArrowDown: -STEP }[e.key];
+    if (d) { e.preventDefault(); set(toPos(api.value + d), true) }
+    else if (e.key === 'Home' || e.key === 'End') { e.preventDefault(); set(e.key === 'Home' ? 0 : 1, true) }
+  });
+  addEventListener('resize', paint);
+  el.setAttribute('aria-valuenow', MIN); el.setAttribute('aria-valuetext', MIN + '%');
+  requestAnimationFrame(() => { paint(); onChange(MIN) });   // it starts at the far left
+  return api;
+}
 function showRole() {
   const r = role, imp = r.imposter, yen = window.GionMoney ? window.GionMoney(r.goal) : '¥' + r.goal.toLocaleString();   // the city's currency
   const secret = imp
     ? `<b>Imposter</b><span>Make the trip fall short of ${yen} without getting caught. Play your part as normal. You have ${r.charges} sabotages that look like bad luck: ${r.kinds.map(k => `<br>· <b style="font-size:14px">${KIND[k][0]}</b>: ${KIND[k][1]}`).join('')}</span>`
     : `<b>Crew</b><span>Earn ${yen} before the clock runs out. Someone in this taxi wants the trip to fail. Watch who drives badly; you'll vote at the end.</span>`;
   layer.hidden = false;
+  const chev = '<svg viewBox="0 0 11 16" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l6 6-6 6"/></svg>';
   layer.innerHTML = `<div class="wt-grid">
-    <div class="card wt-box"><small>Wrong Turn · your secret role</small>
-      <div id="wt-peek" class="${imp ? 'imp' : ''}"><span class="wt-hold">Hold your phone close, then press and hold here to read your role.</span><div class="wt-secret">${secret}</div></div></div>
-    <div class="card wt-box"><small>Your wager</small>
+    <div class="card wt-box">
+      <div id="wt-peek" class="${imp ? 'imp' : ''}"><span class="wt-hold">Hold here to reveal role</span><div class="wt-secret">${secret}</div></div></div>
+    <div class="card wt-box"><small>Wager</small>
       <div class="wt-amt" id="wt-amt"></div>
-      <input type="range" id="wt-range" min="10" max="100" step="5" value="50" aria-label="Wager">
-      <p>Everyone deposits the same stake, <b>${sol(r.stake)} SOL</b> (devnet test tokens), so nobody can tell what you bet. You get back whatever you don't wager. Winners split the losers' wagers in proportion to their own.</p>
-      <button class="pill" id="wt-lock">Lock in wager</button>
-      <p class="wt-fine">Only a fingerprint (a salted hash) goes on Solana now. The amount stays on this phone until the reveal.</p></div></div>`;
+      <div class="wt-shuttle" id="wt-range" role="slider" tabindex="0" aria-label="Wager" aria-valuemin="10" aria-valuemax="100">
+        <i class="wt-trail"></i><div class="wt-chev">${chev.repeat(9)}</div>
+        <div class="wt-knob"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6l6 6-6 6M13 6l6 6-6 6"/></svg></div></div>
+      <button class="pill" id="wt-lock">Lock in wager</button></div></div>`;
   const peek = document.getElementById('wt-peek');
   const on = e => { e.preventDefault(); peek.classList.add('show'); A.buzz(15) }, off = () => peek.classList.remove('show');
   peek.addEventListener('pointerdown', on); for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) peek.addEventListener(ev, off);
-  const range = document.getElementById('wt-range'), amt = () => Math.round(r.stake * range.value / 100);
-  const upd = () => { document.getElementById('wt-amt').innerHTML = `${sol(amt())} SOL<small>${range.value}% of your stake</small>` };
-  range.oninput = upd; upd();
+  const range = shuttle(document.getElementById('wt-range'), () => upd()), amt = () => Math.round(r.stake * range.value / 100);
+  const upd = () => { document.getElementById('wt-amt').innerHTML = `${sol(amt())} SOL<small>${range.value}%</small>` };
+  upd();
   document.getElementById('wt-lock').onclick = () => {
     const wager = Math.max(r.minWager, Math.min(r.stake, amt())), salt = crypto.getRandomValues(new Uint8Array(32));
-    try { localStorage.setItem('wt:' + r.game, JSON.stringify({ wager, salt: hex(salt) })) } catch {}
+    try { localStorage.setItem('wt:' + r.game + ':' + r.me, JSON.stringify({ wager, salt: hex(salt) })) } catch {}
     A.send({ t: 'dx-commit', c: commitment(r.game, r.me, wager, salt) });
     showWaiting('Locking in your wager on Solana…');
   };
@@ -147,10 +201,10 @@ function showVote(m) {
     layer.innerHTML = `<div class="card wt-box wt-center"><h2>Vote in.</h2><p>Waiting for the others…</p></div>`;
   };
 }
-const myPid = () => { try { return localStorage.getItem('gtPid') } catch { return null } };
+const myPid = () => window.gtMyPid ? window.gtMyPid() : null;   // this tab's player (pad.html), not the browser-wide last one
 function doReveal() {
   if (!role || revealSent) return;
-  const s = store(role.game);
+  const s = store(role);
   layer.hidden = false;
   if (!s) { layer.innerHTML = `<div class="card wt-box wt-center"><h2>Your wager's secret isn't on this phone.</h2><p>Without it the reveal can't be checked, so your stake goes to the winners.</p></div>`; return }
   revealSent = true;
@@ -161,16 +215,12 @@ function showFinal(f) {
   const me = f.players.find(p => p.pid === myPid());
   layer.hidden = false; sabEl.hidden = true;
   if (!me) { layer.hidden = true; return }
-  const net = me.payout - f.stake, imp = f.players.find(p => p.imposter);
-  const won = f.aborted ? null : me.imposter ? !f.crewWins : f.crewWins;
+  // just the outcome: won or lost, what it did to this player's SOL, and the way back
+  const net = f.aborted ? 0 : me.payout - f.stake, won = me.imposter ? !f.crewWins : f.crewWins;   // a cancelled trip refunds every stake
   layer.innerHTML = `<div class="card wt-box wt-center">
-    <small>${f.aborted ? 'Trip cancelled' : me.imposter ? 'You were the imposter' : 'You were crew'}</small>
-    <h2>${f.aborted ? (me.payout ? 'Your stake is back.' : 'Nothing was staked.') : won ? 'You won.' : 'You lost.'}</h2>
-    ${f.aborted ? '' : `<p>${imp && imp.pid !== me.pid ? `${esc(imp.name)} was the imposter.` : ''} ${f.crewWins ? (f.caught ? 'The crew voted them out.' : 'The crew made the trip.') : 'The trip failed and nobody caught on.'}</p>
+    <h2>${f.aborted ? 'Trip cancelled.' : won ? 'You won.' : 'You lost.'}</h2>
     <div class="wt-big ${net >= 0 ? 'up' : 'down'}">${net >= 0 ? '+' : '−'}${sol(Math.abs(net))} SOL</div>
-    <p>${me.wager != null ? `You wagered ${sol(me.wager)} SOL.` : 'You did not reveal, so your stake was forfeited.'}</p>`}
-    ${f.tx.settle || f.tx.refund ? `<a class="wt-link" href="${f.tx.settle || f.tx.refund}" target="_blank" rel="noopener">See the payout on Solana ↗</a>` : ''}
-    <button class="pill" id="wt-close">Back to the crew</button></div>`;
+    <button class="pill" id="wt-close">Back</button></div>`;
   document.getElementById('wt-close').onclick = () => { layer.hidden = true; role = null };
 }
 

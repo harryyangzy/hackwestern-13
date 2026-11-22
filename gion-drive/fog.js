@@ -3,8 +3,8 @@
    rubs it off on their phone (pad-fog.js); the strokes come here through mp.js (window.GionCrewExt.onPhone) and this
    file sends the fog holder a small picture of the glass ('fg', 8 Hz).
 
-   The fog is a coarse density grid. It is drawn like the clouds in a woodblock print: flat cream bands with thin gold
-   edges, breathing slowly, rather than a grey blur. Only appears in a crew shift while a phone holds the fog role. */
+   The fog is a coarse density grid, drawn as a soft see-through mist (render()). Past half the glass the taxi can't
+   drive (GionTaxi.blind) until it's rubbed off. Only appears in a crew shift while a phone holds the fog role. */
 (() => {
 const GT = window.GionTaxi, $ = id => document.getElementById(id);
 if (!GT) return;
@@ -26,7 +26,7 @@ function fit() {
 /* ---------- the fog: a density grid, 0 (clear) to 1 (can't see a thing) ---------- */
 const GW = 64, GH = 40;
 const fog = new Float32Array(GW * GH);
-let banks = [], bankT = 4, on = false, sendT = 0, drawT = 0, stats = { rubbed: 0, peak: 0 };
+let blindFog = false, banks = [], bankT = 4, on = false, sendT = 0, drawT = 0, stats = { rubbed: 0, peak: 0 };
 const cover = () => { let s = 0; for (let i = 0; i < fog.length; i++) s += Math.min(1, fog[i] / .45); return s / fog.length };   // share of the glass you can't see through
 
 // a bank is a few puffs that drift in together and leave fog behind them as they go
@@ -58,34 +58,36 @@ function rub(x, y, x1, y1) {
   }
 }
 
-/* ---------- drawing: posterised cloud bands with gold edges ---------- */
+/* ---------- drawing: a soft, see-through mist ---------- */
+// The density grid becomes a smooth gradient: each cell's alpha rises gently with density (thin fog is a faint veil,
+// thick fog a milky wall you can just make out shapes through), upscaled in two smooth steps and blurred so there are
+// no cells or bands. Two slowly drifting copies make it breathe. Colours are the map's paper, cooling toward the
+// blue-violet of its shadows where the fog is thickest.
 const small = document.createElement('canvas'); small.width = GW; small.height = GH;
-const sg = small.getContext('2d');
-const MW = 320, MH = 200;   // the bands are cut at this size, then scaled up smoothly
+const sg = small.getContext('2d'), sImg = sg.createImageData(GW, GH);
+const MW = GW * 4, MH = GH * 4;
 const mid = document.createElement('canvas'); mid.width = MW; mid.height = MH;
-const mg = mid.getContext('2d', { willReadFrequently: true });
-const out = document.createElement('canvas'); out.width = MW; out.height = MH;
-const og = out.getContext('2d'), img = og.createImageData(MW, MH), sImg = sg.createImageData(GW, GH);
-const BANDS = [[.16, .4], [.4, .3], [.64, .24]];   // threshold, how much each band adds
+const mg = mid.getContext('2d');
 const ss = (a, b, v) => { const t = Math.max(0, Math.min(1, (v - a) / (b - a))); return t * t * (3 - 2 * t) };
+const canBlur = 'filter' in g;
 function render(t) {
-  for (let i = 0; i < fog.length; i++) { const v = Math.round(fog[i] * 255), o = i * 4; sImg.data[o] = sImg.data[o + 1] = sImg.data[o + 2] = v; sImg.data[o + 3] = 255 }
-  sg.putImageData(sImg, 0, 0);
-  mg.imageSmoothingEnabled = true; mg.imageSmoothingQuality = 'high'; mg.drawImage(small, 0, 0, MW, MH);
-  const src = mg.getImageData(0, 0, MW, MH).data, d = img.data;
-  for (let y = 0, p = 0; y < MH; y++) {
-    const wy = Math.sin(y * .061 - t * .7);
-    for (let x = 0; x < MW; x++, p += 4) {
-      const v = src[p] / 255 + .035 * Math.sin(x * .047 + t * .9) * wy;   // the edges breathe
-      let a = 0, edge = 0;
-      for (const [th, add] of BANDS) { a += ss(th - .012, th + .012, v) * add; edge = Math.max(edge, 1 - Math.abs(v - th - .016) / .011) }
-      if (edge > 0 && v > .12) { d[p] = 201; d[p + 1] = 160; d[p + 2] = 92; d[p + 3] = Math.round(Math.max(a * 255, 150 * edge)) }   // a thin gold rim
-      else { d[p] = 250; d[p + 1] = 245; d[p + 2] = 233; d[p + 3] = Math.round(a * 255) }
-    }
+  const d = sImg.data;
+  for (let i = 0; i < fog.length; i++) {
+    const v = fog[i], o = i * 4, k = ss(.35, 1, v);
+    d[o] = 246 - 24 * k; d[o + 1] = 242 - 20 * k; d[o + 2] = 234 - 4 * k;    // warm paper → a cool grey-violet
+    d[o + 3] = Math.round(ss(.02, .8, v) * .86 * 255);
   }
-  og.putImageData(img, 0, 0);
+  sg.putImageData(sImg, 0, 0);
+  mg.clearRect(0, 0, MW, MH); mg.imageSmoothingEnabled = true; mg.imageSmoothingQuality = 'high'; mg.drawImage(small, 0, 0, MW, MH);
   g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
-  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.drawImage(out, 0, 0, W, H);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high';
+  if (canBlur) g.filter = `blur(${Math.round(W / GW * .9)}px)`;
+  const pad = W * .03;   // drawn a little oversize so the blur doesn't leave a clear rim at the edges
+  g.globalAlpha = .7; g.drawImage(mid, -pad, -pad, W + 2 * pad, H + 2 * pad);
+  // a second, slowly drifting layer: the mist breathes and wisps move across without the density changing
+  const dx = Math.sin(t * .23) * W * .012, dy = Math.cos(t * .17) * H * .012, sc = 1 + .015 * Math.sin(t * .31);
+  g.globalAlpha = .45; g.drawImage(mid, -pad + dx - W * (sc - 1) / 2, -pad + dy - H * (sc - 1) / 2, (W + 2 * pad) * sc, (H + 2 * pad) * sc);
+  g.globalAlpha = 1; if (canBlur) g.filter = 'none';
 }
 
 /* ---------- phone messages (called by mp.js for the fog role) ---------- */
@@ -112,7 +114,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
   const c = crew(), fogger = GT.driving && c && c.phase === 'driving' && holder('fog');
-  if (!fogger) { if (on) { on = false; reset(); g.clearRect(0, 0, cv.width, cv.height) } cv.hidden = true; $('gt-fogbar').hidden = true; return }
+  if (!fogger) { if (on) { on = false; reset(); g.clearRect(0, 0, cv.width, cv.height) } blindFog = false; GT.blind('fog', false); cv.hidden = true; $('gt-fogbar').hidden = true; return }
   on = true; cv.hidden = false; fit();
   // banks come more often as the shift goes on (one step per fare, like the shooter's levels)
   const st = GT.state(), lv = Math.min(4, st ? st.fares : 0);
@@ -125,6 +127,7 @@ function frame(now) {
   banks = banks.filter(b => b.t < b.life);
   for (let i = 0; i < fog.length; i++) fog[i] = Math.max(0, fog[i] - dt * .004);   // it thins very slowly on its own
   const cov = cover(); stats.peak = Math.max(stats.peak, cov);
+  blindFog = blindFog ? cov > .38 : cov > .5; GT.blind('fog', blindFog);   // too thick to see the road: the taxi won't go until it's rubbed off
   if (now - drawT > 33) { drawT = now; render(now / 1000) }   // 30 fps is plenty for fog
   const bar = $('gt-fogbar'); bar.hidden = false;
   bar.innerHTML = `<b>Fog</b><span class="${cov > .45 ? 'full' : ''}">${cov < .03 ? 'Clear view' : Math.round(cov * 100) + '% fogged'}</span>`;

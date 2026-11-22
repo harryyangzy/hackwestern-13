@@ -328,8 +328,20 @@ const ROLE_INFO = {
 const CALL_TEXT = { left: 'Turn left', right: 'Turn right', straight: 'Straight on', uturn: 'Turn around', stop: 'Stop here' };
 const params = new URLSearchParams(location.search);
 let room = (params.get('r') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
-let pid = params.get('pid'); if (pid && /^[a-z0-9]{8,32}$/.test(pid)) { try { localStorage.setItem('gtPid', pid) } catch {} history.replaceState(null, '', '?r=' + room) } else { pid = null; try { pid = localStorage.getItem('gtPid') } catch {} }
-if (!pid || !/^[a-z0-9]{8,32}$/.test(pid)) { pid = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join(''); try { localStorage.setItem('gtPid', pid) } catch {} }
+// Who this phone is. Each tab is its own player (sessionStorage), so several tabs in one browser are several players,
+// not one player twice. A phone whose tab was closed or reloaded gets its old seat back from localStorage, unless
+// another open tab is still using that id (its heartbeat, gtLive:<pid>, is fresh).
+const PID_OK = p => !!p && /^[a-z0-9]{8,32}$/.test(p);
+const pidLive = p => { try { return Date.now() - (+localStorage.getItem('gtLive:' + p) || 0) < 4000 } catch { return false } };
+let pid = params.get('pid'); if (PID_OK(pid)) history.replaceState(null, '', '?r=' + room);
+else { pid = null; try { pid = sessionStorage.getItem('gtPid') } catch {}
+  if (!PID_OK(pid)) { pid = null; try { const last = localStorage.getItem('gtPid'); if (PID_OK(last) && !pidLive(last)) pid = last } catch {} } }
+if (!PID_OK(pid)) pid = Array.from(crypto.getRandomValues(new Uint8Array(12)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
+try { sessionStorage.setItem('gtPid', pid); localStorage.setItem('gtPid', pid) } catch {}
+const beatPid = () => { try { localStorage.setItem('gtLive:' + pid, Date.now()) } catch {} };
+beatPid(); setInterval(beatPid, 1500);
+addEventListener('pagehide', () => { try { localStorage.removeItem('gtLive:' + pid) } catch {} });
+window.gtMyPid = () => pid;   // wt-pad.js asks this tab who it is (localStorage is shared by every tab)
 
 /* ---------- screens ---------- */
 let screen = 'wait';

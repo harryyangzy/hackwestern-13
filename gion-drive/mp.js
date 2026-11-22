@@ -11,14 +11,15 @@ const SC = GT.scene, HALF = SC.meta.half;
 const served = /^https?:$/.test(location.protocol);
 
 /* ---------- roles: which roles each phone holds, by crew size (seat order) ---------- */
-// The shooter took the navigator's seat (shoot.js); the wipers ride with doors & camera. With four phones the last
-// seat rubs fog off the glass (fog.js), so doors move to the pedals and wipers to the shooter. The 'nav' code below
+// The shooter took the navigator's seat (shoot.js). With four phones the last seat rubs fog off the glass (fog.js),
+// so doors move to the pedals. The 'nav' code below
 // stays for now but no crew size hands it out.
+// No crew has a wiper any more: stuck visitors clear themselves after 10 s (shoot.js). The 'wipe' role code stays.
 const ROLE_SETS = {
   1: [['steer', 'pedals', 'ops']],          // one phone drives; no shooter, so no targets either
-  2: [['steer', 'ops', 'wipe'], ['pedals', 'shoot']],
-  3: [['steer'], ['pedals'], ['shoot', 'ops', 'wipe']],
-  4: [['steer'], ['pedals', 'ops'], ['shoot', 'wipe'], ['fog']],
+  2: [['steer', 'ops'], ['pedals', 'shoot']],
+  3: [['steer'], ['pedals'], ['shoot', 'ops']],
+  4: [['steer'], ['pedals', 'ops'], ['shoot'], ['fog']],
 };
 const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors', shoot: 'Shooter', wipe: 'Wipers', fog: 'Fog' };
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
@@ -42,24 +43,20 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 const menu = $('gt-menu');
 if (served) $('gt-start').insertAdjacentHTML('afterend', '<button id="gt-mp" class="gt-ghost">Play with phones</button>');
 menu.querySelector('.gt-menu-actions').insertAdjacentHTML('afterend', served
-  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors, wipers &amp; fog.</p>'
+  ? '<p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; fog.</p>'
   : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>
   <button id="gt-lclose" class="gt-x" aria-label="Close the room">×</button>
-  <h2>${GT.city.brand} <span>crew shift</span></h2>
-  <p class="gt-lsub">One taxi, up to four phones. Scan to join, pick up fares together.</p>
   <div id="gt-lresult"></div>
   <div class="gt-modes" role="group" aria-label="Game"><button data-game="taxi" aria-pressed="true">Taxi shift</button><button data-game="bowling" aria-pressed="false">${GT.city.bowl}</button></div>
   <div class="gt-lgrid">
     <figure class="gt-qr">
       <div id="gt-qr" aria-live="polite"></div>
-      <figcaption><small>Room</small><b id="gt-room">····</b><span id="gt-url"></span><span id="gt-net"></span><button id="gt-ip" hidden>Other network ›</button></figcaption>
+      <figcaption><small>Room</small><b id="gt-room">····</b><span id="gt-url"></span><button id="gt-ip" hidden>Other network ›</button></figcaption>
     </figure>
-    <div class="gt-crewcol"><ol id="gt-seats"></ol><p class="gt-lnote" id="gt-lnote"></p></div>
+    <div class="gt-crewcol"><ol id="gt-seats"></ol><p class="gt-lnote" id="gt-lnote" hidden></p><button id="gt-lstart" disabled>Start shift</button></div>
   </div>
-  <button id="gt-lstart" disabled>Start shift</button>
-  <p class="gt-keys gt-lhelp gt-lanhelp">Phones on the same Wi-Fi as this laptop. Campus Wi-Fi often blocks phones from reaching a laptop: then restart the server with <kbd>--tunnel</kbd>, or put everyone on one phone's Personal Hotspot.</p>
 </div>
 <div id="gt-count" hidden></div>`);
 $('gt-hud').insertAdjacentHTML('beforeend', '<div id="gt-call" class="gt-card" hidden></div><div id="gt-crew" class="gt-card" hidden></div>');
@@ -80,7 +77,6 @@ function renderLobby() {
   if (url) {
     $('gt-qr').innerHTML = GTQR.svg(url);
     $('gt-url').textContent = url.replace(/^https?:\/\//, '').replace(/\?r=.*/, '');
-    $('gt-net').textContent = publicUrl ? '' : 'Same Wi-Fi as this laptop';
   } else $('gt-qr').innerHTML = `<p class="gt-qrmsg">${!wsOk ? 'Connecting to the crew server…' : 'No network found. Connect this laptop to Wi-Fi or a phone’s hotspot.'}</p>`;
   $('gt-ip').hidden = ips.length < 2 || isLanHost() || !!publicUrl;
   $('gt-lobby').classList.toggle('public', !!publicUrl);
@@ -95,11 +91,11 @@ function renderLobby() {
   $('gt-seats').innerHTML = seats.join('');
   const notReady = crew.filter(p => !p.ready || !p.on).length;
   $('gt-lstart').disabled = !canStart();
-  $('gt-lstart').textContent = (result ? 'Start next ' : 'Start ') + (game === 'bowling' ? 'round' : 'shift');
+  // the Start button says what it's waiting for, so the card needs no notes
+  $('gt-lstart').textContent = !crew.length ? 'Scan the code to join' : notReady ? `Waiting for ${notReady} to get ready` : (result ? 'Start next ' : 'Start ') + (game === 'bowling' ? 'round' : 'shift');
   for (const b of document.querySelectorAll('.gt-modes button')) b.setAttribute('aria-pressed', b.dataset.game === game);
-  $('gt-lnote').textContent = !wsOk ? 'Can’t reach the crew server. Is node gion-drive/server.js still running?'
-    : !crew.length ? 'Up to four phones. Two or more is best: roles are shared out by crew size.'
-    : notReady ? `Waiting for ${notReady} phone${notReady === 1 ? '' : 's'} to get ready.` : 'Everyone’s ready.';
+  $('gt-lnote').textContent = wsOk ? '' : 'Can’t reach the crew server. Is node gion-drive/server.js still running?';
+  $('gt-lnote').hidden = wsOk;
   $('gt-lresult').innerHTML = result ? resultHTML(result) : '';
   $('gt-lobby').classList.toggle('has-result', !!result);
   renderCrewStrip();
@@ -116,7 +112,7 @@ function resultHTML(r) {
   return `<div class="gt-res"><b>Shift over</b><span class="gt-stars" aria-label="${rating(r)} of 3">${stars}</span>
     <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>${GT.moneyLabel}</small><b>${GT.money(r.yen)}</b></div>
     <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>${GT.money(-r.penaltyYen)}</b></div></div>
-    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ${GT.money(r.best)}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass, ${r.wiped} wiped off.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
+    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ${GT.money(r.best)}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
 }
 function renderCrewStrip() {
   const el = $('gt-crew'), on = phase === 'driving' && crew.length;

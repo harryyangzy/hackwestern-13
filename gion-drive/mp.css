@@ -73,3 +73,16 @@
 .gt-modes button{padding:7px 18px;font-weight:600;font-size:14px;color:var(--muted)}
 .gt-modes button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 @media (max-width:620px){.gt-lgrid{grid-template-columns:1fr;justify-items:center}#gt-seats{width:100%}}
+
+/* the lobby, pared down: mode tabs on top, the QR code and room on the left, the seats and Start on the right */
+#gt-lobby{width:min(640px,calc(100% - 28px));padding:18px 22px 20px}
+#gt-lobby .gt-modes{margin:2px auto 18px}
+.gt-lgrid{gap:20px;align-items:stretch}
+.gt-qr{justify-content:center;padding:14px 12px 10px;border-radius:16px;background:#fffcf3;border:1px solid var(--rule)}
+.gt-qr figcaption{margin-top:4px}
+.gt-crewcol{display:flex;flex-direction:column}
+#gt-seats li{min-height:56px}
+#gt-lobby #gt-lstart{position:static;width:100%;margin:auto 0 0;box-shadow:none;transform:none}
+#gt-seats+.gt-lnote,#gt-seats+#gt-lstart{margin-top:12px}
+.gt-lnote[hidden]{display:none}
+.gt-lnote{color:var(--rust);margin:10px 0 10px}
