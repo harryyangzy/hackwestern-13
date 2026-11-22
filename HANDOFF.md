@@ -71,6 +71,10 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
   For testing with fewer than 3 phones, tick "Fill empty seats with bots" under Wrong Turn in the lobby. The
   server wallet (`gion-drive/solana/.keys/server.json`, git-ignored) had about 0.011 devnet SOL left; top it up at
   https://faucet.solana.com before demoing with the default 0.01 SOL stake.
+  On a fresh clone (no `.keys/`), the server now makes its own wallet on first start and prints its address; fund
+  that at the faucet (about 0.05 SOL for a 4-player game). Teammates don't need Harry's key.
+  Step-by-step for teammates and their AI agents: skill `setup-wrong-turn-solana`
+  (`.agents/skills/setup-wrong-turn-solana/SKILL.md`, also linked from `.claude/skills/`).
 - **Merged with `main` (shooter, wipers, new cities, bowling):** the navigator is gone, so the destination stays visible
   and the *decoy* sabotage is unused; shooter sabotages with *drift*, wipers with *jam*. Wrong Turn only applies to taxi
   shifts, not Gion Bowling.
