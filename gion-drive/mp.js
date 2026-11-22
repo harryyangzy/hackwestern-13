@@ -10,13 +10,15 @@ const SC = GT.scene, HALF = SC.meta.half;
 const served = /^https?:$/.test(location.protocol);
 
 /* ---------- roles: which roles each phone holds, by crew size (seat order) ---------- */
+// The shooter took the navigator's seat (shoot.js); the wipers ride with doors & camera. The 'nav' code below stays
+// for now but no crew size hands it out.
 const ROLE_SETS = {
-  1: [['steer', 'pedals', 'ops']],
-  2: [['steer', 'ops'], ['pedals', 'nav']],
-  3: [['steer'], ['pedals'], ['nav', 'ops']],
-  4: [['steer'], ['pedals'], ['nav'], ['ops']],
+  1: [['steer', 'pedals', 'ops']],          // one phone drives; no shooter, so no targets either
+  2: [['steer', 'ops', 'wipe'], ['pedals', 'shoot']],
+  3: [['steer'], ['pedals'], ['shoot', 'ops', 'wipe']],
+  4: [['steer'], ['pedals'], ['shoot'], ['ops', 'wipe']],
 };
-const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors & camera' };
+const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors & camera', shoot: 'Shooter', wipe: 'Wipers' };
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
@@ -33,7 +35,7 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 /* ---------- UI: a menu button, the lobby card, the crew strip and the navigator's callouts ---------- */
 const menu = $('gt-menu');
 $('gt-start').insertAdjacentHTML('afterend', served
-  ? '<button id="gt-mp" class="gt-ghost">Play with phones</button><p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, navigator, doors.</p>'
+  ? '<button id="gt-mp" class="gt-ghost">Play with phones</button><p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
   : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>
@@ -105,7 +107,7 @@ function resultHTML(r) {
   return `<div class="gt-res"><b>Shift over</b><span class="gt-stars" aria-label="${rating(r)} of 3">${stars}</span>
     <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div>
     <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>−¥${r.penaltyYen.toLocaleString()}</b></div></div>
-    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ¥${r.best.toLocaleString()}.</p></div>`;
+    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ¥${r.best.toLocaleString()}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass, ${r.wiped} wiped off.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
 }
 function renderCrewStrip() {
   const el = $('gt-crew'), on = phase === 'driving' && crew.length;
@@ -201,6 +203,8 @@ function onPhone(p, m) {
         showPing(m.x, m.y, p.color); toPhones({ t: 'ev', k: 'ping', x: m.x, y: m.y });
       }
       break;
+    default:   // other roles' messages (shoot.js: aim, fire, wipe); the extension checks role and phase itself
+      if (window.GionCrewExt && window.GionCrewExt.onPhone) window.GionCrewExt.onPhone(p, m, roles, phase);
   }
 }
 // merge the phones into the shared input; a phone that stopped sending (backgrounded, out of range) lets go
@@ -314,5 +318,5 @@ setInterval(() => {
   if (gone.length && wsOk) { for (const p of gone) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1) } rolesChanged(); broadcastLobby() }
 }, 100);
 setInterval(() => send({ t: 'hb' }), 2000);
-window.GionCrew = { get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()) };
+window.GionCrew = { toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()) };
 })();

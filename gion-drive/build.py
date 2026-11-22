@@ -16,8 +16,8 @@ Two ways to build, same result:
 
 Wiring: the page sends window.PLAYER to the render worker with each frame, and the worker sends back the traffic near
 the taxi. window.GT_CITY (and GT_CITY inside the worker) carries the city's settings. The game files (drive.css,
-mp.css, qr.js, drive.js, mp.js) go in before </body>. pad.html and server.js are served beside the pages by
-`node server.js`; they aren't part of the build.
+mp.css, shoot.css, qr.js, drive.js, shoot.js, mp.js) go in before </body>. pad.html, pad-shoot.js (the phone
+controller) and server.js are served beside the pages by `node server.js`; they aren't part of the build.
 """
 import argparse, json, os, re, subprocess, sys, tempfile
 
@@ -102,9 +102,10 @@ def build(cid):
         html = html.replace(old, new)
 
     script = lambda name: '<script>\n' + src(name).replace('</script', '<\\/script') + '\n</script>\n'
-    game = (G_OPEN + '<style>\n' + src('drive.css') + src('mp.css') + '</style>\n'
+    # shoot.js goes before mp.js so it hears the 'stop' event first and can add the shooter's stats to the results
+    game = (G_OPEN + '<style>\n' + src('drive.css') + src('mp.css') + src('shoot.css') + '</style>\n'
             + '<script>window.GT_CITY = ' + json.dumps(cfg, ensure_ascii=False).replace('</', '<\\/') + ';</script>\n'
-            + script('qr.js') + script('drive.js') + script('mp.js') + G_CLOSE)
+            + script('qr.js') + script('drive.js') + script('shoot.js') + script('mp.js') + G_CLOSE)
     if html.count('</body></html>') != 1: sys.exit(f'{cid}: </body></html> not found exactly once')
     html = html.replace('</body></html>', game + '</body></html>')
     open(out, 'w', encoding='utf-8').write(html)
