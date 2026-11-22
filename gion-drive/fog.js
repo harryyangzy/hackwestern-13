@@ -116,6 +116,7 @@ function frame(now) {
   const c = crew(), fogger = GT.driving && c && c.phase === 'driving' && holder('fog');
   if (!fogger) { if (on) { on = false; reset(); g.clearRect(0, 0, cv.width, cv.height) } blindFog = false; GT.blind('fog', false); cv.hidden = true; $('gt-fogbar').hidden = true; return }
   on = true; cv.hidden = false; fit();
+  if (GT.paused) return;
   // banks come more often as the shift goes on (one step per fare, like the shooter's levels)
   const st = GT.state(), lv = Math.min(4, st ? st.fares : 0);
   bankT -= dt;

@@ -39,7 +39,9 @@ window.GionBrief = ({ title, objective, lines = [], onCount, abort = () => false
   if (briefing) return;   // never two at once
   briefing = true;
   $('gt-btitle').textContent = title; $('gt-bobj').textContent = objective;
-  $('gt-blines').innerHTML = lines.map(l => `<li><i style="background:${esc(l.color)}"></i><b>${esc(l.name)}</b><span>${esc(l.text)}</span></li>`).join('');
+  const face = c => window.GionCrew?.icon ? `<span class="gt-bface">${window.GionCrew.icon(c, 44)}</span>` : `<i style="background:${esc(c)}"></i>`;
+  $('gt-blines').innerHTML = lines.map(l => `<li style="--c:${esc(l.color)}">${face(l.color)}<b>${esc(l.name)}</b><span>${esc(l.text)}</span></li>`).join('');
+  $('gt-blines').dataset.n = lines.length;
   const box = $('gt-brief'), num = $('gt-bcount');
   num.textContent = 'Get ready'; num.className = 'ready'; box.classList.remove('leave'); box.hidden = false;
   // the page steps aside and the camera glides down behind the taxi while everyone reads (drive.js preview)

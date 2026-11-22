@@ -306,6 +306,7 @@ function frame(now) {
   const shooter = driving && holder('shoot'), wiper = driving && holder('wipe');
   if (!driving) { if (on) { on = false; reset() } GT.blind('stickers', false); cv.hidden = true; return }
   on = true; cv.hidden = false;
+  if (GT.paused) return;
   const st = GT.state();
   pal = scenery();
   // level: one step per fare delivered

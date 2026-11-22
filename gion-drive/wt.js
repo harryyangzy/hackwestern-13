@@ -88,7 +88,7 @@ GT.on('stop', r => {
 });
 function resetMods() { Object.assign(GT.mods, { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 }) }
 setInterval(() => {
-  if (!active) return;
+  if (!active || GT.paused) return;
   const st = GT.state(); if (!st) return;
   const dt = .1, near = Math.hypot(st.tx - st.x, st.ty - st.y) < 14;
   // brakes fade if someone stands on them away from a lantern: stopping the taxi for good takes more than one foot

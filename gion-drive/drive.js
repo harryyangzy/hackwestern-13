@@ -178,7 +178,7 @@ const remote = { gas: 0, brake: 0, turn: 0, gear: 'D' };   // phone pedals: gas 
 // Wrong Turn mode (wt.js) bends these; at their defaults the game is exactly as before
 const mods = { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 };
 // the shift's route for the results map: a breadcrumb every quarter second, plus where fares, bumps and hits happened
-let trail = [], marks = [], trailT = 0, distM = 0;
+let trail = [], marks = [], trailT = 0, distM = 0, paused = false;
 const mark = k => car && marks.push([+car.x.toFixed(1), +car.y.toFixed(1), k]);
 let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
 // Gion Bowling: pedestrians knocked over this round (hidden by the render worker), score, combo, little dust pops
@@ -225,6 +225,7 @@ function start(m) {
   emit('start', mode);
 }
 function stop(result) {
+  paused = false; document.body.classList.remove('gt-paused');
   blindBy.clear(); if ($('gt-blind')) $('gt-blind').hidden = true;
   const was = driving;
   driving = false; window.PLAYER = null; document.body.classList.remove('gt-driving'); keys.clear(); clearRemote(); ping = null;
@@ -444,7 +445,7 @@ function preview(on) {
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
-  if (!driving) return;
+  if (!driving || paused) return;   // paused (the test lab's Pause): the clock, the taxi and the fare all hold still
   step(dt); bumps(dt); doorOpen = Math.max(0, doorOpen - dt);
   if (fare && fare.mode === 'drop') fare.t += dt;
   distM += Math.abs(car.v) * dt; trailT += dt;
@@ -487,7 +488,8 @@ function frame(now) {
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
   start, stop, preview, blind, money, moneyLabel: MONEY.label, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, mapBase, half: HALF, city: CITYCFG, drive: DRIVE, route,
-  get car() { return car }, get driving() { return driving }, get cam() { return cam }, get mode() { return mode },
+  get car() { return car }, get driving() { return driving },
+  get paused() { return paused }, set paused(v) { paused = !!v && driving; document.body.classList.toggle('gt-paused', paused) }, get cam() { return cam }, get mode() { return mode },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },
   setPing(x, y, color, ms = 6000) { ping = { x, y, color, until: performance.now() + ms } },

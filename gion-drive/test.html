@@ -65,6 +65,8 @@ main{display:flex;min-height:0}
   <button class="act go" id="launch">Launch</button>
   <button class="act" id="readyAll" disabled>All ready</button>
   <button class="act" id="start" disabled>Start</button>
+  <button class="act" id="pause" disabled title="Freeze the clock and the taxi; press again to carry on">Pause</button>
+  <button class="act" id="end" disabled title="End the shift or round now, as if the clock ran out">End game</button>
   <div class="grp"><small>View</small><div class="seg" id="view"></div></div>
   <span id="status"></span>
 </header>
@@ -195,9 +197,15 @@ $('readyAll').onclick = () => {
   for (const p of phones) { try { const b = p.frame.contentDocument.getElementById('ready'); if (b && b.getAttribute('aria-pressed') !== 'true' && b.offsetParent) b.click() } catch {} }
 };
 $('start').onclick = () => { applyMode(); gq('#gt-lstart')?.click() };
+// end the shift now, as if the clock ran out: results, or the Wrong Turn vote and reveal
+$('pause').onclick = () => { const T = gw()?.GionTaxi; if (!T?.driving) return; T.paused = !T.paused; $('pause').textContent = T.paused ? 'Resume' : 'Pause'; $('pause').setAttribute('aria-pressed', T.paused) };
+$('end').onclick = () => { const T = gw()?.GionTaxi; if (T?.driving) T.stop(true) };
 
 // phone headers: who sits there and what they hold, read from the laptop
 setInterval(() => {
+  const T0 = gw()?.GionTaxi;
+  $('end').disabled = $('pause').disabled = !T0?.driving;
+  $('pause').textContent = T0?.paused ? 'Resume' : 'Pause'; $('pause').setAttribute('aria-pressed', !!T0?.paused);
   const g = gw(), crew = g?.GionCrew?.crew; if (!crew) return;
   for (const p of phones) {
     const c = crew.find(x => x.pid === p.pid), h = p.el.querySelector('header');

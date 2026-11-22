@@ -2552,6 +2552,7 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 #gt-menu p{margin:0 0 10px;color:var(--muted)}
 #gt-menu .gt-keys{font-size:13px}
 #gt-menu kbd{font:12px var(--mono);border:1px solid var(--rule);border-radius:4px;padding:1px 5px;background:#fff;margin:0 1px}
+body.gt-paused #stage::after{content:'Paused';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;padding:10px 22px;border-radius:999px;background:#263c35e6;color:#fff6e2;font:600 18px var(--sans);letter-spacing:.04em;pointer-events:none}
 #gt-result:empty{display:none}#gt-result{color:var(--ink)!important;font:16px var(--serif)}
 #gt-start{margin-top:6px;background:var(--rust);color:#fff;border-radius:999px;padding:10px 26px;font-weight:600;font-size:15px}
 #gt-start:hover{filter:brightness(1.08)}
@@ -2581,19 +2582,23 @@ body.gt-focus .stage>.mark,body.gt-driving .stage>.mark{opacity:0}
 /* tandem opening flow (flow.js): the old card only shows a shift's result; the briefing before each shift */
 body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-menu .gt-instructions,body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
 body.gt-flow #gt-lclose{position:static;display:inline-flex;width:max-content;height:auto;margin:0 0 12px;place-items:initial}
-#gt-brief{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 28px));padding:22px 28px;z-index:7;text-align:center}
+/* the briefing: flat paper with a solid edge; the objective in a pill; one tile per player with their mascot; the count in a rust badge */
+#gt-brief{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:max-content;max-width:calc(100% - 28px);padding:26px 28px 24px;z-index:7;text-align:center;
+  background:#fffcf3!important;border:1.5px solid #e3d6bc!important;box-shadow:0 6px 0 #e3d6bc!important}
 #gt-brief[hidden]{display:none}
-#gt-brief small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
-#gt-brief h2{font:600 30px var(--serif);margin:2px 0 6px}
-#gt-brief p{margin:0 0 14px;font:italic 17px var(--serif)}
-#gt-brief ul{list-style:none;margin:0 0 10px;padding:0;text-align:left;display:flex;flex-direction:column;gap:6px}
-#gt-brief li{display:flex;align-items:baseline;gap:8px}
-#gt-brief li i{width:10px;height:10px;border-radius:50%;flex:none;transform:translateY(1px)}
-#gt-brief li b{font:600 15px var(--serif);white-space:nowrap}
-#gt-brief li span{color:var(--muted)}
-#gt-bcount{display:block;font:600 64px/1 var(--serif);color:var(--rust);min-height:64px}
-#gt-bcount.ready{font:italic 22px/64px var(--serif);color:var(--muted)}
-#gt-bcount.pop{animation:gt-pop .9s ease-out}
+#gt-brief h2{font:500 34px/1.05 var(--display);margin:0 0 10px}
+#gt-brief p{display:inline-block;margin:0 0 18px;padding:6px 14px;border-radius:999px;background:#f4ecdc;color:var(--ink);font:600 14px var(--sans)}
+#gt-brief ul{list-style:none;margin:0 0 20px;padding:0;display:grid;grid-template-columns:repeat(var(--cols,2),148px);justify-content:center;gap:10px}
+#gt-blines[data-n="1"]{--cols:1}#gt-blines[data-n="3"]{--cols:3}#gt-blines[data-n="4"]{--cols:4}
+#gt-brief li{display:flex;flex-direction:column;align-items:center;gap:3px;padding:12px 10px 11px;border-radius:14px;background:#fffcf3;border:1.5px solid #e3d6bc;box-shadow:0 4px 0 #e3d6bc}
+#gt-brief li .gt-bface{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:#f4ecdc;margin-bottom:3px}
+#gt-brief li .gt-bface svg{width:44px;height:44px}
+#gt-brief li>i{width:12px;height:12px;border-radius:50%}
+#gt-brief li b{font:500 17px/1.1 var(--display);color:var(--ink);white-space:nowrap}
+#gt-brief li span{font:500 12.5px/1.3 var(--sans);color:var(--muted)}
+#gt-bcount{display:grid;place-items:center;margin:0 auto;width:72px;height:72px;border-radius:50%;background:#c8402f;color:#fff6e2;font:500 40px/1 var(--display);box-shadow:0 4px 0 #9a2f22}
+#gt-bcount.ready{width:auto;height:auto;padding:10px 22px;border-radius:999px;background:#f4ecdc;color:var(--muted);font:600 15px/1 var(--sans);box-shadow:0 3px 0 #e3d6bc}
+@media (max-width:700px){#gt-blines[data-n="3"],#gt-blines[data-n="4"]{--cols:2}}
 
 /* ---------- motion: short, eased, staggered; nothing waits on an animation ---------- */
 @keyframes gt-rise{from{opacity:0;transform:translate(-50%,calc(-50% + 14px)) scale(.985)}to{opacity:1;transform:translate(-50%,-50%)}}
@@ -2603,7 +2608,8 @@ body.gt-flow #gt-lclose{position:static;display:inline-flex;width:max-content;he
 #gt-brief.leave,#gt-lobby.leave{animation:none;opacity:0;transform:translate(-50%,calc(-50% - 10px)) scale(.985);transition:opacity .28s ease,transform .3s ease}
 #gt-brief li{animation:gt-in .4s cubic-bezier(.2,.7,.2,1) both}
 #gt-brief li:nth-child(2){animation-delay:.07s}#gt-brief li:nth-child(3){animation-delay:.14s}#gt-brief li:nth-child(4){animation-delay:.21s}
-#gt-bcount.pop{animation:gt-num .9s cubic-bezier(.2,.7,.2,1)}
+#gt-bcount.pop{animation:gt-bnum .5s cubic-bezier(.2,.7,.2,1)}
+@keyframes gt-bnum{0%{transform:scale(1.35)}100%{transform:scale(1)}}
 #gt-seats li{animation:gt-in .35s cubic-bezier(.2,.7,.2,1) both}
 #gt-seats li:nth-child(2){animation-delay:.04s}#gt-seats li:nth-child(3){animation-delay:.08s}#gt-seats li:nth-child(4){animation-delay:.12s}
 /* the HUD arrives as the shift starts: stats, task, minimap a beat apart */
@@ -3596,7 +3602,7 @@ const remote = { gas: 0, brake: 0, turn: 0, gear: 'D' };   // phone pedals: gas 
 // Wrong Turn mode (wt.js) bends these; at their defaults the game is exactly as before
 const mods = { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 };
 // the shift's route for the results map: a breadcrumb every quarter second, plus where fares, bumps and hits happened
-let trail = [], marks = [], trailT = 0, distM = 0;
+let trail = [], marks = [], trailT = 0, distM = 0, paused = false;
 const mark = k => car && marks.push([+car.x.toFixed(1), +car.y.toFixed(1), k]);
 let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
 // Gion Bowling: pedestrians knocked over this round (hidden by the render worker), score, combo, little dust pops
@@ -3643,6 +3649,7 @@ function start(m) {
   emit('start', mode);
 }
 function stop(result) {
+  paused = false; document.body.classList.remove('gt-paused');
   blindBy.clear(); if ($('gt-blind')) $('gt-blind').hidden = true;
   const was = driving;
   driving = false; window.PLAYER = null; document.body.classList.remove('gt-driving'); keys.clear(); clearRemote(); ping = null;
@@ -3862,7 +3869,7 @@ function preview(on) {
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
-  if (!driving) return;
+  if (!driving || paused) return;   // paused (the test lab's Pause): the clock, the taxi and the fare all hold still
   step(dt); bumps(dt); doorOpen = Math.max(0, doorOpen - dt);
   if (fare && fare.mode === 'drop') fare.t += dt;
   distM += Math.abs(car.v) * dt; trailT += dt;
@@ -3905,7 +3912,8 @@ function frame(now) {
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
   start, stop, preview, blind, money, moneyLabel: MONEY.label, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, mapBase, half: HALF, city: CITYCFG, drive: DRIVE, route,
-  get car() { return car }, get driving() { return driving }, get cam() { return cam }, get mode() { return mode },
+  get car() { return car }, get driving() { return driving },
+  get paused() { return paused }, set paused(v) { paused = !!v && driving; document.body.classList.toggle('gt-paused', paused) }, get cam() { return cam }, get mode() { return mode },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },
   setPing(x, y, color, ms = 6000) { ping = { x, y, color, until: performance.now() + ms } },
@@ -4489,6 +4497,7 @@ function frame(now) {
   const shooter = driving && holder('shoot'), wiper = driving && holder('wipe');
   if (!driving) { if (on) { on = false; reset() } GT.blind('stickers', false); cv.hidden = true; return }
   on = true; cv.hidden = false;
+  if (GT.paused) return;
   const st = GT.state();
   pal = scenery();
   // level: one step per fare delivered
@@ -4658,6 +4667,7 @@ function frame(now) {
   const c = crew(), fogger = GT.driving && c && c.phase === 'driving' && holder('fog');
   if (!fogger) { if (on) { on = false; reset(); g.clearRect(0, 0, cv.width, cv.height) } blindFog = false; GT.blind('fog', false); cv.hidden = true; $('gt-fogbar').hidden = true; return }
   on = true; cv.hidden = false; fit();
+  if (GT.paused) return;
   // banks come more often as the shift goes on (one step per fare, like the shooter's levels)
   const st = GT.state(), lv = Math.min(4, st ? st.fares : 0);
   bankT -= dt;
@@ -5161,7 +5171,7 @@ GT.on('stop', r => {
 });
 function resetMods() { Object.assign(GT.mods, { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 }) }
 setInterval(() => {
-  if (!active) return;
+  if (!active || GT.paused) return;
   const st = GT.state(); if (!st) return;
   const dt = .1, near = Math.hypot(st.tx - st.x, st.ty - st.y) < 14;
   // brakes fade if someone stands on them away from a lantern: stopping the taxi for good takes more than one foot
@@ -5310,7 +5320,9 @@ window.GionBrief = ({ title, objective, lines = [], onCount, abort = () => false
   if (briefing) return;   // never two at once
   briefing = true;
   $('gt-btitle').textContent = title; $('gt-bobj').textContent = objective;
-  $('gt-blines').innerHTML = lines.map(l => `<li><i style="background:${esc(l.color)}"></i><b>${esc(l.name)}</b><span>${esc(l.text)}</span></li>`).join('');
+  const face = c => window.GionCrew?.icon ? `<span class="gt-bface">${window.GionCrew.icon(c, 44)}</span>` : `<i style="background:${esc(c)}"></i>`;
+  $('gt-blines').innerHTML = lines.map(l => `<li style="--c:${esc(l.color)}">${face(l.color)}<b>${esc(l.name)}</b><span>${esc(l.text)}</span></li>`).join('');
+  $('gt-blines').dataset.n = lines.length;
   const box = $('gt-brief'), num = $('gt-bcount');
   num.textContent = 'Get ready'; num.className = 'ready'; box.classList.remove('leave'); box.hidden = false;
   // the page steps aside and the camera glides down behind the taxi while everyone reads (drive.js preview)
