@@ -18,7 +18,7 @@ catch (e) { chainErr = /Cannot find module '@solana/.test(e.message) ? 'Run `npm
 
 const STAKE = Math.round((+process.env.WT_STAKE || 0.01) * 1e9);   // lamports each player deposits (test SOL)
 const SAB_CHARGES = 3, SAB_COOLDOWN_MS = 12000, VOTE_MS = 25000, REVEAL_MS = 45000;
-const KINDS = { steer: 'drift', pedals: 'stall', nav: 'decoy', ops: 'jam' };
+const KINDS = { steer: 'drift', pedals: 'stall', nav: 'decoy', ops: 'jam', shoot: 'drift', wipe: 'jam' };   // main replaced the navigator with shoot + wipe
 const DEFAULT_GOAL = 3000;
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), '[wrong turn]', ...a);
 const hex = b => Buffer.from(b).toString('hex');
@@ -91,7 +91,7 @@ function create(io) {
     const imp = pid === w.imposterPid;
     P(room, pid, { t: 'dx-role', imposter: imp, game: hex(w.game.toBuffer()), me: hex(w.burners[pid].publicKey.toBuffer()),
       gameId: w.gameId, stake: w.stake, minWager: Math.floor(w.stake / 10), goal: w.goal, committed: !!w.commits[pid],
-      kinds: imp ? s.roles.map(r => KINDS[r]) : [], charges: imp ? w.sab.left : 0, quiet: w.phase !== 'commit',
+      kinds: imp ? [...new Set(s.roles.map(r => KINDS[r]))] : [], charges: imp ? w.sab.left : 0, quiet: w.phase !== 'commit',
       seats: w.seats.map(x => ({ pid: x.pid, name: x.name, color: x.color })) });
   }
   async function commit(room, pid, m) {
@@ -120,7 +120,7 @@ function create(io) {
   function sabotage(room, pid, m) {
     const w = room.wt;
     if (!w || w.phase !== 'driving' || pid !== w.imposterPid) return;
-    const s = w.seats.find(x => x.pid === pid), kinds = s.roles.map(r => KINDS[r]);
+    const s = w.seats.find(x => x.pid === pid), kinds = [...new Set(s.roles.map(r => KINDS[r]))];
     const kind = kinds.includes(m.kind) ? m.kind : kinds[0];
     const now = Date.now();
     if (!kind || w.sab.left <= 0 || now - w.sab.last < SAB_COOLDOWN_MS) return P(room, pid, { t: 'dx-sab-ack', ok: false, left: w.sab.left, wait: Math.max(0, SAB_COOLDOWN_MS - (now - w.sab.last)) });

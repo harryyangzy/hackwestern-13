@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- Gion Taxi. The city, its drawing engine and the street simulation are Pocket City by April Zhu (MIT licence, https://april-zhu.com/pocketcity). Map data © OpenStreetMap contributors (ODbL). -->
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f8f5eb"><meta name="description" content="Gion Taxi: drive a taxi through the lanes of Gion Shirakawa, Kyoto, alone or with a crew of phones."><title>Gion Taxi</title>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f8f5eb"><meta name="description" content="Gion Taxi: Drive a taxi through the lanes of Gion, Kyoto. Alone or with a crew of phones."><title>Gion Taxi</title>
 <style>
 :root{--paper:#f6f3e9;--panel:#fffcf3;--ink:#263c35;--muted:#626c60;--rule:#cfcfc0;--rust:#ac4931;--green:#36594b;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:"Helvetica Neue",Arial,sans-serif}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}body{color:var(--ink);font:14px/1.4 var(--sans);background:var(--paper)}button,select,input{font:inherit;color:inherit}button,select{cursor:pointer}button{background:none;border:0}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--rust);outline-offset:3px}button:disabled{opacity:.35;cursor:default}svg{display:block}button svg,.tool svg,.symbol{width:17px;height:17px;flex:none}button{touch-action:manipulation}a{color:var(--green);text-underline-offset:2px}[hidden]{display:none!important}
@@ -1184,10 +1184,11 @@ function CITY_EXTRA(t) {
 }
 
 /* <gion-taxi player.js> */
+const GT_CITY = {"drivePaths": false};
 
 /* ---------- Gion Taxi: the player's car, drawn by the render worker ----------
    Appended after the Gion landmarks. The page sends self.PLAYER with each frame ({x, y, h, v, tx, ty, mode});
-   we draw the player's taxi, the fare marker and the navigator's ping ({px, py, pc}) with the kit's own parts, and hand back the traffic near the car
+   we draw the player's taxi, the fare marker, the navigator's ping ({px, py, pc}), the road kerbs and bowling pops with the kit's own parts, and hand back the traffic near the car
    (self.NEAR) so the page can tell when the taxi bumps into a car, a bike or a person. */
 const GION_EXTRA = typeof CITY_EXTRA === 'function' ? CITY_EXTRA : null;
 let PLAYER_MESH = null;
@@ -1223,11 +1224,102 @@ function pingMarker(x, y, col, t) {
     { fp: rect(x, y, .4, .4), h: 6, draw: () => { const z0 = 4.6 + bob, fp = rect(x, y, .5, .5), cap = rect(x, y, .58, .58);
       return loft(atZ(fp, z0), atZ(fp, z0 + 1), () => col) + shape(atZ(cap, z0 + 1.02), '#3a2e26', .2) + shape(atZ(cap, z0 - .02), '#3a2e26', .2) } }];
 }
+// kerbs: red and cream stripes along every road edge (dark and cream where the road leaves the plot), so it's always clear
+// where the taxi can go. Built once from the scene's road rings, in 1.6 m pieces that sort with everything else.
+let KERBS = null;
+function buildKerbs() {
+  KERBS = [];
+  const H = SCENE.meta.half, DRIVE = SCENE.roads.concat(typeof GT_CITY === 'object' && GT_CITY.drivePaths ? (SCENE.paths || []) : []);
+  const onRoad = p => DRIVE.some(rs => { let c = false; for (const r of rs) if (inside(p, r)) c = !c; return c });
+  let k = 0;
+  for (const rs of DRIVE) for (const r of rs) for (let i = 0; i < r.length; i++) {
+    const a = r[i], b = r[(i + 1) % r.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L < .05) continue;
+    const ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L, mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    const left = onRoad([mid[0] - uy * .4, mid[1] + ux * .4]), right = onRoad([mid[0] + uy * .4, mid[1] - ux * .4]);
+    if (left === right) continue;   // an edge inside the drivable area (a path meeting a road): no kerb
+    const s = left ? 1 : -1, nx = -uy * s, ny = ux * s;   // toward the road
+    const edge = [a, b].every(p => Math.abs(p[0]) > H - .8) || [a, b].every(p => Math.abs(p[1]) > H - .8);
+    for (let d = 0; d < L - .01; d += 1.6, k++) {
+      const e = Math.min(L, d + 1.6), W = edge ? .55 : .36;
+      const q = [[a[0] + ux * d, a[1] + uy * d], [a[0] + ux * e, a[1] + uy * e]];
+      const quad = [q[0], q[1], [q[1][0] + nx * W, q[1][1] + ny * W], [q[0][0] + nx * W, q[0][1] + ny * W]];
+      const col = k % 2 ? '#fffcf3' : edge ? '#263c35' : '#c8513a', cx = (q[0][0] + q[1][0]) / 2, cy = (q[0][1] + q[1][1]) / 2;
+      KERBS.push({ cx, cy, quad, col });
+    }
+  }
+}
+function kerbParts(me) {
+  if (!KERBS) buildKerbs();
+  const out = [];
+  for (const kb of KERBS) {
+    if (Math.abs(kb.cx - me.x) > 70 || Math.abs(kb.cy - me.y) > 70) continue;
+    const far = kb.quad.slice().sort((a, b) => depthOf([...a, 0]) - depthOf([...b, 0]))[0];   // flat: sort by its farthest corner
+    out.push({ fp: rect(far[0], far[1], .05, .05), h: .05, draw: () => shape(atZ(kb.quad, .045), kb.col, 0) });
+  }
+  return out;
+}
+// Gion Bowling: a puff of dust where someone was knocked over
+function popPart(x, y, f) {
+  const r = .6 + f * 1.8, o = (1 - f).toFixed(2);
+  return { fp: rect(x, y, .3, .3), h: 1.5, draw: () => `<g opacity="${o}">` + shape(atZ(polygon(x, y, r, 14), .08), '#f2c94c', 0) + shape(atZ(polygon(x, y, r * .55, 10, f * 3), .9 + f), '#fffcf3', 0) + '</g>' };
+}
+// the people knocked over this round stay down: hide them from the street simulation (this also keeps them out of NEAR)
+function hideHit() {
+  if (!TRAFFIC || TRAFFIC.__gt) return;
+  const to = TRAFFIC.to.bind(TRAFFIC);
+  TRAFFIC.to = t => { const all = to(t), h = self.HIT; return h && h.size ? all.filter(a => !h.has(a.kind + a.id)) : all };
+  TRAFFIC.__gt = true;
+}
+// cutaway: in the close cameras, leave out the trees over the taxi and between it and the camera, so canal elms and
+// campus maples never hide it. The engine finds a tree's crown by its index in TREES, so every slot stays: a hidden
+// tree's slot holds a copy parked far off the plot, which the engine culls.
+let ALL_TREES = null, GHOSTS = null;
+// the ground direction from the taxi toward the camera (the page sends the camera's yaw); the heading if it doesn't
+function towardCamera(me) {
+  if (!me || !me.cut) return [0, 0];
+  if (me.cy != null) { const a = me.cy * Math.PI / 180; return [Math.cos(a), Math.sin(a)] }
+  return [-Math.cos(me.h), -Math.sin(me.h)];
+}
+// x-ray: in the close cameras a building standing between the camera and the taxi is drawn see-through, so the taxi
+// shows behind it (the engine keeps buildings in the models array, filled once; each slot gets an x-ray twin)
+let ALL_MODELS = null, XRAY = null;
+function xrayModels(me) {
+  if (typeof models === 'undefined' || !Array.isArray(models) || !models.length) return;
+  if (!ALL_MODELS) { ALL_MODELS = models.slice(); XRAY = ALL_MODELS.map(m => ({ ...m, draw: () => '<g opacity=".3">' + m.draw() + '</g>' })) }
+  const cut = me && me.cut, [bx, by] = towardCamera(me), reach = cut ? 1 / Math.tan((me.cp || 42) * Math.PI / 180) : 0;
+  for (let i = 0; i < ALL_MODELS.length; i++) {
+    const m = ALL_MODELS[i];
+    let hit = false;
+    if (cut && m.fp) {
+      // the stretch of ground a building of this height can cover in front of the taxi, sampled every 1.5 m
+      const L = Math.min(40, (m.h || 10) * reach + 2);
+      for (let s = 1; s <= L && !hit; s += 1.5) for (const o of [-1.4, 0, 1.4]) {
+        if (inside([me.x + bx * s - by * o, me.y + by * s + bx * o], m.fp)) { hit = true; break }
+      }
+    }
+    models[i] = hit ? XRAY[i] : m;
+  }
+}
+function cutawayTrees(me) {
+  if (typeof TREES === 'undefined' || !Array.isArray(TREES)) return;
+  if (!ALL_TREES) { ALL_TREES = TREES.slice(); GHOSTS = ALL_TREES.map(tr => ({ ...tr, x: 1e6, y: 1e6 })) }
+  const cut = me && me.cut, [bx, by] = towardCamera(me);
+  for (let i = 0; i < ALL_TREES.length; i++) {
+    const tr = ALL_TREES[i];
+    let near = false;
+    if (cut) { const r = (tr.ext || 3) + 2.5; for (let s = 0; s <= 14 && !near; s += 3.5) near = Math.hypot(tr.x - (me.x + bx * s), tr.y - (me.y + by * s)) < r + s * .15 }
+    TREES[i] = near ? GHOSTS[i] : tr;
+  }
+}
 CITY_EXTRA = function (t) {
   const out = GION_EXTRA ? [].concat(GION_EXTRA(t) || []) : [];
   const me = self.PLAYER;
   self.NEAR = null;
+  self.HIT = me && me.hit ? new Set(me.hit) : null;
+  hideHit(); cutawayTrees(me); xrayModels(me);
   if (!me) return out;
+  out.push(...kerbParts(me));
+  if (me.pops) for (const [x, y, f] of me.pops) out.push(popPart(x, y, f));
   if (!PLAYER_MESH) PLAYER_MESH = makeCar('sedan', { plate: VEH.plate || '#f2f2ee', sign: '#faeaa2' });
   const car = carDraw({ p: [me.x, me.y], d: [Math.cos(me.h), Math.sin(me.h)], mesh: PLAYER_MESH, m: soft('#c8513a'), v: Math.abs(me.v) });
   out.push({ fp: car.fp, h: car.z1, svg: car.svg });
@@ -2493,7 +2585,7 @@ function tick(now){
   for(const k of Object.keys(camera)){let delta=goal[k]-camera[k];if(k==='yaw')delta=((delta+180)%360+360)%360-180;
     camera[k]=Math.abs(delta)<.001 ? goal[k] : camera[k]+delta*smooth;}
   $('zoom').textContent=Math.round(camera.zoom/iso.zoom*100)+'%';$('zIn').disabled=goal.zoom>=maxZoom;$('zOut').disabled=goal.zoom<=minZoom;
-  const interval=1000/(phone?20:30);if(now-lastRequest<interval-.3)return;
+  const interval=1000/(window.PLAYER?(phone?30:60):(phone?20:30));if(now-lastRequest<interval-.3)return;
   const key=[revision,playing?time:0,...Object.values(camera).map(v=>v.toFixed(4))].join('|');
   if(key===lastKey)return;const slot=workers.find(s=>!s.busy);if(!slot&&!mainRenderer)return;
   lastRequest=now-lastRequest>=2*interval?now:lastRequest+interval;lastKey=key;
@@ -2531,6 +2623,11 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 #gt-start:hover{filter:brightness(1.08)}
 .gt-x{position:absolute;top:8px;right:12px;font-size:22px;color:var(--muted)}
 #gt-open{position:absolute;top:14px;left:50%;transform:translateX(-50%);padding:8px 18px;font-weight:600;z-index:4}
+.gt-bowlnote{margin:12px 0 0!important}
+.gt-cities{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;margin:12px 0 0!important;padding-top:10px;border-top:1px solid var(--rule);font-size:14px}
+.gt-cities b{color:var(--ink)}
+.gt-cities a{color:var(--rust);font-weight:600}
+.gt-link{color:var(--rust);font-weight:600;text-decoration:underline;font-size:inherit}
 /* Gion Taxi crew play: the lobby card, the countdown, the navigator's callout and the crew strip.
    Same cards, inks and type as drive.css (Pocket City's :root tokens), nothing new in the palette. */
 .gt-ghost{margin:8px 0 0 8px;background:transparent;color:var(--ink);border:1px solid var(--rust);border-radius:999px;padding:9px 20px;font-weight:600;font-size:15px}
@@ -2597,7 +2694,20 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 #gt-lobby.has-result .gt-lsub{display:none}
 #gt-lobby.has-result #gt-qr{width:150px;height:150px}
 #gt-lobby.has-result .gt-res{margin-bottom:10px}
+.gt-modes{display:flex;justify-content:center;margin:0 auto 12px;border:1px solid var(--rule);border-radius:999px;width:max-content;overflow:hidden;background:#fff9}
+.gt-modes button{padding:7px 18px;font-weight:600;font-size:14px;color:var(--muted)}
+.gt-modes button[aria-pressed="true"]{background:var(--ink);color:var(--panel)}
 @media (max-width:620px){.gt-lgrid{grid-template-columns:1fr;justify-items:center}#gt-seats{width:100%}}
+/* Gion Taxi crew play: the shooter's layer and its small HUD line. Same cards, inks and type as drive.css. */
+#gt-shoot{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3}
+#gt-shoot[hidden],#gt-shootbar[hidden],#gt-shootnote[hidden]{display:none}
+#gt-shootbar{position:absolute;right:14px;bottom:14px;display:flex;gap:12px;align-items:baseline;padding:6px 14px;font:13px var(--sans);color:var(--muted)}
+#gt-shootbar b{font:600 16px var(--serif);color:var(--ink)}
+#gt-shootbar span.full{color:var(--rust);font-weight:600}
+#gt-shootnote{position:absolute;left:50%;top:calc(50% - 96px);transform:translateX(-50%);font:italic 600 19px var(--serif);color:var(--ink);
+  text-shadow:0 0 8px #fffcf3,0 0 3px #fffcf3;white-space:nowrap;pointer-events:none}
+#gt-shootnote.pop{animation:gt-note 2.6s ease-out forwards}
+@keyframes gt-note{0%{opacity:0;transform:translate(-50%,6px)}12%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0}}
 /* Gion Taxi "Wrong Turn": the lobby switch, the wager panel, the goal card, the vote and the reveal.
    Same paper, inks and serif as the rest of the game. */
 .wt-switch{display:flex;gap:10px;align-items:flex-start;margin:12px auto 0;max-width:520px;padding:10px 14px;border:1px dashed var(--rule);border-radius:10px;font-size:13px;color:var(--muted);cursor:pointer;text-align:left}
@@ -2668,6 +2778,7 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 .wt-links a{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.wt-card,.wt-card.imp{animation:wt-flip .01s var(--d) both}.wt-head,.wt-subhead,.wt-links,#wt-done{animation:none}}
 </style>
+<script>window.GT_CITY = {"name": "Gion", "brand": "Gion Taxi", "bowl": "Gion Bowling", "blurb": "Drive a taxi through the lanes of Gion, Kyoto.", "drivePaths": false, "id": "gion", "cities": [{"id": "gion", "name": "Gion", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
 <script>
 /* Gion Taxi: a small QR code encoder for the crew lobby (byte mode, error correction level M, versions 1–6,
    i.e. up to 106 bytes, which is plenty for a join URL). Follows ISO/IEC 18004; the structure mirrors
@@ -2779,18 +2890,24 @@ else window.GTQR = GTQR;
    Runs after the Pocket City page script and shares its globals (camera, goal, view, iso, setPlay, redraw).
    The taxi lives here (physics, fares, score); the render worker draws it from window.PLAYER (see player.js).
    Input comes through one interface (readInput): the keyboard and touch pad write `keys`, phone controllers (mp.js)
-   write `remote`. window.GionTaxi is the API mp.js uses: state, events, door, camera and navigator pings. */
+   write `remote`. window.GionTaxi is the API mp.js uses: state, events, door, camera and navigator pings.
+   Two modes: 'taxi' (the fare shift) and 'bowling' (Gion Bowling: 60 s to knock over as many pedestrians as you can). */
 (() => {
 const $ = id => document.getElementById(id);
 const SC = new Function($('data').textContent + ';return SCENE;')();
 const HALF = SC.meta.half;
-document.title = 'Gion Taxi · Gion Shirakawa, Kyoto';
+// the city's settings, written by build.py (window.GT_CITY); Gion's are the defaults
+const CITYCFG = Object.assign({ id: 'gion', name: 'Gion', brand: 'Gion Taxi', bowl: 'Gion Bowling', drivePaths: false, cities: [],
+  blurb: 'Drive a taxi through the lanes of Gion, Kyoto.' }, window.GT_CITY || {});
+document.title = CITYCFG.brand + ' · ' + document.title.replace(/^[^·]*·\s*/, '');
 
 /* ---------- geometry ---------- */
 function inside(p, r) { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], b = r[j];
   if ((a[1] > p[1]) !== (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0]) c = !c } return c }
 const inRings = (p, groups) => groups.some(rs => { let c = false; for (const r of rs) if (inside(p, r)) c = !c; return c });
-const onRoad = p => inRings(p, SC.roads);
+// where the taxi may drive: the roads, plus the footpaths in a city that allows them (Western's campus)
+const DRIVE = SC.roads.concat(CITYCFG.drivePaths ? (SC.paths || []) : []);
+const onRoad = p => inRings(p, DRIVE);
 const CAR = { L: 4.5, W: 1.75 };
 function corners(x, y, h, grow = 0) {
   const d = [Math.cos(h), Math.sin(h)], n = [-d[1], d[0]], hl = CAR.L / 2 + grow, hw = CAR.W / 2 + grow;
@@ -2801,22 +2918,95 @@ const fits = (x, y, h) => corners(x, y, h).every(onRoad);
 
 /* drivable spots: points along the mapped car routes, where a fare can wait */
 const SPOTS = [];
-for (const r of SC.routes.filter(r => r.kind === 'car')) for (let i = 0; i < r.p.length - 1; i++) {
+for (const r of SC.routes.filter(r => r.kind === 'car' || (CITYCFG.drivePaths && r.kind === 'ped'))) for (let i = 0; i < r.p.length - 1; i++) {
   const a = r.p[i], b = r.p[i + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]);
   for (let s = 0; s < L; s += 6) {
     const p = [a[0] + (b[0] - a[0]) * s / L, a[1] + (b[1] - a[1]) * s / L], h = Math.atan2(b[1] - a[1], b[0] - a[0]);
-    if (Math.abs(p[0]) < HALF - 6 && Math.abs(p[1]) < HALF - 6 && fits(p[0], p[1], h) && fits(p[0], p[1], h + Math.PI / 2)) SPOTS.push({ x: p[0], y: p[1], h });
+    if (Math.abs(p[0]) < HALF - 6 && Math.abs(p[1]) < HALF - 6 && fits(p[0], p[1], h) && (CITYCFG.drivePaths || fits(p[0], p[1], h + Math.PI / 2))) SPOTS.push({ x: p[0], y: p[1], h });
   }
 }
 const START = SPOTS.find(s => fits(s.x, s.y, s.h)) || { x: 0, y: 0, h: 0 };
+
+/* ---------- the road grid: which spots connect, and the navigator's route (a breadth-first distance field over road
+   cells, rebuilt per fare stage, the path pulled tight with line-of-sight checks) ---------- */
+// 2 m cells; 1 m where footpaths are drivable (Western's paths are 2-3 m wide)
+const CELL = CITYCFG.drivePaths ? 1 : 2, N = Math.ceil(2 * HALF / CELL), CLEAR = CITYCFG.drivePaths ? .6 : .8;
+let walk = null;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const cx = i => -HALF + (i + .5) * CELL;
+function buildWalk() {
+  walk = new Uint8Array(N * N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const x = cx(i), y = cx(j);
+    walk[j * N + i] = [[0, 0], [CLEAR, 0], [-CLEAR, 0], [0, CLEAR], [0, -CLEAR]].every(([dx, dy]) => onRoad([x + dx, y + dy])) ? 1 : 0;
+  }
+}
+const cellOf = (x, y) => [clamp(Math.floor((x + HALF) / CELL), 0, N - 1), clamp(Math.floor((y + HALF) / CELL), 0, N - 1)];
+function nearestWalk(x, y) {
+  const [i0, j0] = cellOf(x, y);
+  for (let r = 0; r < 16 / CELL; r++) {
+    let best = null, bd = Infinity;
+    for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) {
+      if (i < 0 || j < 0 || i >= N || j >= N || !walk[j * N + i]) continue;
+      const d = Math.hypot(cx(i) - x, cx(j) - y); if (d < bd) { bd = d; best = j * N + i }
+    }
+    if (best != null) return best;
+  }
+  return null;
+}
+const NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+let field = null, fieldKey = null;
+function buildField(tx, ty) {
+  field = new Int32Array(N * N).fill(-1);
+  const s = nearestWalk(tx, ty); if (s == null) return;
+  const q = [s]; field[s] = 0;
+  for (let h = 0; h < q.length; h++) {
+    const c = q[h], i = c % N, j = (c - i) / N;
+    for (const [di, dj] of NB) {
+      const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue;
+      const n = nj * N + ni;
+      if (walk[n] && field[n] < 0 && (!di || !dj || walk[j * N + ni] || walk[nj * N + i])) { field[n] = field[c] + 1; q.push(n) }
+    }
+  }
+}
+function clear(a, b) {
+  const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.ceil(L / .8);
+  for (let k = 1; k < n; k++) { const [i, j] = cellOf(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n); if (!walk[j * N + i]) return false }
+  return true;
+}
+function route(st) {
+  if (!walk) buildWalk();
+  const tk = st.tx.toFixed(1) + ',' + st.ty.toFixed(1);
+  if (tk !== fieldKey) { buildField(st.tx, st.ty); fieldKey = tk }
+  let c = nearestWalk(st.x, st.y); if (c == null || field[c] < 0) return null;
+  const cells = [c];
+  while (field[c] > 0 && cells.length < N * 4) {
+    const i = c % N, j = (c - i) / N; let nx = c;
+    for (const [di, dj] of NB) { const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue; const n = nj * N + ni; if (field[n] >= 0 && field[n] < field[nx]) nx = n }
+    if (nx === c) break; c = nx; cells.push(c);
+  }
+  const raw = [[st.x, st.y], ...cells.map(c => [cx(c % N), cx(Math.floor(c / N))]), [st.tx, st.ty]];
+  const pts = [raw[0]];   // pull the string tight: keep only the corners the road forces
+  for (let a = 0; a < raw.length - 1;) { let b = raw.length - 1; while (b > a + 1 && !clear(raw[a], raw[b])) b--; pts.push(raw[b]); a = b }
+  let len = 0; for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
+  return { pts: pts.map(p => [+p[0].toFixed(1), +p[1].toFixed(1)]), len: Math.round(len) };
+}
+
+// keep only fare spots the taxi can reach from where it starts (a path that touches no road can't be a fare)
+buildWalk(); buildField(START.x, START.y);
+{
+  const reach = SPOTS.filter(s => { const c = nearestWalk(s.x, s.y); return c != null && field[c] >= 0 });
+  if (reach.length >= 4) SPOTS.splice(0, SPOTS.length, ...reach);
+  fieldKey = null;
+}
 
 /* ---------- HUD ---------- */
 const stage = $('stage');
 stage.insertAdjacentHTML('beforeend', `
 <div id="gt-hud" hidden>
   <div class="gt-card gt-stats">
-    <div><small>Fares</small><b id="gt-fares">0</b></div>
-    <div><small>Yen</small><b id="gt-yen">¥0</b></div>
+    <div><small id="gt-l1">Fares</small><b id="gt-fares">0</b></div>
+    <div><small id="gt-l2">Yen</small><b id="gt-yen">¥0</b></div>
     <div><small>Time</small><b id="gt-time">90</b></div>
     <div><small>km/h</small><b id="gt-speed">0</b></div>
   </div>
@@ -2829,12 +3019,15 @@ stage.insertAdjacentHTML('beforeend', `
   </div>
 </div>
 <div id="gt-menu" class="gt-card">
-  <h2>Gion Taxi</h2>
-  <p>Drive a taxi through the lanes of Gion, Kyoto. Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
+  <h2>${CITYCFG.brand}</h2>
+  <p>${CITYCFG.blurb} Pick up the passenger by the orange lantern, then take them to the gold one before the clock runs out.</p>
   <p class="gt-keys"><kbd>↑</kbd><kbd>W</kbd> drive · <kbd>↓</kbd><kbd>S</kbd> brake/reverse · <kbd>←</kbd><kbd>→</kbd> steer · <kbd>C</kbd> camera · <kbd>Esc</kbd> stop</p>
+  <p class="gt-keys">Stay inside the red and cream kerbs: that’s the road.</p>
   <p class="gt-keys">Mind the people, bikes and cars: a bump costs ¥ and time. Change the season on the left, even mid-ride.</p>
   <p id="gt-result"></p>
   <button id="gt-start">Start driving</button>
+  <p class="gt-keys gt-bowlnote">Bonus mode: <button id="gt-bowl" class="gt-link">${CITYCFG.bowl}</button>: 60 seconds to bowl over as many pedestrians as you can.</p>
+  ${CITYCFG.cities.length > 1 ? `<p class="gt-cities">${CITYCFG.cities.map(c => c.id === CITYCFG.id ? `<b>${c.name}</b>` : `<a href="${c.href}">${c.name}</a>`).join('')}</p>` : ''}
 </div>
 <button id="gt-open" class="gt-card" hidden>🚕 Drive</button>`);
 const map = $('gt-map');
@@ -2843,25 +3036,35 @@ const ringPath = groups => groups.map(rs => rs.map(r => 'M' + r.map(p => p[0].to
 map.innerHTML = `<g transform="scale(1,-1)">
   <rect x="${-HALF}" y="${-HALF}" width="${2 * HALF}" height="${2 * HALF}" fill="#efe7d4"/>
   <path d="${ringPath(SC.water)}" fill="#9cc3c4" fill-rule="evenodd"/>
-  <path d="${ringPath(SC.roads)}" fill="#cbbab3" fill-rule="evenodd"/>
+  <path d="${ringPath(DRIVE)}" fill="#cbbab3" fill-rule="evenodd"/>
   <path d="${SC.buildings.map(b => 'M' + b.ring.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z').join('')}" fill="#d9c7a8" stroke="#a89a85" stroke-width=".4"/>
   <circle id="gt-mt" r="5" fill="#f26a2e" stroke="#263c35" stroke-width="1.2"/>
   <path id="gt-me" d="M6 0-4 4-2 0-4-4Z" fill="#c8513a" stroke="#263c35" stroke-width="1.2" transform="scale(1.6)"/></g>`;
 
 /* ---------- state ---------- */
 const keys = new Set();
-let driving = false, chase = true, car, fare, yen = 0, fares = 0, clock = 90, last = 0, bumpCool = 0, toastT = 0, shake = 0, camYaw = 0, finished = false;
+let driving = false, cam = 'kart', mode = 'taxi', car, fare, yen = 0, fares = 0, clock = 90, last = 0, bumpCool = 0, toastT = 0, shake = 0, camYaw = 0, finished = false;
 // crew play (mp.js): phone inputs, the door the operator opens at a lantern, and shift stats for the results card
-const remote = { gas: 0, brake: 0, turn: 0 };
+const remote = { gas: 0, brake: 0, turn: 0, gear: 'D' };   // phone pedals: gas drives in the gear's direction, brake only brakes
 // Wrong Turn mode (wt.js) bends these; at their defaults the game is exactly as before
 const mods = { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 };
 let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
+// Gion Bowling: pedestrians knocked over this round (hidden by the render worker), score, combo, little dust pops
+let pins = 0, score = 0, combo = 0, comboT = 0, hit = new Set(), pops = [];
+const CAMS = {   // kart: low and close behind the taxi, which sits in the lower third looking up the road
+  kart: { label: 'Kart camera', pitch: 42, zoom: 5.4, rate: 5, low: .2 },
+  chase: { label: 'Chase camera', pitch: 54, zoom: 4.2, rate: 3.2, low: 0 },
+  top: { label: 'Overhead camera', pitch: 72, zoom: 3.4, rate: 6, low: 0 },
+};
+const CAM_ORDER = ['kart', 'chase', 'top'];
 const handlers = {};
 const emit = (name, data) => (handlers[name] || []).forEach(f => { try { f(data) } catch (e) { console.error(e) } });
 const TASKS = { pickup: 'Pick up the passenger at the orange lantern', drop: 'Take them to the gold lantern' };
 const setTask = () => { $('gt-task').textContent = fare.atDoor ? (fare.mode === 'pickup' ? 'Stopped at the lantern: open the door' : 'Arrived: open the door to let them out') : TASKS[fare.mode] };
-function clearRemote() { remote.gas = remote.brake = remote.turn = 0 }
-const best = () => +(localStorage.getItem('gionTaxiBest') || 0);
+function clearRemote() { remote.gas = remote.brake = remote.turn = 0; remote.gear = 'D' }
+const bestKey = () => mode === 'bowling' ? 'gionBowlBest' : 'gionTaxiBest';
+const best = () => { try { return +(localStorage.getItem(bestKey()) || 0) } catch { return 0 } };
+const saveBest = v => { try { if (v > best()) localStorage.setItem(bestKey(), v) } catch {} };
 function toast(msg, good) { const t = $('gt-toast'); t.textContent = msg; t.className = good ? 'good show' : 'show'; toastT = 1.8 }
 function spotAway(from, min) {
   const far = SPOTS.filter(s => Math.hypot(s.x - from.x, s.y - from.y) > min);
@@ -2873,32 +3076,38 @@ function newFare() {
   fare = { mode: 'pickup', p, d, dist: Math.hypot(d.x - p.x, d.y - p.y) };
   setTask();
 }
-function start() {
+function start(m) {
+  mode = m === 'bowling' ? 'bowling' : 'taxi';
   car = { x: START.x, y: START.y, h: START.h, v: 0, steer: 0 };
-  yen = 0; fares = 0; clock = 90; finished = false; camYaw = car.h * 180 / Math.PI + 180;
+  yen = 0; fares = 0; clock = mode === 'bowling' ? 60 : 90; finished = false; camYaw = car.h * 180 / Math.PI + 180;
+  pins = 0; score = 0; combo = 0; comboT = 0; hit = new Set(); pops = [];
   bumpCount = 0; penaltyYen = 0; penaltyTime = 0; fareTimes = []; doorOpen = 0; bumpCool = 0; ping = null; keys.clear(); clearRemote();
-  newFare(); driving = true; $('gt-menu').hidden = true; $('gt-open').hidden = true; $('gt-hud').hidden = false;
+  if (mode === 'taxi') newFare(); else { fare = null; $('gt-task').textContent = CITYCFG.bowl + ': knock over as many pedestrians as you can' }
+  $('gt-l1').textContent = mode === 'bowling' ? 'Pins' : 'Fares'; $('gt-l2').textContent = mode === 'bowling' ? 'Score' : 'Yen';
+  $('gt-arrow').hidden = mode === 'bowling'; $('gt-mt').style.display = mode === 'bowling' ? 'none' : '';
+  driving = true; $('gt-menu').hidden = true; $('gt-open').hidden = true; $('gt-hud').hidden = false;
   if (!playing) setPlay(true);
   stage.querySelector('canvas').focus?.();
-  emit('start');
+  emit('start', mode);
 }
 function stop(result) {
   const was = driving;
   driving = false; window.PLAYER = null; keys.clear(); clearRemote(); ping = null;
   $('gt-hud').hidden = true; $('gt-menu').hidden = false;
   if (result) {
-    if (yen > best()) localStorage.setItem('gionTaxiBest', yen);
-    $('gt-result').innerHTML = `<b>Shift over.</b> ${fares} fare${fares === 1 ? '' : 's'}, ¥${yen.toLocaleString()} · best ¥${best().toLocaleString()}`;
+    if (mode === 'bowling') { saveBest(score); $('gt-result').innerHTML = `<b>Time!</b> ${pins} pin${pins === 1 ? '' : 's'}, ${score.toLocaleString()} points · best ${best().toLocaleString()}` }
+    else { saveBest(yen); $('gt-result').innerHTML = `<b>Shift over.</b> ${fares} fare${fares === 1 ? '' : 's'}, ¥${yen.toLocaleString()} · best ¥${best().toLocaleString()}` }
   }
   $('gt-start').textContent = result ? 'Drive again' : 'Start driving';
   setView('cine');
   if (was) emit('stop', summary());
 }
 function summary() {
-  return { fares, yen, best: best(), bumps: bumpCount, penaltyYen, penaltyTime,
+  return { mode, pins, score, fares, yen, best: best(), bumps: bumpCount, penaltyYen, penaltyTime,
     avgFare: fareTimes.length ? fareTimes.reduce((a, b) => a + b, 0) / fareTimes.length : 0, fastest: fareTimes.length ? Math.min(...fareTimes) : 0 };
 }
-$('gt-start').onclick = start;
+$('gt-start').onclick = () => start('taxi');
+$('gt-bowl').onclick = () => start('bowling');
 $('gt-open').onclick = () => { $('gt-menu').hidden = false; $('gt-open').hidden = true };
 $('gt-menu').insertAdjacentHTML('beforeend', '<button id="gt-close" class="gt-x" aria-label="Close">×</button>');
 $('gt-close').onclick = () => { $('gt-menu').hidden = true; $('gt-open').hidden = false };
@@ -2906,7 +3115,7 @@ $('gt-close').onclick = () => { $('gt-menu').hidden = true; $('gt-open').hidden 
 /* ---------- input ---------- */
 const KEYMAP = { ArrowUp: 'gas', w: 'gas', W: 'gas', ArrowDown: 'brake', s: 'brake', S: 'brake', ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right' };
 addEventListener('keydown', e => {
-  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu) start(); return }
+  if (!driving) { if (e.key === 'Enter' && !$('gt-menu').hidden && !api.lockMenu) start('taxi'); return }
   if (e.target.closest && e.target.closest('select,input,dialog')) return;
   if (KEYMAP[e.key]) { keys.add(KEYMAP[e.key]); e.preventDefault(); e.stopPropagation() }
   else if (e.key === 'c' || e.key === 'C') toggleCam();
@@ -2916,21 +3125,25 @@ addEventListener('keydown', e => {
 }, true);
 addEventListener('keyup', e => { if (KEYMAP[e.key]) keys.delete(KEYMAP[e.key]) }, true);
 addEventListener('blur', () => keys.clear());
-function toggleCam() { chase = !chase; toast(chase ? 'Chase camera' : 'Overhead camera', true); emit('cam', chase) }
+function setCam(name) { if (!CAMS[name] || name === cam) return; cam = name; toast(CAMS[cam].label, true); emit('cam', cam) }
+function toggleCam() { setCam(CAM_ORDER[(CAM_ORDER.indexOf(cam) + 1) % CAM_ORDER.length]) }
 // The rear door: in crew play the operator opens it at a lantern; solo, the passenger lets themself in (doorNeeded = false)
 function openDoor() {
-  if (!driving || !doorNeeded) return;
+  if (!driving || !doorNeeded || !fare) return;
   if (performance.now() < mods.doorJamUntil) { toast('The door is stuck!'); emit('jammed'); return }
   doorOpen = 1.2; emit('door');
   if (!fare.atDoor) toast('Door opened');
 }
-// the shared input: keyboard/touch pad (0 or 1) merged with the phones (analog). With keys only it is exactly the old input.
+// the shared input: keyboard/touch pad (0 or 1) merged with the phones (analog).
+//   gas      forward throttle (keyboard ↑, or the phone's gas in D)
+//   back     reverse throttle (the phone's gas in R)
+//   brake    keyboard ↓: brakes, then reverses once stopped (arcade style)
+//   stopper  the phone's brake pedal: brakes to a stop and never reverses
 function readInput() {
-  const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0);
-  const now = performance.now();
-  return { gas: now < mods.gasCutUntil ? 0 : Math.max(keys.has('gas') ? 1 : 0, remote.gas),
-    brake: Math.max(keys.has('brake') ? 1 : 0, remote.brake * mods.brakeScale),
-    turn: Math.max(-1, Math.min(1, kTurn + remote.turn + mods.turnBias)) };
+  const kTurn = (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0), r = remote.gear === 'R';
+  const cut = performance.now() < mods.gasCutUntil;   // Wrong Turn: a stall cuts the throttle for a moment
+  return { gas: cut ? 0 : Math.max(keys.has('gas') ? 1 : 0, r ? 0 : remote.gas), back: cut || !r ? 0 : remote.gas,
+    brake: keys.has('brake') ? 1 : 0, stopper: remote.brake * mods.brakeScale, turn: Math.max(-1, Math.min(1, kTurn + remote.turn + mods.turnBias)) };
 }
 for (const b of document.querySelectorAll('#gt-pad button')) {
   const k = b.dataset.k;
@@ -2939,36 +3152,72 @@ for (const b of document.querySelectorAll('#gt-pad button')) {
 }
 
 /* ---------- physics ---------- */
-const MAX = 11, REV = 4, WHEELBASE = 2.7;
+// Arcade handling tuned for Gion's narrow lanes: quick reverse, a tight turning circle at walking pace, and walls you
+// slide along instead of bouncing off. A full pedal is 1 (keyboard); phones send anything in between.
+const MAX = 11, REV = 5.5, WHEELBASE = 2.7;
+// how many of the car's 8 outline points are on the road (8 = it fits)
+const onCount = (x, y, h) => { let n = 0; for (const c of corners(x, y, h)) if (onRoad(c)) n++; return n };
 function step(dt) {
-  const { gas, brake, turn } = readInput();
-  // analog pedals blend the old full-pedal response with coasting; a full pedal (1, as from the keyboard) is the old physics exactly
+  const { gas, back, brake, stopper, turn } = readInput();
   const coast = -Math.sign(car.v) * Math.min(Math.abs(car.v), 2.2 * dt);
-  if (gas > 0) car.v += gas * (car.v < 0 ? 12 : 5.5 * (1 - car.v / MAX)) * dt + (1 - gas) * coast;
-  else if (brake > 0) car.v -= brake * (car.v > 0 ? 12 : 3) * dt - (1 - brake) * coast;
+  if (gas > 0) car.v += gas * (car.v < 0 ? 16 : 6.2 * (1 - car.v / MAX)) * dt + (1 - gas) * coast;
+  else if (back > 0) car.v -= back * (car.v > .05 ? 16 : 7 * (1 + car.v / REV)) * dt - (1 - back) * coast;   // gas in R: brake, then reverse
+  else if (brake > 0) car.v -= brake * (car.v > .05 ? 16 : 7) * dt - (1 - brake) * coast;   // keyboard ↓: hard brake, then a brisk reverse
+  else if (stopper > 0) car.v -= Math.sign(car.v) * Math.min(Math.abs(car.v), (stopper * 16 + (1 - stopper) * 2.2) * dt);   // phone brake: to a stop
   else car.v += coast;
   car.v = Math.max(-REV, Math.min(MAX, car.v));
-  const steerMax = .55 / (1 + Math.abs(car.v) * .06);
-  car.steer += (turn * steerMax - car.steer) * Math.min(1, dt * 8);
-  const nh = car.h + car.v * Math.tan(car.steer) / WHEELBASE * dt;
-  const nx = car.x + Math.cos(nh) * car.v * dt, ny = car.y + Math.sin(nh) * car.v * dt;
-  if (fits(nx, ny, nh)) { car.x = nx; car.y = ny; car.h = nh }
-  else if (fits(car.x + Math.cos(nh) * car.v * dt, car.y, nh)) { car.x += Math.cos(nh) * car.v * dt * .5; car.h = nh; car.v *= .9 }   // slide along a kerb
-  else if (fits(car.x, car.y + Math.sin(nh) * car.v * dt, nh)) { car.y += Math.sin(nh) * car.v * dt * .5; car.h = nh; car.v *= .9 }
-  else { if (Math.abs(car.v) > 4) { toast('Scrape!'); shake = .25; emit('scrape') } car.v *= -.3 }
+  const steerMax = .66 / (1 + Math.abs(car.v) * .055);   // ≈3.5 m turning radius at walking pace
+  car.steer += (turn * steerMax - car.steer) * Math.min(1, dt * 11);
+  move(dt);
+}
+function move(dt) {
+  const dist = car.v * dt, nh = car.h + car.v * Math.tan(car.steer) / WHEELBASE * dt;
+  if (!dist) return;
+  const now = onCount(car.x, car.y, car.h);
+  // a pose is allowed if it fits, or (when the car is already clipping a kerb) if it doesn't clip any more than now
+  const ok = (x, y, h) => { const n = onCount(x, y, h); return n === 8 || (now < 8 && n >= now && onRoad([x, y])) };
+  const at = (h, d) => [car.x + Math.cos(h) * d, car.y + Math.sin(h) * d];
+  let p = at(nh, dist);
+  if (ok(p[0], p[1], nh)) { car.x = p[0]; car.y = p[1]; car.h = nh; return }
+  // blocked: slide along the wall. Try directions turned a little either way, keep the part of the speed that goes along
+  // the wall, and turn the body gently toward the wall's direction.
+  const side = Math.sign(car.steer * car.v) || 1;   // try the way the driver is steering first
+  for (const a of [.18, .36, .6, .9].flatMap(a => [a * side, -a * side])) {
+    const f = Math.cos(a); p = at(nh + a, dist * f);
+    for (const h of [nh + Math.sign(a) * Math.min(Math.abs(a) * .5, 1.6 * dt), nh]) if (ok(p[0], p[1], h)) {   // body turns toward the wall's line, gently
+      car.x = p[0]; car.y = p[1]; car.h = h; car.v *= 1 - (1 - f) * Math.min(1, dt * 7);
+      if (Math.abs(car.v) > 5 && Math.abs(a) > .5) { shake = Math.max(shake, .12) }
+      return;
+    }
+  }
+  // head-on into a wall: stop (no bounce). Arcade assist: still pushing and steering, the taxi pivots slowly toward
+  // the steering, so it can turn away from a wall without backing up first.
+  if (Math.abs(car.v) > 4) { toast('Scrape!'); shake = .25; emit('scrape') }
+  if (Math.abs(car.steer) > .05) { const ph = car.h + Math.sign(car.steer) * Math.sign(car.v) * 1.1 * dt; if (ok(car.x, car.y, ph)) car.h = ph }
+  car.v = 0;
 }
 function bumps(dt) {
-  bumpCool -= dt;
+  bumpCool -= dt; comboT -= dt; if (comboT <= 0) combo = 0;
   const near = window.NEAR_IN || window.NEAR;
-  if (!near || bumpCool > 0) return;
+  if (!near) return;
   const d = [Math.cos(car.h), Math.sin(car.h)], n = [-d[1], d[0]];
   for (const a of near) {
     const rx = a.x - car.x, ry = a.y - car.y, along = rx * d[0] + ry * d[1], side = rx * n[0] + ry * n[1];
     const reach = a.k === 'car' ? Math.max(a.L, a.W) * .8 : a.k === 'bike' ? .8 : .35;
     if (Math.abs(along) < CAR.L / 2 + reach && Math.abs(side) < CAR.W / 2 + reach * .6) {
+      if (mode === 'bowling' && a.k !== 'car') {   // a pin! each person or cyclist counts once a round
+        if (hit.has(a.k + a.id)) continue;
+        hit.add(a.k + a.id); pins++; combo++; comboT = 2.2;
+        const pts = (a.k === 'bike' ? 150 : 100) * Math.min(combo, 5); score += pts;
+        pops.push({ x: a.x, y: a.y, t: performance.now() }); shake = Math.max(shake, .15); car.v *= .9;
+        toast((combo >= 3 ? `Strike ×${Math.min(combo, 5)}! ` : a.k === 'bike' ? 'Spare! ' : 'Strike! ') + '+' + pts, true);
+        emit('pin', { kind: a.k, pts, combo });
+        continue;
+      }
+      if (bumpCool > 0) return;
       const cost = a.k === 'ped' ? 600 : a.k === 'bike' ? 400 : 300;
       penaltyYen += Math.min(yen, cost); penaltyTime += Math.min(clock, 3); bumpCount++;
-      yen = Math.max(0, yen - cost); clock = Math.max(0, clock - 3); car.v *= -.25; bumpCool = 1.2; shake = .3;
+      yen = Math.max(0, yen - cost); clock = Math.max(0, clock - 3); car.v *= .3; bumpCool = 1.2; shake = .3;
       emit('bump', { kind: a.k, cost });
       toast(a.k === 'ped' ? 'Watch the pedestrians! −¥' + cost : a.k === 'bike' ? 'You clipped a bike! −¥' + cost : 'Fender bender! −¥' + cost);
       return;
@@ -2976,6 +3225,7 @@ function bumps(dt) {
   }
 }
 function fareLogic() {
+  if (!fare) return null;
   const target = fare.mode === 'pickup' ? fare.p : fare.d, dist = Math.hypot(target.x - car.x, target.y - car.y);
   if (dist < 3.2 && Math.abs(car.v) < 2.5) {
     if (doorNeeded && doorOpen <= 0) {   // crew play: wait at the lantern until the operator opens the door
@@ -2999,51 +3249,426 @@ function frame(now) {
   const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
   if (!driving) return;
   step(dt); bumps(dt); doorOpen = Math.max(0, doorOpen - dt);
-  if (fare.mode === 'drop') fare.t += dt;
+  if (fare && fare.mode === 'drop') fare.t += dt;
   const target = fareLogic();
   clock -= dt;
   if (clock <= 0) { clock = 0; stop(true); return }
   if (ping && now > ping.until) ping = null;
-  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, tx: target.x, ty: target.y, mode: fare.mode, ...(ping ? { px: ping.x, py: ping.y, pc: ping.color } : {}) };
-  // camera: behind the taxi (chase) or the plot's own iso angle, a little ahead of the car
-  const want = chase ? car.h * 180 / Math.PI + 180 : iso.yaw;
-  let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * (chase ? 3.2 : 6));
+  pops = pops.filter(p => now - p.t < 900);
+  window.PLAYER = { x: car.x, y: car.y, h: car.h, v: car.v, cut: true, cy: camYaw, cp: CAMS[cam].pitch, ...(target ? { tx: target.x, ty: target.y, mode: fare.mode } : {}),
+    ...(ping ? { px: ping.x, py: ping.y, pc: ping.color } : {}), ...(mode === 'bowling' ? { hit: [...hit], pops: pops.map(p => [p.x, p.y, (now - p.t) / 900]) } : {}) };
+  // camera: kart (low, close, taxi in the lower third), chase (the original), or overhead at the plot's iso angle
+  const C = CAMS[cam], want = cam === 'top' ? iso.yaw : car.h * 180 / Math.PI + 180;
+  let dy = ((want - camYaw + 180) % 360 + 360) % 360 - 180; camYaw += dy * Math.min(1, dt * C.rate);
   shake = Math.max(0, shake - dt);
-  const j = shake > 0 ? (Math.random() - .5) * shake * 2 : 0, ahead = Math.max(0, car.v) * .5;
+  const zoom = iso.zoom * C.zoom * (1 - Math.abs(car.v) / MAX * .12);
+  // push the view centre up the road so the taxi sits `low` of the screen height below the middle
+  const vbH = stage.clientHeight / (Math.min(stage.clientWidth / 302, stage.clientHeight / 202) * zoom || 1);
+  const j = shake > 0 ? (Math.random() - .5) * shake * 2 : 0, ahead = Math.max(0, car.v) * .5 + C.low * vbH / Math.sin(C.pitch * Math.PI / 180);
+  const fx = cam === 'top' ? Math.cos(car.h) : -Math.cos(camYaw * Math.PI / 180), fy = cam === 'top' ? Math.sin(car.h) : -Math.sin(camYaw * Math.PI / 180);
   view = 'drive';
-  goal = camera = { yaw: camYaw, pitch: chase ? 54 : 72, zoom: iso.zoom * (chase ? 4.2 : 3.4) * (1 - Math.abs(car.v) / MAX * .12),
-    x: car.x + Math.cos(car.h) * ahead + j, y: car.y + Math.sin(car.h) * ahead + j, z: 1 };
-  $('viewName').textContent = 'Gion Taxi';
+  goal = camera = { yaw: camYaw, pitch: C.pitch, zoom, x: car.x + fx * ahead + j, y: car.y + fy * ahead + j, z: 1 };
+  $('viewName').textContent = CITYCFG.brand;
   // HUD
-  $('gt-fares').textContent = fares; $('gt-yen').textContent = '¥' + yen.toLocaleString();
+  $('gt-fares').textContent = mode === 'bowling' ? pins : fares; $('gt-yen').textContent = mode === 'bowling' ? score.toLocaleString() : '¥' + yen.toLocaleString();
   $('gt-time').textContent = Math.ceil(clock); $('gt-time').classList.toggle('low', clock < 15);
   $('gt-speed').textContent = Math.round(Math.abs(car.v) * 3.6);
+  $('gt-me').setAttribute('transform', `translate(${car.x} ${car.y}) rotate(${car.h * 180 / Math.PI}) scale(1.6)`);
+  toastT -= dt; if (toastT <= 0) $('gt-toast').classList.remove('show');
+  redraw();
+  if (!target) return;
   // the arrow points from the taxi to the target, as seen on screen (camera right = (-sin yaw, cos yaw), up = -(cos yaw, sin yaw))
   const gx = target.x - car.x, gy = target.y - car.y, t = camYaw * Math.PI / 180;
   const sx = -gx * Math.sin(t) + gy * Math.cos(t), sy = gx * Math.cos(t) + gy * Math.sin(t);
   const arrow = $('gt-arrow');
+  arrow.style.top = (50 + CAMS[cam].low * 100) + '%';   // around the taxi, which the kart camera keeps below the middle
   arrow.style.transform = `translate(-50%,-50%) rotate(${Math.atan2(sx, -sy) * 180 / Math.PI}deg) translateY(-110px)`;
   arrow.querySelector('path').setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
   arrow.style.opacity = mods.hideTarget ? 0 : Math.hypot(gx, gy) < 12 ? .25 : 1;
-  $('gt-me').setAttribute('transform', `translate(${car.x} ${car.y}) rotate(${car.h * 180 / Math.PI}) scale(1.6)`);
   const mt = $('gt-mt'); mt.style.visibility = mods.hideTarget ? 'hidden' : ''; mt.setAttribute('cx', target.x); mt.setAttribute('cy', target.y); mt.setAttribute('fill', fare.mode === 'pickup' ? '#f26a2e' : '#f2c94c');
-  toastT -= dt; if (toastT <= 0) $('gt-toast').classList.remove('show');
-  redraw();
 }
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
-  start, stop, keys, remote, mods, toggleCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false,
-  get car() { return car }, get driving() { return driving }, get chase() { return chase },
+  start, stop, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
+  get car() { return car }, get driving() { return driving }, get cam() { return cam }, get mode() { return mode },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },
   setPing(x, y, color, ms = 6000) { ping = { x, y, color, until: performance.now() + ms } },
   state() {
-    if (!car || !fare) return null;
+    if (!car) return null;
+    const base = { driving, clock, cam, game: mode, gear: remote.gear, x: car.x, y: car.y, h: car.h, v: car.v, doorNeeded, ...summary() };
+    if (!fare) return { ...base, atDoor: false, fareEst: 0 };
     const target = fare.mode === 'pickup' ? fare.p : fare.d;
-    return { driving, clock, yen, fares, chase, x: car.x, y: car.y, h: car.h, v: car.v, mode: fare.mode, tx: target.x, ty: target.y,
-      atDoor: !!fare.atDoor, doorNeeded, fareDist: fare.dist, fareT: fare.t || 0,
-      fareEst: fare.mode === 'drop' ? Math.round((500 + fare.dist * 12 + Math.max(0, 40 - (fare.t || 0)) * 25) / 10) * 10 : 0, ...summary() };
+    return { ...base, mode: fare.mode, tx: target.x, ty: target.y, atDoor: !!fare.atDoor, fareDist: fare.dist, fareT: fare.t || 0,
+      fareEst: fare.mode === 'drop' ? Math.round((500 + fare.dist * 12 + Math.max(0, 40 - (fare.t || 0)) * 25) / 10) * 10 : 0 };
   },
+};
+})();
+
+</script>
+<script>
+/* Gion Taxi crew play: the shooter and the wipers (laptop side). Runs after drive.js, before mp.js.
+   Little ASCII creatures, flowers and shapes drift in from the street ahead and stick to the windshield unless the
+   shooter (phone gyro → crosshair, tap → shoot) pops them first. Whatever sticks, the wiper player sweeps off.
+   The laptop is the authority, as for the rest of crew play: phones send aim/fire/wipe through mp.js
+   (window.GionCrewExt.onPhone), this file runs the targets and sends phones a 10 Hz picture ('sh') plus events ('sx').
+   Solo play never sees any of this: targets only appear in a crew shift while a phone holds the shooter role. */
+(() => {
+const GT = window.GionTaxi, $ = id => document.getElementById(id);
+if (!GT) return;
+const crew = () => window.GionCrew;
+const holder = r => { const c = crew(); return c && c.holder ? c.holder(r) : null };
+const toPhones = m => { const c = crew(); if (c && c.toPhones) c.toPhones(m) };
+
+/* ---------- the characters (crisp monospace; every frame of a sprite has the same line count) ---------- */
+const SPR = {
+  cat:       { f: [[' /\\_/\\ ', '( o.o )', ' > ^ < '], [' /\\_/\\ ', '( -.- )', ' > ^ < ']], stuck: [' /\\_/\\ ', '( >.< )', ' > ^ < '], hit: [' /\\_/\\ ', '( O.O )', ' > ^ < '], move: 'hop' },
+  butterfly: { f: [['(\\ /)', ' )|( ', '(/ \\)'], [' \\ / ', ' )|( ', ' / \\ ']], move: 'flutter' },
+  daisy:     { f: [[' .o. ', 'o(@)o', " 'o' "], [' o.o ', '.(@).', " o'o "]], move: 'sway' },
+  star:      { f: [['\\ | /', '- * -', '/ | \\'], [' .|. ', '--*--', " '|' "]], move: 'twinkle' },
+  heart:     { f: [['/\\/\\', '\\  /', ' \\/ ']], hp: 2, move: 'beat' },
+  diamond:   { f: [[' /\\ ', '<  >', ' \\/ '], [' /\\ ', '|  |', ' \\/ ']], move: 'spin' },
+  hexagon:   { f: [[' __ ', '/  \\', '\\__/']], move: 'spin' },
+};
+const KINDS = Object.keys(SPR);
+// colours that sit in each season's scenery (soft inks, never neon); at night they become lit lantern tones
+const PALETTE = {
+  spring: ['#d9738f', '#e79aac', '#7f9f5c', '#b98a2e', '#9a6fb0', '#c8513a'],
+  summer: ['#2f7f78', '#d96b4f', '#c9932c', '#4f7ea8', '#6b9a4f', '#a85a7a'],
+  autumn: ['#ac4931', '#c9782e', '#8a4a2a', '#b8902a', '#6d5a8a', '#4f6d5a'],
+  winter: ['#4f6d8a', '#7d93ad', '#b0566a', '#7f78ad', '#3f6f66', '#9a7a4a'],
+  night:  ['#ffd98a', '#fbd3dd', '#fff3c4', '#ffb85c', '#bfe0e6', '#f6c445'],
+};
+// the page's chosen scene: Pocket City's page globals `season` (an id) and SEASONS/OCCASIONS (with night/leaves flags)
+let sceneId = null, sceneLook = 'summer';
+function scenery() {
+  let id = null; try { id = typeof season !== 'undefined' ? season : null } catch {}
+  if (id === sceneId) return sceneLook;
+  let s = {}; try { s = [...(typeof SEASONS !== 'undefined' ? SEASONS : []), ...(typeof OCCASIONS !== 'undefined' ? OCCASIONS : [])].find(x => x.id === id) || {} } catch {}
+  sceneId = id;
+  return sceneLook = s.night ? 'night' : PALETTE[s.id] ? s.id : s.leaves === 'blossom' ? 'spring' : s.leaves === 'autumn' ? 'autumn' : s.leaves === 'bare' ? 'winter' : 'summer';
+}
+
+/* ---------- levels: gentle first, more and livelier with every fare delivered ---------- */
+const LV = [
+  { every: 3.4, approach: 6.6, live: 3, cap: 4, kinds: ['daisy', 'heart', 'cat'], moves: ['drift'], note: 'Level 1 · a few visitors' },
+  { every: 2.8, approach: 5.9, live: 4, cap: 4, kinds: ['daisy', 'heart', 'cat', 'butterfly'], moves: ['drift', 'wobble'], note: 'Level 2 · butterflies join in' },
+  { every: 2.3, approach: 5.3, live: 5, cap: 5, kinds: ['daisy', 'heart', 'cat', 'butterfly', 'star'], moves: ['drift', 'wobble', 'zigzag'], note: 'Level 3 · stars zigzag' },
+  { every: 1.9, approach: 4.7, live: 6, cap: 5, kinds: KINDS, moves: ['drift', 'wobble', 'zigzag', 'orbit'], note: 'Level 4 · shapes start to orbit' },
+  { every: 1.55, approach: 4.2, live: 7, cap: 6, kinds: KINDS, moves: ['wobble', 'zigzag', 'orbit', 'dart'], note: 'Level 5 · everything darts' },
+];
+
+/* ---------- the layer ---------- */
+$('gt-hud').insertAdjacentHTML('beforebegin', '<canvas id="gt-shoot" aria-hidden="true"></canvas>');
+$('gt-hud').insertAdjacentHTML('beforeend', '<div id="gt-shootbar" class="gt-card" hidden></div><div id="gt-shootnote" hidden></div>');
+const cv = $('gt-shoot'), g = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+function fit() {
+  const r = cv.getBoundingClientRect(); DPR = Math.min(2, devicePixelRatio || 1);
+  if (r.width && (Math.round(r.width * DPR) !== cv.width || Math.round(r.height * DPR) !== cv.height)) { cv.width = Math.round(r.width * DPR); cv.height = Math.round(r.height * DPR) }
+  W = r.width; H = r.height;
+}
+const MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+
+/* ---------- state ---------- */
+let on = false, level = 0, spawnT = 0, nextId = 1, targets = [], stuck = [], parts = [], fx = [];
+let aim = null, aimShown = null, aimAt = 0, aimColor = '#c8513a', recoil = 0, combo = 0, lastFire = 0;
+let wipe = null, stats = null, lastFares = 0, sendT = 0, pal = 'summer';
+const resetStats = () => ({ shots: 0, hits: 0, stuck: 0, wiped: 0, bestCombo: 0 });
+stats = resetStats();
+const VP = { x: .5, y: .38 };                       // where they come from: the street ahead, just above the taxi
+const inCore = (x, y) => ((x - .5) / .17) ** 2 + ((y - .56) / .30) ** 2 < 1;   // the taxi and the road ahead stay clear
+const underHud = (x, y) => y < .2 || (x > .8 && y < .34) || (x < .22 && y > .8) || (x > .76 && y > .82);   // stats, minimap, crew strip, shooter bar
+
+function reset() {
+  targets = []; stuck = []; parts = []; fx = []; wipe = null; aim = null; aimShown = null; level = 0; spawnT = 1.6; combo = 0; recoil = 0;
+  lastFares = 0; stats = resetStats(); $('gt-shootbar').hidden = true; g.clearRect(0, 0, cv.width, cv.height);
+}
+GT.on('start', reset);
+// shooter stats go into the shift summary before mp.js shows the results (this file loads first, so it hears 'stop' first)
+GT.on('stop', r => {
+  if (r && on) Object.assign(r, { shots: stats.shots, hits: stats.hits, stuckOn: stats.stuck, wiped: stats.wiped, bestCombo: stats.bestCombo });
+  on = false; reset();
+});
+
+function pickFinal() {
+  let best = null, bestD = -1;
+  for (let k = 0; k < 40; k++) {
+    const x = .07 + Math.random() * .86, y = .2 + Math.random() * .7;
+    if (inCore(x, y) || underHud(x, y)) continue;
+    let d = 9; for (const o of [...stuck, ...targets]) d = Math.min(d, Math.hypot((o.fx - x) * W / H, o.fy - y));
+    if (d > .22) return [x, y];
+    if (d > bestD) { bestD = d; best = [x, y] }
+  }
+  return best || [Math.random() < .5 ? .14 : .86, .5];
+}
+function spawn() {
+  const L = LV[level], kind = L.kinds[Math.floor(Math.random() * L.kinds.length)], [fx0, fy0] = pickFinal();
+  const colors = PALETTE[pal];
+  targets.push({ id: nextId++, kind, move: L.moves[Math.floor(Math.random() * L.moves.length)], t: 0, T: L.approach * (.85 + Math.random() * .3),
+    fx: fx0, fy: fy0, ph: Math.random() * 6.28, color: colors[Math.floor(Math.random() * colors.length)], hp: SPR[kind].hp || 1, flash: 0, x: VP.x, y: VP.y, s: .2 });
+}
+
+/* where a flying target is now: from the vanishing point out to its spot on the glass, growing as it nears */
+function place(o) {
+  const p = Math.min(1, o.t / o.T), grow = p ** 1.55, fade = 1 - p ** 4, t = o.t, a = Math.min(W, H) / Math.max(1, W);
+  let dx = 0, dy = 0;
+  if (o.move === 'wobble') dx = Math.sin(t * 2.3 + o.ph) * .07;
+  else if (o.move === 'zigzag') dx = (2 / Math.PI) * Math.asin(Math.sin(t * 2.2 + o.ph)) * .09;
+  else if (o.move === 'orbit') { dx = Math.cos(t * 2.6 + o.ph) * .07; dy = Math.sin(t * 2.6 + o.ph) * .06 }
+  else if (o.move === 'dart') dx = Math.tanh(5 * Math.sin(t * 1.4 + o.ph)) * .1;
+  const k = SPR[o.kind].move;
+  if (k === 'hop') dy -= Math.abs(Math.sin(t * 5 + o.ph)) * .025;
+  else if (k === 'flutter') dy += Math.sin(t * 8 + o.ph) * .018;
+  else if (k === 'sway') dx += Math.sin(t * 3 + o.ph) * .012;
+  o.x = VP.x + (o.fx - VP.x) * grow + dx * a * fade * (.4 + grow);
+  o.y = VP.y + (o.fy - VP.y) * grow + dy * fade * (.4 + grow);
+  o.s = .16 + .84 * grow;
+  if (k === 'beat') o.s *= 1 + .07 * Math.max(0, Math.sin(t * 6.5 + o.ph));
+}
+const fontPx = () => Math.max(13, Math.min(26, Math.min(W, H) * .03));
+function frameOf(o, stuckNow) {
+  const S = SPR[o.kind];
+  if (o.flash > 0 && S.hit) return S.hit;
+  if (stuckNow) return S.stuck || S.f[0];
+  const n = S.f.length; return S.f[Math.floor((o.t * (S.move === 'twinkle' ? 3 : 1.6) + o.ph) % n)];
+}
+function box(o, scale) {   // the sprite's size on screen, in px
+  const lines = SPR[o.kind].f[0], fs = fontPx() * scale;
+  return { w: Math.max(...lines.map(l => l.length)) * fs * .62, h: lines.length * fs * 1.08, fs };
+}
+
+/* ---------- the shooter ---------- */
+function fire(x, y, color) {
+  const now = performance.now();
+  if (now - lastFire < 110) return;   // a trigger, not a hose
+  lastFire = now; stats.shots++; recoil = 1;
+  const px = x * W, py = y * H;
+  let hit = null, hitD = Infinity;
+  for (const o of targets) {   // nearest (largest) first; stuck ones are behind the glass's reach: they're the wipers' job
+    const b = box(o, o.s), dx = Math.abs(px - o.x * W), dy = Math.abs(py - o.y * H);
+    if (dx < b.w * .6 + 10 && dy < b.h * .6 + 10) { const d = -o.s; if (d < hitD) { hitD = d; hit = o } }
+  }
+  if (!hit) { combo = 0; sound.miss(); fx.push({ x: px, y: py, t: 0, color, miss: true }); toPhones({ t: 'sx', k: 'miss' }); return }
+  hit.hp--; hit.flash = .18;
+  if (hit.hp > 0) { sound.tink(); toPhones({ t: 'sx', k: 'nick', kind: hit.kind }); return }
+  targets.splice(targets.indexOf(hit), 1);
+  stats.hits++; combo++; stats.bestCombo = Math.max(stats.bestCombo, combo);
+  burst(hit, hit.s, 1); sound.pop(combo);
+  fx.push({ x: hit.x * W, y: hit.y * H, t: 0, color: hit.color });
+  toPhones({ t: 'sx', k: 'hit', kind: hit.kind, combo });
+}
+function burst(o, scale, power) {   // the sprite falls apart into its own characters, plus a few sparks
+  const b = box(o, scale), lines = frameOf(o, o.stuckAt != null), cx = o.x * W, cy = o.y * H;
+  lines.forEach((ln, r) => [...ln].forEach((ch, c) => {
+    if (ch === ' ') return;
+    const x = cx + (c - (ln.length - 1) / 2) * b.fs * .62, y = cy + (r - (lines.length - 1) / 2) * b.fs * 1.08;
+    const ang = Math.atan2(y - cy, x - cx) + (Math.random() - .5) * .9, sp = (90 + Math.random() * 160) * power * (.6 + scale * .6);
+    parts.push({ ch, x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 60 * power, r: 0, vr: (Math.random() - .5) * 8, life: .75 + Math.random() * .3, t: 0, fs: b.fs, color: o.color });
+  }));
+  for (let k = 0; k < 6; k++) {
+    const ang = Math.random() * 6.28, sp = 120 + Math.random() * 140;
+    parts.push({ ch: '.*+\'·'[k % 5], x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, r: 0, vr: 0, life: .5, t: 0, fs: b.fs * .8, color: o.color });
+  }
+}
+
+/* ---------- the glass and the wipers ---------- */
+function arrive(o) {
+  targets.splice(targets.indexOf(o), 1);
+  if (stuck.length >= LV[level].cap) {   // the glass is full enough: it bounces off, so the road stays drivable
+    burst(o, 1, .45); sound.bounce(); toPhones({ t: 'sx', k: 'bounce' }); return;
+  }
+  o.stuckAt = 0; o.hp = SPR[o.kind].hp || 1; o.x = o.fx; o.y = o.fy; o.slide = 0;
+  stuck.push(o); stats.stuck++; combo = 0; sound.splat();
+  toPhones({ t: 'sx', k: 'stick', kind: o.kind });
+}
+const PIVOT = () => ({ x: .5 * W, y: H * 1.12 });
+const WIPE_S = .55, SWEEP = 72 * Math.PI / 180;
+function startWipe(dir) {
+  if (wipe) return;   // one sweep at a time
+  wipe = { t: 0, dir: dir < 0 ? -1 : 1, done: new Set() };
+  sound.swish(); toPhones({ t: 'sx', k: 'wipe' });
+}
+function bladeAngle() { const p = wipe.t / WIPE_S, e = p < .5 ? 2 * p * p : 1 - (-2 * p + 2) ** 2 / 2; return wipe.dir * SWEEP * (2 * e - 1) }   // from one side to the other
+function stepWipe(dt) {
+  if (!wipe) return;
+  wipe.t += dt;
+  const pv = PIVOT(), a = bladeAngle();
+  for (const o of [...stuck]) {
+    if (wipe.done.has(o.id)) continue;
+    const oa = Math.atan2(o.x * W - pv.x, pv.y - o.y * H);   // 0 = straight up from the pivot
+    if (wipe.dir * (a - oa) >= 0) {
+      wipe.done.add(o.id); o.hp--;
+      if (o.hp <= 0) { stuck.splice(stuck.indexOf(o), 1); stats.wiped++; burst(o, 1.45, .35); o.dead = true; toPhones({ t: 'sx', k: 'wiped', kind: o.kind }) }
+      else { o.smear = 1; o.x += wipe.dir * .015 }
+    }
+  }
+  if (wipe.t >= WIPE_S) wipe = null;
+}
+
+/* ---------- drawing ---------- */
+function drawSprite(lines, x, y, fs, color, alpha, sx = 1, sy = 1) {
+  g.save(); g.translate(x, y); g.scale(sx, sy); g.globalAlpha = alpha;
+  g.font = `600 ${fs.toFixed(1)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  const night = pal === 'night', n = lines.length;
+  g.strokeStyle = night ? '#1d2b26cc' : '#fffcf3e6'; g.lineWidth = Math.max(2, fs * .16); g.fillStyle = color;
+  for (let r = 0; r < n; r++) { const yy = (r - (n - 1) / 2) * fs * 1.08; g.strokeText(lines[r], 0, yy) }
+  for (let r = 0; r < n; r++) { const yy = (r - (n - 1) / 2) * fs * 1.08; g.fillText(lines[r], 0, yy) }
+  g.restore();
+}
+function draw(dt) {
+  fit(); g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, W, H);
+  const fs = fontPx();
+  // flying ones, far to near
+  for (const o of [...targets].sort((a, b) => a.s - b.s)) {
+    const near = o.s, alpha = Math.min(1, .35 + o.t / o.T * 1.6);
+    drawSprite(frameOf(o, false), o.x * W, o.y * H, fs * near, o.color, alpha * (o.flash > 0 ? .6 : 1));
+    if (o.t / o.T > .78) {   // about to land: a small soft ring on the glass where it will stick
+      const p = (o.t / o.T - .78) / .22; g.save(); g.globalAlpha = .25 * p; g.strokeStyle = o.color; g.lineWidth = 1.2;
+      g.beginPath(); g.ellipse(o.fx * W, o.fy * H, 26 + 14 * (1 - p), 18 + 10 * (1 - p), 0, 0, 6.283); g.stroke(); g.restore();
+    }
+  }
+  // stuck to the glass: squashed a little, sliding slowly, smeared after a wiper pass
+  for (const o of stuck) {
+    const k = Math.min(1, o.stuckAt / .18), sq = 1 + .18 * Math.sin(Math.min(1, o.stuckAt / .25) * Math.PI);
+    drawSprite(frameOf(o, true), o.x * W, (o.y + o.slide) * H, fs * 1.45, o.color, (o.smear ? .62 : .9) * (.6 + .4 * k), sq * 1.06, 1 / sq * .94);
+  }
+  // the wiper blade
+  if (wipe) {
+    const pv = PIVOT(), a = bladeAngle(), L = H * 1.02;
+    g.save(); g.translate(pv.x, pv.y); g.rotate(a);
+    g.strokeStyle = pal === 'night' ? '#fffcf366' : '#263c3577'; g.lineCap = 'round';
+    g.lineWidth = 3; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -L * .55); g.stroke();
+    g.lineWidth = 6; g.strokeStyle = pal === 'night' ? '#fffcf388' : '#263c35aa'; g.beginPath(); g.moveTo(0, -L * .3); g.lineTo(0, -L); g.stroke();
+    g.restore();
+  }
+  // particles
+  for (const q of parts) {
+    const a = Math.max(0, 1 - q.t / q.life);
+    g.save(); g.translate(q.x, q.y); g.rotate(q.r); g.globalAlpha = a; g.font = `600 ${q.fs.toFixed(1)}px ${MONO}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = q.color; g.fillText(q.ch, 0, 0); g.restore();
+  }
+  // hit rings and miss dots
+  for (const f of fx) {
+    const p = f.t / (f.miss ? .3 : .45);
+    g.save(); g.globalAlpha = Math.max(0, 1 - p) * (f.miss ? .5 : .8); g.strokeStyle = f.color; g.lineWidth = f.miss ? 1 : 1.6;
+    g.beginPath(); g.arc(f.x, f.y, f.miss ? 3 + 6 * p : 8 + 30 * p, 0, 6.283); g.stroke(); g.restore();
+  }
+  // the crosshair, in the shooter's seat colour; kicks up a little on each shot
+  if (aimShown && performance.now() - aimAt < 1500) {
+    const x = aimShown.x * W, y = aimShown.y * H - recoil * 7, r = 15 * (1 + recoil * .22);
+    g.save(); g.strokeStyle = '#fffcf3'; g.lineWidth = 4; g.globalAlpha = .7; ring(x, y, r); g.restore();
+    g.save(); g.strokeStyle = aimColor; g.lineWidth = 1.8; ring(x, y, r); g.fillStyle = aimColor; g.beginPath(); g.arc(x, y, 1.8, 0, 6.283); g.fill(); g.restore();
+  }
+}
+function ring(x, y, r) {
+  g.beginPath(); g.arc(x, y, r, 0, 6.283); g.stroke();
+  g.beginPath(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { g.moveTo(x + dx * (r - 4), y + dy * (r - 4)); g.lineTo(x + dx * (r + 6), y + dy * (r + 6)) } g.stroke();
+}
+
+/* ---------- sound: small synthesized pops, quiet by default ---------- */
+let ac = null;
+function audio() {
+  if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)() } catch { return null } }
+  if (ac.state === 'suspended') ac.resume().catch(() => {});
+  return ac;
+}
+addEventListener('pointerdown', audio, true); addEventListener('keydown', audio, true);
+function tone(type, f0, f1, dur, vol, delay = 0) {
+  const a = ac; if (!a || a.state !== 'running') return;
+  const t = a.currentTime + delay, o = a.createOscillator(), v = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur * .6);
+  v.gain.setValueAtTime(.0001, t); v.gain.exponentialRampToValueAtTime(vol, t + .006); v.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(v).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+function noise(dur, vol, f0, f1) {
+  const a = ac; if (!a || a.state !== 'running') return;
+  const t = a.currentTime, n = Math.floor(a.sampleRate * dur), buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const s = a.createBufferSource(), f = a.createBiquadFilter(), v = a.createGain();
+  s.buffer = buf; f.type = 'bandpass'; f.Q.value = 1.2; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  v.gain.setValueAtTime(vol, t); s.connect(f).connect(v).connect(a.destination); s.start(t);
+}
+const STEP = [0, 2, 4, 7, 9, 12, 14, 16];   // a pentatonic climb as the combo grows
+const sound = {
+  pop(c) { const f = 620 * 2 ** (STEP[Math.min(c - 1, 7)] / 12); tone('triangle', f * 1.6, f, .2, .16); tone('sine', f * 2.5, f * 2, .12, .05, .035) },
+  tink() { tone('sine', 1500, 1300, .09, .06) },
+  miss() { tone('square', 190, 120, .05, .02) },
+  splat() { noise(.18, .14, 900, 200); tone('sine', 220, 120, .16, .06) },
+  bounce() { tone('sine', 520, 760, .12, .05) },
+  swish() { noise(WIPE_S, .07, 400, 2400) },
+};
+
+/* ---------- phone messages (called by mp.js for the shooter and wiper roles) ---------- */
+const num = v => typeof v === 'number' && Number.isFinite(v);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+window.GionCrewExt = Object.assign(window.GionCrewExt || {}, {
+  onPhone(p, m, roles, phase) {
+    if (phase !== 'driving') return false;
+    if ((m.t === 'aim' || m.t === 'fire') && roles.includes('shoot') && num(m.x) && num(m.y)) {
+      aim = { x: clamp(.5 + m.x * .5, 0, 1), y: clamp(.5 + m.y * .5, 0, 1) }; aimAt = performance.now(); aimColor = p.color;
+      if (!aimShown) aimShown = { ...aim };
+      if (m.t === 'fire' && on) fire(aim.x, aim.y, p.color);
+      return true;
+    }
+    if (m.t === 'wipe' && roles.includes('wipe')) { if (on) startWipe(num(m.d) ? m.d : 1); return true }
+    return false;
+  },
+});
+
+/* ---------- the loop ---------- */
+let last = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(.05, (now - (last || now)) / 1000); last = now;
+  const c = crew(), driving = GT.driving && c && c.phase === 'driving';
+  const shooter = driving && holder('shoot'), wiper = driving && holder('wipe');
+  if (!driving) { if (on) { on = false; reset() } cv.hidden = true; return }
+  on = true; cv.hidden = false;
+  const st = GT.state();
+  pal = scenery();
+  // level: one step per fare delivered
+  const nl = Math.min(LV.length - 1, st ? st.fares : 0);
+  if (nl !== level) { level = nl; note(LV[level].note); toPhones({ t: 'sx', k: 'level', lv: level + 1 }) }
+  // spawn only while someone holds the shooter role (otherwise nobody could stop them)
+  if (shooter) {
+    spawnT -= dt;
+    if (spawnT <= 0 && targets.length < LV[level].live) { spawn(); spawnT = LV[level].every * (.75 + Math.random() * .5) }
+  }
+  for (const o of [...targets]) { o.t += dt; o.flash = Math.max(0, o.flash - dt); place(o); if (o.t >= o.T) arrive(o) }
+  for (const o of stuck) { o.stuckAt += dt; o.slide = Math.min(.035, o.slide + dt * .003); o.smear = Math.max(0, (o.smear || 0) - dt * .15) }
+  // with nobody on the wipers, the glass slowly clears itself
+  if (!wiper) for (const o of [...stuck]) if (o.stuckAt > 10) { stuck.splice(stuck.indexOf(o), 1); burst(o, 1.45, .2) }
+  stepWipe(dt);
+  for (const q of parts) { q.t += dt; q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 520 * dt; q.r += q.vr * dt }
+  parts = parts.filter(q => q.t < q.life);
+  for (const f of fx) f.t += dt; fx = fx.filter(f => f.t < .5);
+  recoil *= Math.exp(-dt * 12);
+  if (aim && aimShown) { const k = 1 - Math.exp(-dt * 22); aimShown.x += (aim.x - aimShown.x) * k; aimShown.y += (aim.y - aimShown.y) * k }
+  draw(dt);
+  // HUD line
+  const bar = $('gt-shootbar');
+  bar.hidden = !shooter && !stuck.length;
+  bar.innerHTML = `<b>Lv ${level + 1}</b><span>✶ ${stats.hits} popped</span><span class="${stuck.length >= LV[level].cap ? 'full' : ''}">${stuck.length ? `${stuck.length} on the glass` : 'Glass clear'}</span>`;
+  // the 10 Hz picture for the phones
+  if (now - sendT > 100) {
+    sendT = now;
+    toPhones({ t: 'sh', lv: level + 1, hits: stats.hits, shots: stats.shots, cap: LV[level].cap, pal,
+      tg: targets.map(o => [o.id, KINDS.indexOf(o.kind), +o.x.toFixed(3), +o.y.toFixed(3), +o.s.toFixed(2), o.color]),
+      st: stuck.map(o => [o.id, KINDS.indexOf(o.kind), +o.x.toFixed(3), +(o.y + o.slide).toFixed(3), o.hp, o.color]),
+      wipe: wipe ? +(wipe.t / WIPE_S).toFixed(2) * wipe.dir : 0, ar: +(W / Math.max(1, H)).toFixed(3) });
+  }
+}
+let noteT = 0;
+function note(text) {
+  const el = $('gt-shootnote'); el.textContent = text; el.hidden = false; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  clearTimeout(noteT); noteT = setTimeout(() => { el.hidden = true }, 2600);
+}
+requestAnimationFrame(frame);
+cv.hidden = true;
+window.GionShoot = {
+  get targets() { return targets }, get stuck() { return stuck }, get stats() { return stats }, get level() { return level + 1 }, get on() { return on },
+  get palette() { return pal }, fire: (x, y) => fire(x, y, aimColor), wipe: d => startWipe(d || 1), SPR, KINDS, PALETTE,
 };
 })();
 
@@ -3061,13 +3686,15 @@ const SC = GT.scene, HALF = SC.meta.half;
 const served = /^https?:$/.test(location.protocol);
 
 /* ---------- roles: which roles each phone holds, by crew size (seat order) ---------- */
+// The shooter took the navigator's seat (shoot.js); the wipers ride with doors & camera. The 'nav' code below stays
+// for now but no crew size hands it out.
 const ROLE_SETS = {
-  1: [['steer', 'pedals', 'ops']],
-  2: [['steer', 'ops'], ['pedals', 'nav']],
-  3: [['steer'], ['pedals'], ['nav', 'ops']],
-  4: [['steer'], ['pedals'], ['nav'], ['ops']],
+  1: [['steer', 'pedals', 'ops']],          // one phone drives; no shooter, so no targets either
+  2: [['steer', 'ops', 'wipe'], ['pedals', 'shoot']],
+  3: [['steer'], ['pedals'], ['shoot', 'ops', 'wipe']],
+  4: [['steer'], ['pedals'], ['shoot'], ['ops', 'wipe']],
 };
-const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors & camera' };
+const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'Doors & camera', shoot: 'Shooter', wipe: 'Wipers' };
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
@@ -3075,7 +3702,7 @@ const STALE_MS = 700, GRACE_MS = 20000;
 let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
 let phase = 'off';             // off | lobby | count | driving | results
 let crew = [];                 // seat order: [{ pid, name, color, on, ready, offAt, input, lastIn }]
-let result = null, countT = null;
+let result = null, countT = null, game = 'taxi';   // game: 'taxi' or 'bowling', picked in the lobby
 const rolesOf = p => (ROLE_SETS[crew.length] || [])[crew.indexOf(p)] || [];
 const holder = role => crew.find(p => p.on && rolesOf(p).includes(role));
 const find = pid => crew.find(p => p.pid === pid);
@@ -3084,14 +3711,15 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '
 /* ---------- UI: a menu button, the lobby card, the crew strip and the navigator's callouts ---------- */
 const menu = $('gt-menu');
 $('gt-start').insertAdjacentHTML('afterend', served
-  ? '<button id="gt-mp" class="gt-ghost">Play with phones</button><p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, navigator, doors.</p>'
+  ? '<button id="gt-mp" class="gt-ghost">Play with phones</button><p class="gt-keys gt-mpnote">2–4 phones share one taxi: wheel, pedals, shooter, doors &amp; wipers.</p>'
   : '<p class="gt-keys gt-mpnote">Play with phones: run <kbd>node gion-drive/server.js</kbd> and open the address it prints.</p>');
 $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>
   <button id="gt-lclose" class="gt-x" aria-label="Close the room">×</button>
-  <h2>Gion Taxi <span>crew shift</span></h2>
+  <h2>${GT.city.brand} <span>crew shift</span></h2>
   <p class="gt-lsub">One taxi, up to four phones. Scan to join, pick up fares together.</p>
   <div id="gt-lresult"></div>
+  <div class="gt-modes" role="group" aria-label="Game"><button data-game="taxi" aria-pressed="true">Taxi shift</button><button data-game="bowling" aria-pressed="false">${GT.city.bowl}</button></div>
   <div class="gt-lgrid">
     <figure class="gt-qr">
       <div id="gt-qr" aria-live="polite"></div>
@@ -3134,7 +3762,8 @@ function renderLobby() {
   $('gt-seats').innerHTML = seats.join('');
   const notReady = crew.filter(p => !p.ready || !p.on).length;
   $('gt-lstart').disabled = !canStart();
-  $('gt-lstart').textContent = result ? 'Start next shift' : 'Start shift';
+  $('gt-lstart').textContent = (result ? 'Start next ' : 'Start ') + (game === 'bowling' ? 'round' : 'shift');
+  for (const b of document.querySelectorAll('.gt-modes button')) b.setAttribute('aria-pressed', b.dataset.game === game);
   $('gt-lnote').textContent = !wsOk ? 'Can’t reach the crew server. Is node gion-drive/server.js still running?'
     : !crew.length ? 'Up to four phones. Two or more is best: roles are shared out by crew size.'
     : notReady ? `Waiting for ${notReady} phone${notReady === 1 ? '' : 's'} to get ready.` : 'Everyone’s ready.';
@@ -3142,13 +3771,19 @@ function renderLobby() {
   $('gt-lobby').classList.toggle('has-result', !!result);
   renderCrewStrip();
 }
-function rating(r) { return r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0 }
+function rating(r) { return r.mode === 'bowling' ? (r.score >= 4000 ? 3 : r.score >= 2000 ? 2 : r.score >= 600 ? 1 : 0) : r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0 }
 function resultHTML(r) {
+  if (r.mode === 'bowling') {
+    const n = rating(r);
+    return `<div class="gt-res"><b>Time!</b><span class="gt-stars" aria-label="${n} of 3">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span>
+      <div class="gt-resrow"><div><small>Pins</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div>
+      <p>Best ${GT.city.bowl} score ${r.best.toLocaleString()}.</p></div>`;
+  }
   const stars = '★'.repeat(rating(r)) + '☆'.repeat(3 - rating(r));
   return `<div class="gt-res"><b>Shift over</b><span class="gt-stars" aria-label="${rating(r)} of 3">${stars}</span>
     <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div>
     <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>−¥${r.penaltyYen.toLocaleString()}</b></div></div>
-    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ¥${r.best.toLocaleString()}.</p></div>`;
+    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ¥${r.best.toLocaleString()}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass, ${r.wiped} wiped off.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
 }
 function renderCrewStrip() {
   const el = $('gt-crew'), on = phase === 'driving' && crew.length;
@@ -3233,28 +3868,31 @@ function onPhone(p, m) {
     case 'in':   // continuous controls; only from the role's holder and only during a shift
       if (phase !== 'driving') break;
       if (roles.includes('steer') && num(m.turn)) p.input.turn = clamp(m.turn, -1, 1);
-      if (roles.includes('pedals')) { if (num(m.gas)) p.input.gas = clamp(m.gas, 0, 1); if (num(m.brake)) p.input.brake = clamp(m.brake, 0, 1) }
+      if (roles.includes('pedals')) { if (num(m.gas)) p.input.gas = clamp(m.gas, 0, 1); if (num(m.brake)) p.input.brake = clamp(m.brake, 0, 1); if (m.gear === 'D' || m.gear === 'R') p.input.gear = m.gear }
       p.lastIn = performance.now(); applyInputs();
       break;
     case 'door': if (phase === 'driving' && roles.includes('ops')) GT.openDoor(); break;
-    case 'cam': if (phase === 'driving' && roles.includes('ops') && typeof m.chase === 'boolean' && m.chase !== GT.chase) GT.toggleCam(); break;
+    case 'cam': if (phase === 'driving' && roles.includes('ops') && GT.CAM_ORDER.includes(m.cam)) GT.setCam(m.cam); break;
     case 'call': if (phase === 'driving' && roles.includes('nav') && CALLS[m.d]) { showCall(m.d, p); toPhones({ t: 'ev', k: 'call', d: m.d }) } break;
     case 'ping':
       if (phase === 'driving' && roles.includes('nav') && num(m.x) && num(m.y) && Math.abs(m.x) <= HALF && Math.abs(m.y) <= HALF) {
         showPing(m.x, m.y, p.color); toPhones({ t: 'ev', k: 'ping', x: m.x, y: m.y });
       }
       break;
+    default:   // other roles' messages (shoot.js: aim, fire, wipe); the extension checks role and phase itself
+      if (window.GionCrewExt && window.GionCrewExt.onPhone) window.GionCrewExt.onPhone(p, m, roles, phase);
   }
 }
 // merge the phones into the shared input; a phone that stopped sending (backgrounded, out of range) lets go
 function applyInputs() {
   const now = performance.now(), r = GT.remote;
-  let turn = 0, gas = 0, brake = 0;
+  let turn = 0, gas = 0, brake = 0, gear = 'D';
   if (phase === 'driving') for (const p of crew) {
     if (!p.on || now - p.lastIn > STALE_MS) continue;
     turn += p.input.turn; gas = Math.max(gas, p.input.gas); brake = Math.max(brake, p.input.brake);
+    if (p.input.gear === 'R') gear = 'R';
   }
-  r.turn = clamp(turn, -1, 1); r.gas = gas; r.brake = brake;
+  r.turn = clamp(turn, -1, 1); r.gas = gas; r.brake = brake; r.gear = gear;
   GT.doorNeeded = phase === 'driving' && !!holder('ops');
 }
 function rolesChanged() {
@@ -3263,12 +3901,12 @@ function rolesChanged() {
 }
 function broadcastLobby() {
   renderLobby();
-  toPhones({ t: 'lobby', phase, room, result, canStart: canStart(),
+  toPhones({ t: 'lobby', phase, room, result, game, brand: GT.city.brand, bowl: GT.city.bowl, canStart: canStart(),
     seats: crew.map(p => ({ pid: p.pid, name: p.name, color: p.color, roles: rolesOf(p), on: p.on, ready: p.ready })) });
 }
 function sendMap(to) {
   const ring = r => 'M' + r.map(q => q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join('L') + 'Z';
-  toPhones({ t: 'map', half: HALF, roads: SC.roads.map(rs => rs.map(ring).join('')).join(''), water: SC.water.map(rs => rs.map(ring).join('')).join(''),
+  toPhones({ t: 'map', half: HALF, roads: GT.drive.map(rs => rs.map(ring).join('')).join(''), water: SC.water.map(rs => rs.map(ring).join('')).join(''),
     bldg: SC.buildings.map(b => ring(b.ring)).join('') }, to);
 }
 const canStart = () => wsOk && crew.length > 0 && crew.every(p => p.on && p.ready) && (phase === 'lobby' || phase === 'results');
@@ -3293,7 +3931,7 @@ function startCountdown(force) {
   let n = 3; const el = $('gt-count');
   const tick = () => {
     if (phase !== 'count') { el.hidden = true; return }
-    if (n === 0) { el.hidden = true; GT.lockMenu = false; GT.start(); return }
+    if (n === 0) { el.hidden = true; GT.lockMenu = false; GT.start(game); return }
     el.textContent = n; el.hidden = false; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
     toPhones({ t: 'count', n }); n--; countT = setTimeout(tick, 900);
   };
@@ -3310,12 +3948,13 @@ GT.on('stop', r => {
   phase = 'results'; result = r; for (const p of crew) { p.ready = false; p.input = { turn: 0, gas: 0, brake: 0 } }
   applyInputs(); showLobby(true); broadcastLobby();
 });
-for (const k of ['bump', 'pickup', 'dropoff', 'scrape', 'door', 'atdoor']) GT.on(k, d => { if (phase === 'driving') toPhones({ t: 'ev', k, ...(d && typeof d === 'object' ? d : { v: d }) }) });
-GT.on('cam', chase => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', chase }) });
+for (const k of ['bump', 'pickup', 'dropoff', 'scrape', 'door', 'atdoor', 'pin']) GT.on(k, d => { if (phase === 'driving') toPhones({ t: 'ev', k, ...(d && typeof d === 'object' ? d : { v: d }) }) });
+GT.on('cam', cam => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', cam }) });
 
 if (served) $('gt-mp').onclick = openRoom;
 $('gt-lclose').onclick = closeRoom;
 $('gt-lstart').onclick = () => startCountdown();
+document.querySelector('.gt-modes').onclick = e => { const b = e.target.closest('[data-game]'); if (b && (phase === 'lobby' || phase === 'results')) { game = b.dataset.game; broadcastLobby() } };
 $('gt-ip').onclick = () => { ipIndex++; renderLobby() };
 $('gt-seats').onclick = e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -3330,79 +3969,21 @@ async function refreshInfo() {
 }
 setInterval(() => { if (!$('gt-lobby').hidden) refreshInfo() }, 5000);
 
-/* ---------- the navigator's route: a breadth-first distance field over 2 m road cells, rebuilt per fare stage ---------- */
-const CELL = 2, N = Math.ceil(2 * HALF / CELL);
-let walk = null;
-const cx = i => -HALF + (i + .5) * CELL;
-function buildWalk() {
-  walk = new Uint8Array(N * N);
-  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
-    const x = cx(i), y = cx(j);
-    walk[j * N + i] = [[0, 0], [.8, 0], [-.8, 0], [0, .8], [0, -.8]].every(([dx, dy]) => GT.onRoad([x + dx, y + dy])) ? 1 : 0;
-  }
-}
-const cellOf = (x, y) => [clamp(Math.floor((x + HALF) / CELL), 0, N - 1), clamp(Math.floor((y + HALF) / CELL), 0, N - 1)];
-function nearestWalk(x, y) {
-  const [i0, j0] = cellOf(x, y);
-  for (let r = 0; r < 8; r++) {
-    let best = null, bd = Infinity;
-    for (let j = j0 - r; j <= j0 + r; j++) for (let i = i0 - r; i <= i0 + r; i++) {
-      if (i < 0 || j < 0 || i >= N || j >= N || !walk[j * N + i]) continue;
-      const d = Math.hypot(cx(i) - x, cx(j) - y); if (d < bd) { bd = d; best = j * N + i }
-    }
-    if (best != null) return best;
-  }
-  return null;
-}
-const NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
-let field = null, lastTarget = null, lastRoute = null;
-function buildField(tx, ty) {
-  field = new Int32Array(N * N).fill(-1);
-  const s = nearestWalk(tx, ty); if (s == null) return;
-  const q = [s]; field[s] = 0;
-  for (let h = 0; h < q.length; h++) {
-    const c = q[h], i = c % N, j = (c - i) / N;
-    for (const [di, dj] of NB) {
-      const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue;
-      const n = nj * N + ni;
-      if (walk[n] && field[n] < 0 && (!di || !dj || (walk[j * N + ni] && walk[nj * N + i]))) { field[n] = field[c] + 1; q.push(n) }
-    }
-  }
-}
-function clear(a, b) {
-  const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.ceil(L / .8);
-  for (let k = 1; k < n; k++) { const [i, j] = cellOf(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n); if (!walk[j * N + i]) return false }
-  return true;
-}
-function route(st) {
-  if (!walk) buildWalk();
-  const tk = st.tx.toFixed(1) + ',' + st.ty.toFixed(1);
-  if (tk !== lastTarget) { buildField(st.tx, st.ty); lastTarget = tk }
-  let c = nearestWalk(st.x, st.y); if (c == null || field[c] < 0) return null;
-  const cells = [c];
-  while (field[c] > 0 && cells.length < N * 4) {
-    const i = c % N, j = (c - i) / N; let nx = c;
-    for (const [di, dj] of NB) { const ni = i + di, nj = j + dj; if (ni < 0 || nj < 0 || ni >= N || nj >= N) continue; const n = nj * N + ni; if (field[n] >= 0 && field[n] < field[nx]) nx = n }
-    if (nx === c) break; c = nx; cells.push(c);
-  }
-  const raw = [[st.x, st.y], ...cells.map(c => [cx(c % N), cx(Math.floor(c / N))]), [st.tx, st.ty]];
-  const pts = [raw[0]];   // pull the string tight: keep only the corners the road forces
-  for (let a = 0; a < raw.length - 1;) { let b = raw.length - 1; while (b > a + 1 && !clear(raw[a], raw[b])) b--; pts.push(raw[b]); a = b }
-  let len = 0; for (let k = 1; k < pts.length; k++) len += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
-  return { pts: pts.map(p => [+p[0].toFixed(1), +p[1].toFixed(1)]), len: Math.round(len) };
-}
+/* ---------- the navigator's route: drive.js keeps the road grid (GT.route) ---------- */
+let lastTarget = null, lastRoute = null;
+const route = st => GT.route(st);
 
 /* ---------- the 10 Hz picture of the shift for the phones, and the watchdogs ---------- */
 let routeT = 0;
 function sendState() {
   const st = GT.state(); if (!st || phase !== 'driving') return;
   const now = performance.now();
-  if (now - routeT > 400 && holder('nav')) {
+  if (now - routeT > 400 && holder('nav') && st.tx != null) {
     routeT = now;
     try { const r = route(st); if (r) { const m = { t: 'route', ...r }; if (!lastRoute || JSON.stringify(m.pts) !== JSON.stringify(lastRoute.pts)) toPhones(m); lastRoute = m } } catch (e) { console.error(e) }
   }
-  toPhones({ t: 's', clock: +st.clock.toFixed(1), yen: st.yen, fares: st.fares, v: +st.v.toFixed(2), x: +st.x.toFixed(2), y: +st.y.toFixed(2), h: +st.h.toFixed(3),
-    mode: st.mode, tx: st.tx, ty: st.ty, atDoor: st.atDoor, doorNeeded: st.doorNeeded, chase: st.chase, fareEst: st.fareEst, dist: lastRoute ? lastRoute.len : null });
+  toPhones({ t: 's', game: st.game, clock: +st.clock.toFixed(1), yen: st.yen, fares: st.fares, pins: st.pins, score: st.score, v: +st.v.toFixed(2), x: +st.x.toFixed(2), y: +st.y.toFixed(2), h: +st.h.toFixed(3),
+    gear: st.gear, mode: st.mode, tx: st.tx, ty: st.ty, atDoor: st.atDoor, doorNeeded: st.doorNeeded, cam: st.cam, fareEst: st.fareEst, dist: st.tx != null && lastRoute ? lastRoute.len : null });
 }
 setInterval(() => {
   if (phase === 'off') return;
@@ -3414,9 +3995,9 @@ setInterval(() => {
   if (gone.length && wsOk) { for (const p of gone) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1) } rolesChanged(); broadcastLobby() }
 }, 100);
 setInterval(() => send({ t: 'hb' }), 2000);
-window.GionCrew = { get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
+window.GionCrew = { toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
   // used by Wrong Turn mode (wt.js)
-  send, toPhones, canStart, startCountdown, holder, get wsOk() { return wsOk }, onDx: null };
+  send, canStart, startCountdown, get game() { return game }, get wsOk() { return wsOk }, onDx: null };
 })();
 
 </script>
@@ -3460,7 +4041,7 @@ setInterval(() => { if (!$('gt-lobby').hidden) renderSwitch() }, 1000);
 
 /* ---------- 1. before the trip: secret roles out, wagers locked in on-chain ---------- */
 C.beforeStart = () => {
-  if (!on) return false;
+  if (!on || C.game !== 'taxi') return false;   // Wrong Turn is a taxi trip; bowling plays as usual
   if (C.crew.length < (withBots ? 1 : 3) || avail) {   // say why Start did nothing, right where the eye is
     renderSwitch(); const sw = $('wt-switch'); sw.classList.remove('wt-shake'); void sw.offsetWidth; sw.classList.add('wt-shake');
     return true;

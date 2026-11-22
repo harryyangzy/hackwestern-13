@@ -37,7 +37,7 @@ setInterval(() => { if (!$('gt-lobby').hidden) renderSwitch() }, 1000);
 
 /* ---------- 1. before the trip: secret roles out, wagers locked in on-chain ---------- */
 C.beforeStart = () => {
-  if (!on) return false;
+  if (!on || C.game !== 'taxi') return false;   // Wrong Turn is a taxi trip; bowling plays as usual
   if (C.crew.length < (withBots ? 1 : 3) || avail) {   // say why Start did nothing, right where the eye is
     renderSwitch(); const sw = $('wt-switch'); sw.classList.remove('wt-shake'); void sw.offsetWidth; sw.classList.add('wt-shake');
     return true;

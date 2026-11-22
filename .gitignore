@@ -4,6 +4,8 @@ node_modules/
 .env.*
 __pycache__/
 .venv/
+gion-drive/cities/*/work/osm.json
+gion-drive/cities/*/work/pocket-*.html
 build/
 DerivedData/
 *.xcuserstate

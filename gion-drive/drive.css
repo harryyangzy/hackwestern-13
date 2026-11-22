@@ -24,3 +24,8 @@
 #gt-start:hover{filter:brightness(1.08)}
 .gt-x{position:absolute;top:8px;right:12px;font-size:22px;color:var(--muted)}
 #gt-open{position:absolute;top:14px;left:50%;transform:translateX(-50%);padding:8px 18px;font-weight:600;z-index:4}
+.gt-bowlnote{margin:12px 0 0!important}
+.gt-cities{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;margin:12px 0 0!important;padding-top:10px;border-top:1px solid var(--rule);font-size:14px}
+.gt-cities b{color:var(--ink)}
+.gt-cities a{color:var(--rust);font-weight:600}
+.gt-link{color:var(--rust);font-weight:600;text-decoration:underline;font-size:inherit}

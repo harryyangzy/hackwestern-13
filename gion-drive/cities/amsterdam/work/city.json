@@ -1,0 +1,401 @@
+{
+ "name": "Amsterdam",
+ "title": "Reguliersgracht × Keizersgracht, Amsterdam",
+ "region": "The Netherlands",
+ "place": "Reguliersgracht × Keizersgracht",
+ "flag": "<svg aria-hidden='true' viewBox='0 0 30 20'><rect width='30' height='20' fill='#f8f6f0'/><rect width='30' height='6.7' fill='#ae1c28'/><rect y='13.3' width='30' height='6.7' fill='#21468b'/></svg>",
+ "timezone": "Europe/Amsterdam",
+ "level": 3.3,
+ "styles": {
+  "default": {
+   "facade": "brick",
+   "wall": [
+    "#7d3e30",
+    "#6a3a2d",
+    "#8e4b37",
+    "#5e3529",
+    "#9a5a44"
+   ],
+   "trim": "#f4efe4",
+   "frame": "#f4efe4",
+   "roof": "gabled",
+   "ridge": "long",
+   "pitch": 50,
+   "roofColour": [
+    "#4b4846",
+    "#57534f",
+    "#6d4a3c"
+   ],
+   "roofTex": "tiles",
+   "levels": 4,
+   "floor": 3.3,
+   "bay": 2.0,
+   "eaves": 0.2,
+   "maxSpan": 12,
+   "rectFill": 0.6,
+   "shop": "poi",
+   "flatRoof": "#8b8781"
+  },
+  "rules": [
+   {
+    "if": {
+     "maxArea": 30
+    },
+    "set": {
+     "levels": 2,
+     "shop": "none"
+    }
+   },
+   {
+    "if": {
+     "minArea": 600
+    },
+    "set": {
+     "facade": "stucco",
+     "wall": [
+      "#e9e1d0",
+      "#ddd3bf"
+     ],
+     "roof": "flat"
+    }
+   }
+  ]
+ },
+ "buildings": {},
+ "palette": {
+  "ground": "#e6dfcf",
+  "road": "#a59a95",
+  "pavement": "#d2c6b6",
+  "walk": "#cfc3b2",
+  "grass": "#9fcf6e",
+  "slab": "#c9b8a3",
+  "marking": "#f2ece0",
+  "kerb": "#cbbfae",
+  "paving": "#b39f8c",
+  "water": "#7d9e94",
+  "quay": "#cdbfa9"
+ },
+ "paving": {
+  "style": "slabs",
+  "size": 0.25,
+  "colour": "#9c8471",
+  "stone": "#b58c74"
+ },
+ "lamp": {
+  "colour": "#2d3a36",
+  "height": 4.6,
+  "head": "#f4ead0"
+ },
+ "boats": {
+  "hulls": [
+   "#f3efe4",
+   "#2f4f6e",
+   "#7d3e30",
+   "#2f3238"
+  ],
+  "stripes": [
+   "#b8483b"
+  ],
+  "covers": [
+   "#3f6e9a",
+   "#2f3238"
+  ],
+  "inside": "#c8a27a",
+  "cabin": "#f6f3ea"
+ },
+ "cafes": {
+  "umbrellas": [
+   "#f3efe4",
+   "#2f4f6e"
+  ],
+  "stripes": false,
+  "table": "#f1ece0",
+  "chair": "#6d5a46"
+ },
+ "trees": {
+  "default": {
+   "style": 2,
+   "colours": [
+    "#7fb35c",
+    "#93c066"
+   ],
+   "height": 14,
+   "autumn": "#d9b24a"
+  },
+  "rules": [
+   {
+    "match": "Bank tree|Ulmus|elm",
+    "style": 2,
+    "colours": [
+     "#7aae58",
+     "#8cbb60"
+    ],
+    "height": 15,
+    "autumn": "#d9b84a",
+    "vary": 0.25
+   }
+  ]
+ },
+ "people": {
+  "clothes": [
+   "#2f3238",
+   "#e7e2d6",
+   "#3d4a5e",
+   "#a64a3c",
+   "#6b7f94",
+   "#d8b56a",
+   "#4f6b4f"
+  ],
+  "umbrellas": [
+   "#2f3238",
+   "#3d4a5e",
+   "#a64a3c",
+   "#e7e2d6"
+  ],
+  "bikes": [
+   "#2f3238",
+   "#2f3238",
+   "#5a5e63",
+   "#7d3e30",
+   "#2f4f6e"
+  ]
+ },
+ "vehicles": {
+  "kinds": [
+   "small",
+   "hatch",
+   "van",
+   "small"
+  ],
+  "colours": [
+   "#f2f2ee",
+   "#2e3139",
+   "#99a3ae",
+   "#3d4f6b"
+  ],
+  "plate": "#f2c94c"
+ },
+ "seasonLabel": "Season",
+ "seasons": [
+  {
+   "id": "spring",
+   "label": "Spring",
+   "leaves": "spring",
+   "wx": "fluff",
+   "crowd": 1.2,
+   "note": {
+    "text": "Elms have lined the canals since the 18th century, when they replaced the first lindens.",
+    "source": "Grachten Museum",
+    "url": "https://grachten.museum/en/climate-and-nature/"
+   }
+  },
+  {
+   "id": "summer",
+   "label": "Summer",
+   "leaves": "summer",
+   "crowd": 1.5,
+   "boats": 1,
+   "note": {
+    "text": "Amsterdam is slightly warmer in summer and cooler in winter than London.",
+    "source": "Met Office",
+    "url": "https://www.metoffice.gov.uk/holiday-weather/europe/netherlands/amsterdam"
+   }
+  },
+  {
+   "id": "autumn",
+   "label": "Autumn",
+   "leaves": "autumn",
+   "wet": true,
+   "umbrellas": true,
+   "wx": "drizzle",
+   "cafes": "closed",
+   "crowd": 0.9,
+   "boats": 0.8,
+   "note": {
+    "text": "Rain falls in every month in Amsterdam: there is no dry season.",
+    "source": "Climate-Data.org",
+    "url": "https://en.climate-data.org/location/3330/"
+   }
+  },
+  {
+   "id": "winter",
+   "label": "Winter",
+   "leaves": "bare",
+   "coats": true,
+   "cafes": false,
+   "crowd": 0.7,
+   "boats": 0.6,
+   "grass": "#9fcf6e",
+   "note": {
+    "text": "Amsterdam winters are fairly cold, with rain, wind and some snow.",
+    "source": "I amsterdam",
+    "url": "https://iamsterdam.com/en/plan-your-trip/practical-info/amsterdam-weather"
+   }
+  }
+ ],
+ "occasionLabel": "Special scenes",
+ "occasions": [
+  {
+   "id": "kingsday",
+   "label": "King's Day",
+   "leaves": "spring",
+   "crowd": 2.2,
+   "boats": 1,
+   "dress": {
+    "colours": [
+     "#f28c28",
+     "#f28c28",
+     "#f5a04a",
+     "#21468b",
+     "#ae1c28"
+    ],
+    "share": 0.75
+   },
+   "decor": {
+    "bunting": [
+     "#f28c28",
+     "#ae1c28",
+     "#f8f6f0",
+     "#21468b"
+    ],
+    "flags": [
+     "#f28c28"
+    ]
+   },
+   "note": {
+    "text": "On 27 April the canals fill with party boats decked out in orange.",
+    "source": "I amsterdam",
+    "url": "https://www.iamsterdam.com/en/see-and-do/whats-on/major-events-and-celebrations/kings-day/all-about-kings-day-in-amsterdam"
+   }
+  },
+  {
+   "id": "lightfestival",
+   "label": "Light Festival",
+   "leaves": "bare",
+   "coats": true,
+   "night": 0.9,
+   "litShare": 0.7,
+   "crowd": 1.3,
+   "decor": {
+    "fairy": [
+     "#fff3c4",
+     "#ffe7a8",
+     "#f6c445"
+    ],
+    "litTrees": "Bank tree|^$"
+   },
+   "note": {
+    "text": "Each winter about 20 light artworks stand in, above and alongside the canals.",
+    "source": "I amsterdam",
+    "url": "https://www.iamsterdam.com/en/whats-on/calendar/festivals/events/amsterdam-light-festival"
+   }
+  }
+ ],
+ "months": [
+  "winter",
+  "winter",
+  "spring",
+  "spring",
+  "spring",
+  "summer",
+  "summer",
+  "summer",
+  "autumn",
+  "autumn",
+  "autumn",
+  "winter"
+ ],
+ "views": [
+  {
+   "id": "crossing",
+   "label": "Canal crossing",
+   "camera": {
+    "yaw": -40,
+    "pitch": 28,
+    "zoom": 2.6,
+    "x": 0,
+    "y": 0,
+    "z": 4
+   }
+  },
+  {
+   "id": "reguliers",
+   "label": "Reguliersgracht",
+   "camera": {
+    "yaw": -95,
+    "pitch": 26,
+    "zoom": 3.2,
+    "x": 0,
+    "y": -40,
+    "z": 3
+   }
+  }
+ ],
+ "legend": [
+  {
+   "name": "Canal houses",
+   "source": "OpenStreetMap",
+   "count": "144",
+   "icon": "buildings",
+   "camera": {
+    "yaw": -40,
+    "pitch": 30,
+    "zoom": 2.4,
+    "x": 30,
+    "y": 30,
+    "z": 6
+   }
+  },
+  {
+   "name": "Keizersgracht",
+   "source": "OpenStreetMap",
+   "count": "",
+   "icon": "water",
+   "camera": {
+    "yaw": -40,
+    "pitch": 28,
+    "zoom": 2.6,
+    "x": 0,
+    "y": 0,
+    "z": 4
+   }
+  },
+  {
+   "name": "Canal elms",
+   "source": "Illustrative positions",
+   "count": "",
+   "icon": "trees",
+   "camera": {
+    "yaw": -95,
+    "pitch": 26,
+    "zoom": 3.2,
+    "x": 0,
+    "y": -40,
+    "z": 3
+   }
+  }
+ ],
+ "notes": [
+  {
+   "title": "Reguliersgracht",
+   "text": "The canal of seven bridges: looking along the Reguliersgracht from the Keizersgracht bridge, its bridges line up in a row. Merchants built the gabled canal houses in the 17th century.",
+   "links": [
+    {
+     "label": "Lonely Planet",
+     "url": "https://www.lonelyplanet.com/the-netherlands/amsterdam/attractions/reguliersgracht/a/poi-sig/1231961/1323041"
+    }
+   ]
+  },
+  {
+   "title": "What is illustrative",
+   "text": "Measured from OpenStreetMap: footprints, quays, canals. Drawn by eye: most heights, gables, brick colours, each canal elm (placed along the banks), boats, people and traffic.",
+   "links": [
+    {
+     "label": "OpenStreetMap",
+     "url": "https://www.openstreetmap.org/#map=18/52.3635/4.8960"
+    }
+   ]
+  }
+ ],
+ "vivid": true
+}

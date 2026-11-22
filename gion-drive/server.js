@@ -4,7 +4,10 @@
 //                                        so phones can join from any network, even when campus Wi-Fi isolates devices.
 //   PUBLIC_URL=https://… node …          use a tunnel/host you run yourself (ngrok, cloudflared…) for the QR code
 // Laptop (the game, the host) opens http://localhost:8090. Phones scan the QR code in the crew lobby, which points at
-// http://<laptop LAN address>:8090/join?r=ROOM. Phones only use touch, so plain HTTP is enough (no certificate).
+// http://<laptop LAN address>:8090/join?r=ROOM. Most roles only use touch, so plain HTTP is enough. The shooter aims
+// with the phone's gyroscope, which browsers only allow on secure pages, so the server also listens on HTTPS_PORT
+// (8490) with a self-signed certificate made on first run (gion-drive/.cert, needs openssl). Only the shooter's phone
+// switches to it, and only on the LAN; a --tunnel or PUBLIC_URL address is already https. NO_HTTPS=1 turns it off.
 //
 // The server is a relay with rooms. The laptop page is the authority: it runs the taxi, assigns roles and decides
 // who is ready. The server only creates rooms, admits up to four phones per room, remembers each phone by a
@@ -12,14 +15,17 @@
 // The WebSocket framing is adapted from shooter/server.js (Laptop Shooter, branch laptop-shooter).
 
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
-const { spawn } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
 const WT = require('./wt-server.js');   // Wrong Turn mode (Solana devnet wagers); works without it, see wt-server.js
 
 const PORT = +process.env.PORT || 8090;
+const HTTPS_PORT = +process.env.HTTPS_PORT || 8490;
+let httpsUp = false;
 const MAX_PHONES = 4;
 const HOST_GRACE_MS = 120000;     // a room survives this long without its laptop (page reload, Wi-Fi blip)
 const IDLE_MS = 15000;            // a socket that says nothing for this long is closed (clients heartbeat every 2 s)
@@ -63,18 +69,18 @@ process.on('exit', () => { if (tunnelProc) tunnelProc.kill() });
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(0));
 
 // ---------- static files ----------
-const FILES = { '/': 'gion-taxi.html', '/index.html': 'gion-taxi.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/wt-pad.js': 'wt-pad.js' };
+const FILES = { '/': 'gion-taxi.html', '/index.html': 'gion-taxi.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/wt-pad.js': 'wt-pad.js' };
 function handler(req, res) {
   const url = req.url.split('?')[0];
   if (url === '/info') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    return res.end(JSON.stringify({ ips: lanIPs(), port: PORT, publicUrl }));
+    return res.end(JSON.stringify({ ips: lanIPs(), port: PORT, publicUrl, httpsPort: httpsUp ? HTTPS_PORT : null }));
   }
-  const file = FILES[url];
+  const file = FILES[url] || (/^\/(gion-taxi|taxi-[a-z]+)\.html$/.test(url) ? url.slice(1) : /^\/(london|toronto|amsterdam|gion)$/.test(url) ? (url === '/gion' ? 'gion-taxi.html' : 'taxi' + url.replace('/', '-') + '.html') : null);
   if (!file) { res.writeHead(404, { 'Content-Type': 'text/plain' }); return res.end('Not found. The game is at / and phones join at /join'); }
   fs.readFile(path.join(__dirname, file), (err, data) => {
     if (err) { res.writeHead(500); return res.end('Could not read ' + file); }
-    res.writeHead(200, { 'Content-Type': file.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    res.writeHead(200, { 'Content-Type': (file.endsWith('.js') ? 'text/javascript' : 'text/html') + '; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end(data);
   });
 }
@@ -235,6 +241,27 @@ function onUpgrade(req, socket) {
   socket.on('error', cleanup);
 }
 
+// ---------- HTTPS for the shooter's gyroscope (self-signed; the phone accepts it once) ----------
+function ensureCert() {
+  const dir = path.join(__dirname, '.cert'), key = path.join(dir, 'key.pem'), cert = path.join(dir, 'cert.pem');
+  if (!fs.existsSync(key) || !fs.existsSync(cert)) {
+    fs.mkdirSync(dir, { recursive: true });
+    const san = ['DNS:localhost', 'IP:127.0.0.1', ...lanIPs().map(ip => 'IP:' + ip)].join(',');
+    execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-days', '365',
+      '-subj', '/CN=gion-taxi', '-addext', 'subjectAltName=' + san], { stdio: 'ignore' });
+  }
+  return { key: fs.readFileSync(key), cert: fs.readFileSync(cert) };
+}
+function startHttps() {
+  if (process.env.NO_HTTPS) return;
+  let creds;
+  try { creds = ensureCert() } catch { return console.log('  (No openssl: the shooter can still aim by dragging on the phone.)') }
+  const s = https.createServer(creds, handler);
+  s.on('upgrade', onUpgrade);
+  s.on('error', e => console.log(`  HTTPS port ${HTTPS_PORT} unavailable (${e.code}); the shooter can still aim by dragging.`));
+  s.listen(HTTPS_PORT, '0.0.0.0', () => { httpsUp = true; console.log(`  Shooter tilt aiming:  https://<LAN address>:${HTTPS_PORT} (the phone offers the switch)`) });
+}
+
 // ---------- start ----------
 const server = http.createServer(handler);
 server.on('upgrade', onUpgrade);
@@ -249,6 +276,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`  Laptop (the game):  http://localhost:${PORT}`);
   console.log(`  Phones join at:     ${ips.length ? ips.map(ip => `http://${ip}:${PORT}/join`).join('  or  ') : '(no network found: connect to Wi-Fi or a hotspot)'}`);
   console.log('  Open the game, press "Play with phones" and scan the QR code.');
+  startHttps();
   if (process.argv.includes('--tunnel')) return startTunnel();
   if (publicUrl) return console.log(`  Public address for phones: ${publicUrl}/join\n`);
   console.log('  Phones must be on the same network as this laptop. If they can\'t connect (campus Wi-Fi often blocks');
