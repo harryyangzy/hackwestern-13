@@ -36,6 +36,18 @@ the network connected to the start, so every fare is reachable (tested: 16/16 fa
 In every camera the worker hides trees over the taxi and between it and the camera, and draws buildings in front of it
 see-through (x-ray), so canal elms and tall buildings never hide the taxi.
 
+**Test lab and seat characters (2026-11-22):**
+- `test.html`, served at `/test` (and linked as "Test lab" on the title when served): pick a city, a mode (Solo, Taxi shift,
+  Joyride, Wrong Turn) and 1–4 phones, then Launch. The laptop page runs on the left and the phones (`pad.html` at 844×390,
+  scaled, each with its own `pid`) on the right, already joined. **All ready** taps every phone's Ready; **Start** presses
+  the lobby's Start. Wrong Turn with fewer than 3 phones ticks "fill with bots". Each launch opens a fresh room (it clears
+  `sessionStorage.gtRoom`). Phone frames have `allow="fullscreen 'none'"` so Ready can't take over the window.
+  Checked in headless Chrome: Taxi shift with 2 phones, Joyride with 4 and Taxi shift with 1 all start driving; Wrong Turn
+  with 3 phones reaches the wager step; Solo drives; no page errors.
+- The lobby's seats show the crew characters from `crew.js` (fox, bear, owl, raccoon by seat colour) instead of a colour
+  dot; empty seats show the characters still free, faded, with no "Seat N · Waiting for a phone" text. The phone's role list
+  uses them too (`pad.html` loads `/crew.js`). `mp.js` keeps crew.js's helpers on `window.GionCrew` (it used to overwrite them).
+
 **Phone screens are controls only (2026-11-22):** anything the laptop shows (time, yen, fares, task, speed, the taxi
 meter, toasts for bumps/fares/pins/hits/levels, results, the crew list, hint text, the shooter's level/score counter)
 is left off the phone; it still buzzes. What remains: the controls, door + camera, the aim and wipe panels, a corner

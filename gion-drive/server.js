@@ -69,7 +69,7 @@ process.on('exit', () => { if (tunnelProc) tunnelProc.kill() });
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => process.exit(0));
 
 // ---------- static files ----------
-const FILES = { '/': 'index.html', '/index.html': 'index.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/cuties.js': 'cuties.js', '/crew.js': 'crew.js', '/pad-fog.js': 'pad-fog.js', '/wt-pad.js': 'wt-pad.js', '/theme.css': 'theme.css', '/InterVariable.woff2': 'InterVariable.woff2', '/SuisseIntl-Regular.woff2': 'SuisseIntl-Regular.woff2', '/ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf': 'ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf' };
+const FILES = { '/': 'index.html', '/index.html': 'index.html', '/test': 'test.html', '/test.html': 'test.html', '/join': 'pad.html', '/pad.html': 'pad.html', '/pad-shoot.js': 'pad-shoot.js', '/cuties.js': 'cuties.js', '/crew.js': 'crew.js', '/pad-fog.js': 'pad-fog.js', '/wt-pad.js': 'wt-pad.js', '/theme.css': 'theme.css', '/InterVariable.woff2': 'InterVariable.woff2', '/SuisseIntl-Regular.woff2': 'SuisseIntl-Regular.woff2', '/ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf': 'ZimulaInkSpotUnlicensedTrial-MediumInkSpot.otf' };
 function handler(req, res) {
   const url = req.url.split('?')[0];
   if (url === '/info') {

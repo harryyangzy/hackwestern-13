@@ -6,6 +6,7 @@
 (() => {
 const GT = window.GionTaxi, $ = id => document.getElementById(id);
 if (!GT) return;
+const CHAR = window.GionCrew || null;   // crew.js: the seat characters (fox, bear, owl, raccoon); kept on the export below
 const SC = GT.scene, HALF = SC.meta.half;
 const served = /^https?:$/.test(location.protocol);
 
@@ -70,6 +71,8 @@ function showLobby(on) {
   if (on) { menu.hidden = true; $('gt-open').hidden = true }
   GT.lockMenu = on;
 }
+// a seat's character; falls back to the old colour dot if crew.js is missing
+const face = color => CHAR ? `<span class="gt-face">${CHAR.icon(color, 40)}</span>` : '<i></i>';
 function renderLobby() {
   if (phase === 'off') return;
   $('gt-room').textContent = room || '····';
@@ -81,12 +84,12 @@ function renderLobby() {
   } else $('gt-qr').innerHTML = `<p class="gt-qrmsg">${!wsOk ? 'Connecting to the crew server…' : 'No network found. Connect this laptop to Wi-Fi or a phone’s hotspot.'}</p>`;
   $('gt-ip').hidden = ips.length < 2 || isLanHost() || !!publicUrl;
   $('gt-lobby').classList.toggle('public', !!publicUrl);
-  const seats = [];
+  const seats = [], free = COLORS.filter(c => !crew.some(p => p.color === c));   // the characters still to be taken, in join order
   for (let i = 0; i < 4; i++) {
     const p = crew[i];
-    if (!p) { seats.push(`<li class="empty"><i></i><div><b>Seat ${i + 1}</b><small>${i === 0 ? 'Scan the code to join' : 'Waiting for a phone'}</small></div></li>`); continue }
+    if (!p) { seats.push(`<li class="empty" title="Open seat" aria-label="Seat ${i + 1}, open">${face(free.shift())}</li>`); continue }
     const status = !p.on ? 'Reconnecting…' : phase === 'driving' || phase === 'count' ? 'On shift' : p.ready ? 'Ready' : 'Not ready';
-    seats.push(`<li style="--c:${p.color}" class="${p.on ? '' : 'off'} ${p.ready ? 'ready' : ''}"><i></i><div><b>${esc(p.name)}</b><small>${rolesOf(p).map(r => ROLE_NAMES[r]).join(' · ')}</small></div>
+    seats.push(`<li style="--c:${p.color}" class="${p.on ? '' : 'off'} ${p.ready ? 'ready' : ''}">${face(p.color)}<div><b>${esc(p.name)}</b><small>${rolesOf(p).map(r => ROLE_NAMES[r]).join(' · ')}</small></div>
       <span class="st">${status}</span>${crew.length > 1 ? `<button data-swap="${i}" title="Swap roles with the next seat" aria-label="Swap roles">⇅</button>` : ''}<button data-kick="${i}" title="Remove this phone" aria-label="Remove ${esc(p.name)}">×</button></li>`);
   }
   $('gt-seats').innerHTML = seats.join('');
@@ -344,7 +347,7 @@ setInterval(() => {
   if (gone.length && wsOk) { for (const p of gone) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1) } rolesChanged(); broadcastLobby() }
 }, 100);
 setInterval(() => send({ t: 'hb' }), 2000);
-window.GionCrew = { open: openRoom, toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
+window.GionCrew = { ...(CHAR || {}), open: openRoom, toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
   // used by Wrong Turn mode (wt.js)
   send, canStart, startCountdown, get game() { return game }, get wsOk() { return wsOk }, onDx: null };
 })();

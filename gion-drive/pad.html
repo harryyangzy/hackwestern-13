@@ -312,6 +312,7 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 <div id="banner" class="card" hidden></div>
 <div id="toast"></div>
 
+<script src="crew.js"></script>
 <script>
 (() => {
 const $ = id => document.getElementById(id);
@@ -415,7 +416,7 @@ function onLobby(m) {
   $('ready').classList.toggle('on', ready); $('ready').setAttribute('aria-pressed', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
   const waiting = m.seats.filter(s => !s.ready || !s.on).length;
   $('lobbyMsg').textContent = !me ? 'Finding you a seat…' : !ready ? '' : waiting ? `Waiting for ${waiting} more…` : 'Starting soon…';
-  $('mates').innerHTML = (m.seats.length > 1 ? '<small>Roles · tap one to take it</small>' : '') + m.seats.map((s, i) => `<button data-seat="${i}" class="${s.pid === pid ? 'mine' : ''}"><i style="background:${s.color}"></i><b>${s.roles.map(r => ROLE_INFO[r][0]).join(' + ')}</b><span>${s.pid === pid ? 'You' : s.name}${s.on && s.ready ? ' ✓' : ''}</span></button>`).join('');
+  $('mates').innerHTML = (m.seats.length > 1 ? '<small>Roles · tap one to take it</small>' : '') + m.seats.map((s, i) => `<button data-seat="${i}" class="${s.pid === pid ? 'mine' : ''}">${window.GionCrew ? GionCrew.icon(s.color, 26) : `<i style="background:${s.color}"></i>`}<b>${s.roles.map(r => ROLE_INFO[r][0]).join(' + ')}</b><span>${s.pid === pid ? 'You' : s.name}${s.on && s.ready ? ' ✓' : ''}</span></button>`).join('');
   $('result').innerHTML = '';   // results are on the laptop
   if (phase === 'driving' || phase === 'count') { if (screen !== 'drive') show('drive') }
   else if (screen !== 'lobby') { show('lobby'); release() }

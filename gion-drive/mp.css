@@ -28,6 +28,10 @@
 #gt-seats li.off{opacity:.6}
 #gt-seats li>i{width:12px;height:12px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 2px #fffcf3,0 0 0 3px var(--c)}
 #gt-seats li.empty>i{background:transparent;box-shadow:0 0 0 1px var(--rule)}
+#gt-seats .gt-face{display:flex;flex:none;width:40px;height:40px}
+#gt-seats li.empty{justify-content:center;padding:6px 10px}
+#gt-seats li.empty .gt-face{filter:grayscale(1);opacity:.35}
+#gt-seats li.off .gt-face{filter:grayscale(.7)}
 #gt-seats li>div{flex:1;min-width:0;display:flex;flex-direction:column}
 #gt-seats b{font:600 16px var(--serif)}
 #gt-seats small{color:var(--muted);font-size:12px}
