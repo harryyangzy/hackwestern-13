@@ -34,13 +34,13 @@ src = lambda name: read(os.path.join(HERE, name))
 # (Western's main campus is almost all paths); open: drive anywhere on the plot except through buildings (London: the
 # paths are only ~2.6 m wide, too skinny to be fun); blurb: the menu's first line.
 CITIES = {
-    'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Gion', brand='tandem',
+    'gion': dict(src=os.path.join(a.skill, 'assets', 'examples', 'gion'), out='gion-taxi.html', name='Kyoto', place='Gion Shirakawa', brand='tandem',
                  bowl='Gion Bowling', blurb='Drive a taxi through the lanes of Gion, Kyoto.', drivePaths=False),
-    'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', brand='tandem',
+    'london': dict(src=os.path.join(HERE, 'cities', 'london', 'work'), out='taxi-london.html', name='London', place='Western University, Ontario', brand='tandem',
                    bowl='Campus Bowling', blurb='Drive a taxi across Western University’s main campus in London, Ontario: the whole campus is open, just not through the buildings.', drivePaths=True, open=True),
-    'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', brand='tandem',
+    'toronto': dict(src=os.path.join(HERE, 'cities', 'toronto', 'work'), out='taxi-toronto.html', name='Toronto', place='Nathan Phillips Square', brand='tandem',
                     bowl='Square Bowling', blurb='Drive a taxi around Nathan Phillips Square and Toronto City Hall.', drivePaths=False),
-    'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', brand='tandem',
+    'amsterdam': dict(src=os.path.join(HERE, 'cities', 'amsterdam', 'work'), out='taxi-amsterdam.html', name='Amsterdam', place='Reguliersgracht × Keizersgracht', brand='tandem',
                       bowl='Canal Bowling', blurb='Drive a taxi along the canals where the Reguliersgracht crosses the Keizersgracht.', drivePaths=False),
 }
 P_OPEN, P_CLOSE = '/* <gion-taxi player.js> */\n', '\n/* </gion-taxi player.js> */'
@@ -107,14 +107,40 @@ def build(cid):
     # shoot.js goes before mp.js so it hears the 'stop' event first and can add the shooter's stats to the results
     game = (G_OPEN + '<style>\n' + src('drive.css') + src('mp.css') + src('shoot.css') + src('wt.css') + '</style>\n'
             + '<script>window.GT_CITY = ' + json.dumps(cfg, ensure_ascii=False).replace('</', '<\\/') + ';</script>\n'
-            + script('qr.js') + script('drive.js') + script('shoot.js') + script('mp.js') + script('wt.js') + G_CLOSE)
+            + script('qr.js') + script('drive.js') + script('shoot.js') + script('mp.js') + script('wt.js') + script('flow.js') + G_CLOSE)
     if html.count('</body></html>') != 1: sys.exit(f'{cid}: </body></html> not found exactly once')
     html = html.replace('</body></html>', game + '</body></html>')
     open(out, 'w', encoding='utf-8').write(html)
     print(f'Built {c["out"]} ({len(html) // 1024} KB) from {mode}.')
 
 
+def preview(c):
+    """A small map of the city's plot (streets, water, buildings) from its scene, for the city cards."""
+    try: sc = json.load(open(os.path.join(c['src'], 'scene.json'), encoding='utf-8'))
+    except OSError: return None
+    H = sc['meta']['half']
+    ring = lambda r: 'M' + 'L'.join(f'{p[0]:.0f} {-p[1]:.0f}' for p in r) + 'Z'
+    group = lambda gs: ''.join(ring(r) for g in gs for r in g)
+    streets = group(sc['roads']) + (group(sc.get('paths', [])) if c.get('drivePaths') else '')
+    return (f'<svg viewBox="{-H} {-H} {2 * H} {2 * H}" aria-hidden="true"><rect x="{-H}" y="{-H}" width="{2 * H}" height="{2 * H}" fill="#efe7d4"/>'
+            f'<path d="{group(sc.get("water", []))}" fill="#9cc3c4" fill-rule="evenodd"/><path d="{streets}" fill="#cbbab3" fill-rule="evenodd"/>'
+            f'<path d="{"".join(ring(b["ring"]) for b in sc["buildings"])}" fill="#d9c7a8" stroke="#a89a85" stroke-width="{H / 160:.2f}"/></svg>')
+
+
+def build_index():
+    cards = []
+    for cid, c in CITIES.items():
+        playable = os.path.isfile(os.path.join(HERE, c['out']))
+        svg = preview(c) or ''
+        cards.append(f'<button class="city" data-href="{c["out"]}" {"" if playable else "disabled"}>{svg}'
+                     f'<span><b>{c["name"]}</b><small>{c["place"]}</small><em>{c["blurb"]}</em></span></button>')
+    html = read(os.path.join(HERE, 'index.template.html')).replace('<!--CITIES-->', '\n'.join(cards))
+    open(os.path.join(HERE, 'index.html'), 'w', encoding='utf-8').write(html)
+    print('Built index.html (title and city selection).')
+
+
 for cid in (CITIES if a.city == 'all' else [a.city]):
     if cid not in CITIES: sys.exit(f'unknown city {cid}; choose from {", ".join(CITIES)}')
     build(cid)
+build_index()
 print('Solo: open a page in a browser and press Start driving. Crew: node server.js, then open http://localhost:8090')

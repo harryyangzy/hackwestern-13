@@ -2647,6 +2647,22 @@ selectSeason(season);setPlay(playing);requestAnimationFrame(tick);
 body.gt-driving .top,body.gt-driving .foot,body.gt-driving .rail,body.gt-driving .tools,body.gt-driving .compass,body.gt-driving .stage>.mark{display:none!important}
 body.gt-driving .workspace{height:100%}
 body.gt-driving .stage{left:0;right:0;top:0;bottom:0}
+/* tandem opening flow (flow.js): the old card only shows a shift's result; the briefing before each shift */
+body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
+body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weight:600;color:var(--rust)}
+#gt-brief{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 28px));padding:22px 28px;z-index:7;text-align:center}
+#gt-brief[hidden]{display:none}
+#gt-brief small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+#gt-brief h2{font:600 30px var(--serif);margin:2px 0 6px}
+#gt-brief p{margin:0 0 14px;font:italic 17px var(--serif)}
+#gt-brief ul{list-style:none;margin:0 0 10px;padding:0;text-align:left;display:flex;flex-direction:column;gap:6px}
+#gt-brief li{display:flex;align-items:baseline;gap:8px}
+#gt-brief li i{width:10px;height:10px;border-radius:50%;flex:none;transform:translateY(1px)}
+#gt-brief li b{font:600 15px var(--serif);white-space:nowrap}
+#gt-brief li span{color:var(--muted)}
+#gt-bcount{display:block;font:600 64px/1 var(--serif);color:var(--rust);min-height:64px}
+#gt-bcount.ready{font:italic 22px/64px var(--serif);color:var(--muted)}
+#gt-bcount.pop{animation:gt-pop .9s ease-out}
 /* Gion Taxi crew play: the lobby card, the countdown, the navigator's callout and the crew strip.
    Same cards, inks and type as drive.css (Pocket City's :root tokens), nothing new in the palette. */
 .gt-ghost{margin:8px 0 0 8px;background:transparent;color:var(--ink);border:1px solid var(--rust);border-radius:999px;padding:9px 20px;font-weight:600;font-size:15px}
@@ -2798,7 +2814,7 @@ body.gt-driving .stage{left:0;right:0;top:0;bottom:0}
 .wt-links a{color:var(--ink)}
 @media (prefers-reduced-motion:reduce){.wt-card,.wt-card.imp{animation:wt-flip .01s var(--d) both}.wt-head,.wt-subhead,.wt-links,#wt-done{animation:none}}
 </style>
-<script>window.GT_CITY = {"name": "Gion", "brand": "tandem", "bowl": "Gion Bowling", "blurb": "Drive a taxi through the lanes of Gion, Kyoto.", "drivePaths": false, "open": false, "id": "gion", "cities": [{"id": "gion", "name": "Gion", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
+<script>window.GT_CITY = {"name": "Kyoto", "brand": "tandem", "bowl": "Gion Bowling", "blurb": "Drive a taxi through the lanes of Gion, Kyoto.", "drivePaths": false, "open": false, "id": "gion", "cities": [{"id": "gion", "name": "Kyoto", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
 <script>
 /* Gion Taxi: a small QR code encoder for the crew lobby (byte mode, error correction level M, versions 1–6,
    i.e. up to 106 bytes, which is plenty for a join URL). Follows ISO/IEC 18004; the structure mirrors
@@ -3741,6 +3757,9 @@ const ROLE_NAMES = { steer: 'Wheel', pedals: 'Pedals', nav: 'Navigator', ops: 'D
 const COLORS = ['#c8513a', '#36594b', '#c9932c', '#4f6d8a'];
 const CALLS = { left: ['◀', 'Turn left'], right: ['▶', 'Turn right'], straight: ['▲', 'Straight on'], uturn: ['↶', 'Turn around'], stop: ['■', 'Stop here'] };
 const STALE_MS = 700, GRACE_MS = 20000;
+// one line per role for the briefing before a shift
+const ROLE_BRIEF = { steer: 'Wheel: steer the taxi.', pedals: 'Pedals: gas and brake; D/R to reverse.', nav: 'Navigator: call the turns.',
+  shoot: 'Shooter: pop whatever flies at the windshield.', wipe: 'Wipers: swipe the glass clean.', ops: 'Doors: open the door at each lantern.' };
 
 let ws = null, room = null, key = null, ips = [], publicUrl = null, ipIndex = 0, port = location.port, wsOk = false, retry = 0;
 let phase = 'off';             // off | lobby | count | driving | results
@@ -3905,6 +3924,13 @@ function onPhone(p, m) {
   const roles = rolesOf(p);
   switch (m.t) {
     case 'hello': sendMap(p.pid); broadcastLobby(); if (lastRoute) toPhones(lastRoute, p.pid); break;
+    case 'seat': {   // a phone picks a role set: it swaps seats with whoever holds it (lobby only)
+      const i = m.i, j = crew.indexOf(p);
+      if ((phase === 'lobby' || phase === 'results') && Number.isInteger(i) && i >= 0 && i < crew.length && i !== j) {
+        [crew[i], crew[j]] = [crew[j], crew[i]]; crew[i].ready = crew[j].ready = false; rolesChanged(); broadcastLobby();
+      }
+      break;
+    }
     case 'ready':
       if (phase === 'lobby' || phase === 'results') { p.ready = !!m.v; broadcastLobby() }
       break;
@@ -3971,6 +3997,17 @@ function startCountdown(force) {
   if (force !== true && window.GionCrew.beforeStart?.()) return;   // Wrong Turn: wagers are locked in first, then it calls startCountdown(true)
   phase = 'count'; for (const p of crew) p.ready = false;
   showLobby(false); menu.hidden = true; broadcastLobby();
+  // the briefing (flow.js): the objective and each player's job, then a 3-2-1 the phones follow
+  if (window.GionBrief) {
+    toPhones({ t: 'brief' });
+    window.GionBrief({
+      title: game === 'bowling' ? GT.city.bowl : 'Crew shift',
+      objective: game === 'bowling' ? 'Knock over as many pedestrians as you can in 60 seconds.' : 'Pick up and deliver passengers together before the shift ends.',
+      lines: crew.map(p => ({ color: p.color, name: p.name, text: rolesOf(p).map(r => ROLE_BRIEF[r] || r).join(' ') })),
+      onCount: n => toPhones({ t: 'count', n }), abort: () => phase !== 'count',
+    }).then(() => { if (phase !== 'count') return; GT.lockMenu = false; GT.start(game) });
+    return;
+  }
   let n = 3; const el = $('gt-count');
   const tick = () => {
     if (phase !== 'count') { el.hidden = true; return }
@@ -3995,7 +4032,8 @@ for (const k of ['bump', 'pickup', 'dropoff', 'scrape', 'door', 'atdoor', 'pin']
 GT.on('cam', cam => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', cam }) });
 
 if (served) $('gt-mp').onclick = openRoom;
-$('gt-lclose').onclick = closeRoom;
+// close the room; on a ?play=crew page (flow.js) go back to city selection, so no room is left behind
+$('gt-lclose').onclick = () => { const home = $('gt-lclose').dataset.home; closeRoom(); if (home) location.href = home };
 $('gt-lstart').onclick = () => startCountdown();
 document.querySelector('.gt-modes').onclick = e => { const b = e.target.closest('[data-game]'); if (b && (phase === 'lobby' || phase === 'results')) { game = b.dataset.game; broadcastLobby() } };
 $('gt-ip').onclick = () => { ipIndex++; renderLobby() };
@@ -4038,7 +4076,7 @@ setInterval(() => {
   if (gone.length && wsOk) { for (const p of gone) { send({ t: 'drop', pid: p.pid }); crew.splice(crew.indexOf(p), 1) } rolesChanged(); broadcastLobby() }
 }, 100);
 setInterval(() => send({ t: 'hb' }), 2000);
-window.GionCrew = { toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
+window.GionCrew = { open: openRoom, toPhones, holder, get phase() { return phase }, get room() { return room }, get crew() { return crew.map(p => ({ ...p, roles: rolesOf(p) })) }, joinURL, route: () => GT.state() && route(GT.state()),
   // used by Wrong Turn mode (wt.js)
   send, canStart, startCountdown, get game() { return game }, get wsOk() { return wsOk }, onDx: null };
 })();
@@ -4223,6 +4261,65 @@ C.onDx = m => {
   else if (m.t === 'dx-final') renderReveal(m);
   if (m.t === 'dx-status') lastStatus = m;
 };
+})();
+
+</script>
+<script>
+/* tandem: the opening flow on a city page. index.html (title → city selection) sends players here with ?play=solo or
+   ?play=crew. Solo: a short briefing, a 3-2-1, then the shift. Crew: the lobby opens at once (mp.js), and its Start runs
+   the same briefing (window.GionBrief) in sync with the phones. Without ?play the page goes back to the title, so the old
+   instruction card never opens first. Runs last in the page, after drive.js, shoot.js, mp.js and wt.js. */
+(() => {
+const GT = window.GionTaxi, $ = id => document.getElementById(id);
+if (!GT) return;
+const HOME = 'index.html', play = new URLSearchParams(location.search).get('play');
+const served = /^https?:$/.test(location.protocol);
+if (play !== 'solo' && !(play === 'crew' && served)) { location.replace(HOME + (play === 'crew' ? '#crew' : '')); return }
+
+document.body.classList.add('gt-flow');   // drive.css: the old card only shows a shift's result now
+$('gt-menu').hidden = true; $('gt-open').hidden = true; GT.lockMenu = true;
+const back = `${HOME}#${play}`;
+const cities = $('gt-menu').querySelector('.gt-cities');
+if (cities) cities.innerHTML = `<a href="${back}">← Choose another city</a>`;
+// the crew lobby's close button goes back to city selection (mp.js closes the room first)
+const lclose = $('gt-lclose');
+if (lclose) { lclose.textContent = '← Cities'; lclose.setAttribute('aria-label', 'Close the room and choose another city'); lclose.dataset.home = back }
+
+/* ---------- the briefing: objective, each player's job, then a 3-2-1 ---------- */
+$('stage').insertAdjacentHTML('beforeend', `<div id="gt-brief" class="gt-card" hidden>
+  <small>Today’s shift</small><h2 id="gt-btitle"></h2><p id="gt-bobj"></p><ul id="gt-blines"></ul><b id="gt-bcount" aria-live="assertive"></b></div>`);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let briefing = false;
+// returns a promise that resolves at "go"; onCount(n) fires on each number (mp.js sends it to the phones);
+// abort() is checked between steps (a phone leaving, the room closing)
+window.GionBrief = ({ title, objective, lines = [], onCount, abort = () => false }) => new Promise(resolve => {
+  if (briefing) return;   // never two at once
+  briefing = true;
+  $('gt-btitle').textContent = title; $('gt-bobj').textContent = objective;
+  $('gt-blines').innerHTML = lines.map(l => `<li><i style="background:${esc(l.color)}"></i><b>${esc(l.name)}</b><span>${esc(l.text)}</span></li>`).join('');
+  const box = $('gt-brief'), num = $('gt-bcount');
+  num.textContent = 'Get ready'; num.className = 'ready'; box.hidden = false;
+  const done = ok => { briefing = false; box.hidden = true; if (ok) resolve() };
+  let n = 3;
+  const tick = () => {
+    if (abort()) return done(false);
+    if (n === 0) return done(true);
+    num.textContent = n; num.className = ''; void num.offsetWidth; num.className = 'pop';
+    onCount?.(n); n--; setTimeout(tick, 900);
+  };
+  setTimeout(tick, 2600);   // time to read the briefing first
+});
+
+/* ---------- go ---------- */
+const whenLoaded = cb => { const f = () => ($('loading').hidden ? cb() : setTimeout(f, 120)); f() };
+if (play === 'solo') {
+  whenLoaded(() => window.GionBrief({
+    title: GT.city.name, objective: 'Pick up passengers at the orange lantern and deliver them to the gold one before the shift ends.',
+    lines: [{ color: '#c8513a', name: 'You', text: '↑ / W gas · ↓ / S brake, then reverse · ← → steer · C camera · Esc ends the shift' }],
+  }).then(() => { GT.lockMenu = false; if (!GT.driving) GT.start('taxi') }));
+} else {
+  whenLoaded(() => window.GionCrew?.open());
+}
 })();
 
 </script>
