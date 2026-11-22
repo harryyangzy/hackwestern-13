@@ -104,14 +104,14 @@ function resultHTML(r) {
   if (r.mode === 'bowling') {
     const n = rating(r);
     return `<div class="gt-res"><b>Time!</b><span class="gt-stars" aria-label="${n} of 3">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span>
-      <div class="gt-resrow"><div><small>Pins</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div>
+      <div class="gt-resrow"><div><small>Hits</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div>
       <p>Best ${GT.city.bowl} score ${r.best.toLocaleString()}.</p></div>`;
   }
   const stars = '★'.repeat(rating(r)) + '☆'.repeat(3 - rating(r));
   return `<div class="gt-res"><b>Shift over</b><span class="gt-stars" aria-label="${rating(r)} of 3">${stars}</span>
-    <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div>
-    <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>−¥${r.penaltyYen.toLocaleString()}</b></div></div>
-    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ¥${r.best.toLocaleString()}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass, ${r.wiped} wiped off.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
+    <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>${GT.moneyLabel}</small><b>${GT.money(r.yen)}</b></div>
+    <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>${GT.money(-r.penaltyYen)}</b></div></div>
+    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ${GT.money(r.best)}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass, ${r.wiped} wiped off.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
 }
 function renderCrewStrip() {
   const el = $('gt-crew'), on = phase === 'driving' && crew.length;
@@ -236,7 +236,7 @@ function rolesChanged() {
 }
 function broadcastLobby() {
   renderLobby();
-  toPhones({ t: 'lobby', phase, room, result, game, brand: GT.city.brand, bowl: GT.city.bowl, canStart: canStart(),
+  toPhones({ t: 'lobby', phase, room, result, game, brand: GT.city.brand, bowl: GT.city.bowl, money: GT.city.money, canStart: canStart(),
     seats: crew.map(p => ({ pid: p.pid, name: p.name, color: p.color, roles: rolesOf(p), on: p.on, ready: p.ready })) });
 }
 function sendMap(to) {
@@ -299,7 +299,7 @@ GT.on('cam', cam => { if (phase === 'driving') toPhones({ t: 'ev', k: 'cam', cam
 
 if (served) $('gt-mp').onclick = openRoom;
 // close the room; on a ?play=crew page (flow.js) go back to city selection, so no room is left behind
-$('gt-lclose').onclick = () => { const home = $('gt-lclose').dataset.home; closeRoom(); if (home) location.href = home };
+$('gt-lclose').onclick = () => { const home = $('gt-lclose').dataset.home; closeRoom(); if (home) (window.GionFlow ? window.GionFlow.leave(home) : (location.href = home)) };
 $('gt-lstart').onclick = () => startCountdown();
 document.querySelector('.gt-modes').onclick = e => { const b = e.target.closest('[data-game]'); if (b && (phase === 'lobby' || phase === 'results')) { game = b.dataset.game; broadcastLobby() } };
 $('gt-ip').onclick = () => { ipIndex++; renderLobby() };

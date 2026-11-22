@@ -43,6 +43,18 @@ chip (seat colour, name, connection light), the Ready button with one line per r
 (reconnecting, rotate, swipe-up full screen, tilt-aim errors). Most of it is one CSS block in pad.html
 ("simplified controller"); the hidden elements are still updated, so it's easy to bring one back.
 
+**Transitions (2026-11-22):** one continuous move from title to shift.
+- Start page: screens fade out (200 ms) before the next rises in, parts staggered; a chosen city card lifts, the rest fall
+  back and the page fades to paper. Each city page opens on the same paper (`#gt-veil`, built in by build.py, with the
+  city's name) and lifts it once the first picture is drawn; leaving (← Cities, ← Choose another city) brings it back
+  first. Browser back restores pages correctly (`pageshow`).
+- The map is always full-window; header, sidebar and footer float over it and slide away at the briefing (`gt-focus`)
+  and during the shift, so the map never resizes. Cards and the HUD rise in, staggered (drive.css "motion").
+- During the countdown `GionTaxi.preview(true)` parks the taxi at its start and points the page's camera easing at the
+  shift's view (`frameTaxi`), so the camera glides down behind it; `start()` then blends from the current camera over
+  0.6 s instead of cutting. Measured: no frame-to-frame jump at Go.
+- `prefers-reduced-motion` turns the motion off. Phones: screens and the briefing fade in.
+
 **Opening flow (2026-11-22):** Title → City selection → (crew) lobby → briefing + 3-2-1 → shift; solo skips the lobby.
 - `index.html` (built from `index.template.html` by build.py, with a map preview of each city drawn from its scene) is the
   title screen and city selection; the server serves it at `/`. `#crew` / `#solo` in its address picks the mode.

@@ -187,6 +187,12 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 .gear button small{display:none}
 .gear button{padding:8px 0}
 .you .roles span{font-size:13px}
+/* screens fade in rather than cut; the briefing card rises */
+@keyframes padin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#lobby:not([hidden]),#drive:not([hidden]),#join:not([hidden]),#wait:not([hidden]){animation:padin .32s cubic-bezier(.2,.7,.2,1) both}
+#brief:not([hidden])>*{animation:padin .4s cubic-bezier(.2,.7,.2,1) both}
+#brief:not([hidden])>*:nth-child(2){animation-delay:.06s}#brief:not([hidden])>*:nth-child(3){animation-delay:.12s}
+@media (prefers-reduced-motion:reduce){#lobby,#drive,#join,#wait,#brief>*{animation:none!important}}
 /* countdown + banner */
 #count{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:600 34vh var(--serif);color:var(--ink);text-shadow:0 0 30px #fffcf3;z-index:40;pointer-events:none}
 #count.pop{animation:pop .9s ease-out}
@@ -382,9 +388,13 @@ function onMsg(m) {
 }
 
 /* ---------- lobby ---------- */
-let lobby = null, me = null, myRoles = [], phase = 'lobby', ready = false, BOWL = 'Bowling';   // BOWL: the city's bowling mode name
+let MONEY_LABEL = 'Yen';
+const fmtMoney = v => window.GionMoney ? window.GionMoney(v) : '¥' + v.toLocaleString();
+let lobby = null, me = null, myRoles = [], phase = 'lobby', ready = false, BOWL = 'Joyride';   // BOWL: the city's bowling mode name
 function onLobby(m) {
-  lobby = m; phase = m.phase; if (m.bowl) BOWL = m.bowl; if (m.brand) document.title = m.brand + ' · Crew';
+  lobby = m; phase = m.phase; if (m.bowl) BOWL = m.bowl;
+  // money in the city's currency, from the laptop (also used by Wrong Turn's phone screens)
+  if (m.money) { const M = m.money; window.GionMoney = v => (v < 0 ? '−' : '') + M.sym + (Math.abs(v) * M.rate).toLocaleString('en', { minimumFractionDigits: M.dec, maximumFractionDigits: M.dec }); MONEY_LABEL = M.label } if (m.brand) document.title = m.brand + ' · Crew';
   me = m.seats.find(s => s.pid === pid) || null;
   const roles = me ? me.roles : [];
   if (roles.join() !== myRoles.join()) { myRoles = roles; layout(); release() }
@@ -404,7 +414,7 @@ function onLobby(m) {
 }
 function resultHTML(r) {
   if (r.mode === 'bowling') { const b = r.score >= 4000 ? 3 : r.score >= 2000 ? 2 : r.score >= 600 ? 1 : 0;
-    return `<div class="card res"><b class="t">Time!</b><span class="stars">${'★'.repeat(b)}${'☆'.repeat(3 - b)}</span><div class="row"><div><small>Pins</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div></div>` }
+    return `<div class="card res"><b class="t">Time!</b><span class="stars">${'★'.repeat(b)}${'☆'.repeat(3 - b)}</span><div class="row"><div><small>Hits</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div></div>` }
   const n = r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0;
   return `<div class="card res"><b class="t">Shift over</b><span class="stars">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span><div class="row"><div><small>Fares</small><b>${r.fares}</b></div><div><small>Yen</small><b>¥${r.yen.toLocaleString()}</b></div><div><small>Bumps</small><b>${r.bumps}</b></div></div></div>`;
 }
@@ -514,15 +524,15 @@ function onState(m) {
   const first = !st; st = m;
   if (first) Object.assign(view, { x: m.x, y: m.y, h: m.h, v: m.v });
   $('clock').textContent = Math.ceil(m.clock); $('clock').classList.toggle('low', m.clock < 15);
-  $('yen').textContent = '¥' + m.yen.toLocaleString(); $('fares').textContent = m.fares;
+  $('yen').textContent = fmtMoney(m.yen); $('fares').textContent = m.fares;
   const bowl = m.game === 'bowling';
-  $('lab1').textContent = bowl ? 'Pins' : 'Yen'; $('lab2').textContent = bowl ? 'Score' : 'Fares';
+  $('lab1').textContent = bowl ? 'Hits' : MONEY_LABEL; $('lab2').textContent = bowl ? 'Score' : 'Fares';
   if (bowl) {
     $('yen').textContent = m.pins; $('fares').textContent = m.score.toLocaleString();
     $('task').textContent = BOWL + ': knock over the pedestrians';
     $('navTarget').textContent = BOWL; $('navDist').textContent = 'Call the turns toward the crowds';
     $('mtarget').setAttribute('visibility', 'hidden'); $('mroute').setAttribute('points', '');
-    $('flag').classList.remove('hired'); $('flag').innerHTML = '<span lang="ja">回送</span><small>Off duty</small>'; $('fareYen').textContent = m.pins + ' pins';
+    $('flag').classList.remove('hired'); $('flag').innerHTML = '<span lang="ja">回送</span><small>Off duty</small>'; $('fareYen').textContent = m.pins + ' hits';
     $('door').disabled = true; $('door').classList.remove('call'); $('doorLabel').textContent = 'Door'; $('opsHint').textContent = 'No passengers in ' + BOWL + ': you run the camera';
     for (const b of $('cam').children) b.classList.toggle('on', b.dataset.cam === m.cam);
     return;
@@ -537,7 +547,7 @@ function onState(m) {
   // operations
   $('flag').classList.toggle('hired', !pick);
   $('flag').innerHTML = pick ? '<span lang="ja">空車</span><small>For hire</small>' : '<span lang="ja">賃走</span><small>Hired</small>';
-  $('fareYen').textContent = pick ? '—' : '¥' + m.fareEst.toLocaleString();
+  $('fareYen').textContent = pick ? '—' : fmtMoney(m.fareEst);
   const door = $('door'); door.disabled = !m.doorNeeded; door.classList.toggle('call', !!m.atDoor && m.doorNeeded);
   $('doorLabel').textContent = 'Door';
   $('opsHint').textContent = m.atDoor ? 'They’re waiting: open the door!' : pick ? 'Open the door when the taxi stops at the orange lantern' : 'Open the door at the gold lantern';

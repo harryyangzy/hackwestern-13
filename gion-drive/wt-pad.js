@@ -86,7 +86,7 @@ let role = null, status = {}, voted = false, revealSent = false, sab = { left: 0
 const store = g => { try { return JSON.parse(localStorage.getItem('wt:' + g) || 'null') } catch { return null } };
 
 function showRole() {
-  const r = role, imp = r.imposter, yen = '¥' + r.goal.toLocaleString();
+  const r = role, imp = r.imposter, yen = window.GionMoney ? window.GionMoney(r.goal) : '¥' + r.goal.toLocaleString();   // the city's currency
   const secret = imp
     ? `<b>Imposter</b><span>Make the trip fall short of ${yen} without getting caught. Play your part as normal. You have ${r.charges} sabotages that look like bad luck: ${r.kinds.map(k => `<br>· <b style="font-size:14px">${KIND[k][0]}</b>: ${KIND[k][1]}`).join('')}</span>`
     : `<b>Crew</b><span>Earn ${yen} before the clock runs out. Someone in this taxi wants the trip to fail. Watch who drives badly; you'll vote at the end.</span>`;
@@ -134,7 +134,7 @@ setInterval(() => { if (role && role.imposter) { const want = A.screen === 'driv
 
 function showVote(m) {
   layer.hidden = false; voted = false;
-  const yen = v => '¥' + v.toLocaleString();
+  const yen = v => window.GionMoney ? window.GionMoney(v) : '¥' + v.toLocaleString();
   layer.innerHTML = `<div class="card wt-box wt-center"><small>${m.success ? `The trip made it: ${yen(m.yen)} of ${yen(m.goal)}` : `The trip fell short: ${yen(m.yen)} of ${yen(m.goal)}`}</small>
     <h2>Who took the wrong turn?</h2>
     <div class="wt-votes">${m.seats.filter(s => s.pid !== myPid()).map(s => `<button data-pid="${s.pid}"><i style="background:${s.color}"></i>${esc(s.name)}</button>`).join('')}<button class="skip" data-pid="">Not sure</button></div>
