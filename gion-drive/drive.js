@@ -159,6 +159,10 @@ stage.insertAdjacentHTML('beforeend', `
 </div>
 <button id="gt-open" class="gt-card" hidden>🚕 Drive</button>`);
 const map = $('gt-map');
+const mapBase = () => `<rect x="${-HALF}" y="${-HALF}" width="${2 * HALF}" height="${2 * HALF}" fill="#efe7d4"/>
+  <path d="${ringPath(SC.water)}" fill="#9cc3c4" fill-rule="evenodd"/>
+  <path d="${ringPath(DRIVE)}" fill="#cbbab3" fill-rule="evenodd"/>
+  <path d="${SC.buildings.map(b => 'M' + b.ring.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z').join('')}" fill="#d9c7a8" stroke="#a89a85" stroke-width=".4"/>`;
 const ringPath = groups => groups.map(rs => rs.map(r => 'M' + r.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') + 'Z').join('')).join('');
 // the minimap is in plan coordinates with y up, so flip it; north is roughly up (the plot is turned only a few degrees)
 map.innerHTML = `<g transform="scale(1,-1)">
@@ -176,6 +180,9 @@ let driving = false, cam = 'kart', mode = 'taxi', car, fare, yen = 0, fares = 0,
 const remote = { gas: 0, brake: 0, turn: 0, gear: 'D' };   // phone pedals: gas drives in the gear's direction, brake only brakes
 // Wrong Turn mode (wt.js) bends these; at their defaults the game is exactly as before
 const mods = { hideTarget: false, turnBias: 0, gasCutUntil: 0, brakeScale: 1, doorJamUntil: 0 };
+// the shift's route for the results map: a breadcrumb every quarter second, plus where fares, bumps and hits happened
+let trail = [], marks = [], trailT = 0, distM = 0;
+const mark = k => car && marks.push([+car.x.toFixed(1), +car.y.toFixed(1), k]);
 let doorNeeded = false, doorOpen = 0, bumpCount = 0, penaltyYen = 0, penaltyTime = 0, fareTimes = [], ping = null;
 // Gion Bowling: pedestrians knocked over this round (hidden by the render worker), score, combo, little dust pops
 let pins = 0, score = 0, combo = 0, comboT = 0, hit = new Set(), pops = [];
@@ -210,7 +217,7 @@ function start(m) {
   blendFrom = { ...camera }; blend = 0;   // ease in from the current view instead of cutting
   yen = 0; fares = 0; clock = mode === 'bowling' ? 60 : 120; finished = false; camYaw = car.h * 180 / Math.PI + 180;
   pins = 0; score = 0; combo = 0; comboT = 0; hit = new Set(); pops = [];
-  bumpCount = 0; penaltyYen = 0; penaltyTime = 0; fareTimes = []; doorOpen = 0; bumpCool = 0; ping = null; keys.clear(); clearRemote();
+  bumpCount = 0; penaltyYen = 0; penaltyTime = 0; fareTimes = []; trail = [[+car.x.toFixed(1), +car.y.toFixed(1)]]; marks = []; trailT = 0; distM = 0; doorOpen = 0; bumpCool = 0; ping = null; keys.clear(); clearRemote();
   if (mode === 'taxi') newFare(); else { fare = null; $('gt-task').textContent = CITYCFG.bowl + ': knock over as many pedestrians as you can' }
   $('gt-l1').textContent = mode === 'bowling' ? 'Hits' : 'Fares'; $('gt-l2').textContent = mode === 'bowling' ? 'Score' : MONEY.label;
   $('gt-arrow').hidden = mode === 'bowling'; $('gt-mt').style.display = mode === 'bowling' ? 'none' : '';
@@ -231,11 +238,11 @@ function stop(result) {
   }
   $('gt-start').textContent = result ? 'Drive again' : 'Start driving';
   setView('cine');
-  if (was) emit('stop', summary());
+  if (was) { if (car) trail.push([+car.x.toFixed(1), +car.y.toFixed(1)]); emit('stop', { ...summary(), trail, marks }) }
 }
 function summary() {
   return { mode, pins, score, fares, yen, best: best(), bumps: bumpCount, penaltyYen, penaltyTime,
-    avgFare: fareTimes.length ? fareTimes.reduce((a, b) => a + b, 0) / fareTimes.length : 0, fastest: fareTimes.length ? Math.min(...fareTimes) : 0 };
+    dist: distM, avgFare: fareTimes.length ? fareTimes.reduce((a, b) => a + b, 0) / fareTimes.length : 0, fastest: fareTimes.length ? Math.min(...fareTimes) : 0 };
 }
 $('gt-start').onclick = () => start('taxi');
 $('gt-bowl').onclick = () => start('bowling');
@@ -381,7 +388,7 @@ function bumps(dt) {
         const pts = (a.k === 'bike' ? 150 : 100) * Math.min(combo, 5); score += pts;
         pops.push({ x: a.x, y: a.y, t: performance.now() }); shake = Math.max(shake, .15); car.v *= .9;
         toast((combo >= 3 ? `Combo ×${Math.min(combo, 5)}! ` : a.k === 'bike' ? 'Ding! ' : 'Bonk! ') + '+' + pts, true);
-        emit('pin', { kind: a.k, pts, combo });
+        mark('h'); emit('pin', { kind: a.k, pts, combo });
         continue;
       }
       if (bumpCool > 0) return;
@@ -389,7 +396,7 @@ function bumps(dt) {
       const cost = mode === 'taxi' ? 200 : a.k === 'ped' ? 600 : a.k === 'bike' ? 400 : 300, lost = mode === 'taxi' ? 0 : 3;
       penaltyYen += Math.min(yen, cost); penaltyTime += Math.min(clock, lost); bumpCount++;
       yen = Math.max(0, yen - cost); clock = Math.max(0, clock - lost); car.v *= mode === 'taxi' ? .75 : .3; bumpCool = mode === 'taxi' ? 2 : 1.2; shake = .2;
-      emit('bump', { kind: a.k, cost });
+      mark('b'); emit('bump', { kind: a.k, cost });
       toast((a.k === 'ped' ? 'Watch the pedestrians! ' : a.k === 'bike' ? 'You clipped a bike! ' : 'Fender bender! ') + money(-cost));
       return;
     }
@@ -404,11 +411,11 @@ function fareLogic() {
       return target;
     }
     doorOpen = 0; fare.atDoor = false;
-    if (fare.mode === 'pickup') { fare.mode = 'drop'; fare.t = 0; toast('Passenger aboard!', true); setTask(); emit('pickup') }
+    if (fare.mode === 'pickup') { fare.mode = 'drop'; fare.t = 0; toast('Passenger aboard!', true); setTask(); mark('p'); emit('pickup') }
     else {
       const pay = Math.round((500 + fare.dist * 12 + Math.max(0, 40 - fare.t) * 25) / 10) * 10, bonus = Math.round(8 + fare.dist / 12);
       yen += pay; fares++; clock += bonus; fareTimes.push(fare.t); toast('Fare paid ' + money(pay) + ' · +' + bonus + ' s', true); newFare();
-      emit('dropoff', { pay, bonus });
+      mark('d'); emit('dropoff', { pay, bonus });
     }
   } else if (fare.atDoor) { fare.atDoor = false; setTask() }
   return target;
@@ -443,6 +450,8 @@ function frame(now) {
   if (!driving) return;
   step(dt); bumps(dt); doorOpen = Math.max(0, doorOpen - dt);
   if (fare && fare.mode === 'drop') fare.t += dt;
+  distM += Math.abs(car.v) * dt; trailT += dt;
+  if (trailT > .25) { trailT = 0; trail.push([+car.x.toFixed(1), +car.y.toFixed(1)]) }
   const target = fareLogic();
   clock -= dt;
   if (clock <= 0) { clock = 0; stop(true); return }
@@ -480,7 +489,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 const api = window.GionTaxi = {
-  start, stop, preview, blind, money, moneyLabel: MONEY.label, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, city: CITYCFG, drive: DRIVE, route,
+  start, stop, preview, blind, money, moneyLabel: MONEY.label, keys, remote, mods, toggleCam, setCam, openDoor, toast, scene: SC, onRoad, fits, lockMenu: false, CAM_ORDER, mapBase, half: HALF, city: CITYCFG, drive: DRIVE, route,
   get car() { return car }, get driving() { return driving }, get cam() { return cam }, get mode() { return mode },
   get doorNeeded() { return doorNeeded }, set doorNeeded(v) { doorNeeded = !!v; if (!doorNeeded && fare && fare.atDoor) { fare.atDoor = false; setTask() } },
   on(name, f) { (handlers[name] = handlers[name] || []).push(f) },

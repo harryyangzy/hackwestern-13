@@ -64,7 +64,7 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 - **Crew play:** `node gion-drive/server.js` (Node 18+, no install; `--tunnel` for campus Wi-Fi), open
   http://localhost:8090, press *Play with phones*, phones scan the QR code. Roles by crew size: wheel, pedals (D/R gear),
   shooter (tilt or drag to pop what flies at the taxi; tilt needs the HTTPS port 8490), doors & camera, wipers. Lobby
-  with ready-up, Taxi shift / Bowling switch, 3-2-1 start, results, replay without reconnecting; the room survives the
+  with ready-up, Taxi shift / Joyride tabs (a clay pill that slides across, `.gt-clay` in `mp.css`), phone lobby with an animated how-to for each role (`TUTOR` in `pad.html`), 3-2-1 start, results, replay without reconnecting; the room survives the
   host switching city. Details: `gion-drive/HANDOFF.md` and `gion-drive/README.md`.
 - **Tested:** automatically only (headless Chrome with emulated phones, plus server protocol checks).
   **Not tried on real phones or campus Wi-Fi yet.**
@@ -150,3 +150,9 @@ file and what you can verify in the repo; don't guess at plans that aren't writt
 2. Laptop Shooter: confirm full gameplay on a real phone; add the hotspot tip to `shooter/README.md`.
 3. Try Gion Taxi on a phone, and try crew play with real phones.
 4. Laptop Shooter: check the corner calibration on a real phone.
+
+### Shift-over card and QR taxi (results screen)
+- The results card in the lobby (`resultHTML` / `routeMap` in mp.js, `.gt-glow` styles at the end of mp.css) shows the shift's route on the city map, glow-in-the-dark style: the route draws in rust, the map dusks over, then the route and the numbers glow pale and settle. Stats sit in a dark-green strip at the bottom (money or score big, then fares, distance driven, fastest ride, bumps, and stickers popped when there's a shooter).
+- drive.js records a breadcrumb `trail` every 0.25 s plus `marks` (pickup, dropoff, bump, hit) and distance `dist`; the trail and marks only go out with the `stop` event, not with every `state()`. `GionTaxi.mapBase()` and `GionTaxi.half` draw the base map.
+- The lobby QR sits in a flat taxi matching the tandem logo (theme.css `#gt-qr:has(> svg)`): red body, red-and-cream kerb stripe, cream-and-gold headlights, gold roof light on a dark green base.
+- City picker panel (index.template.html `#panel.shift`): for a city with a shift, the city's map fills the whole card and fades to paper at the bottom under the city name, its place (one line) and Start. The icon, eyebrow, blurb and Continue are gone. Cities without a shift keep the old panel.

@@ -77,6 +77,62 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 .mates .ok{margin-left:auto;color:var(--green);font-weight:600}
 .mates .no{margin-left:auto;color:var(--muted);font-style:italic}
 #result:empty{display:none}
+/* lobby, left: how to play each of your roles, a small phone screen with a touch dot doing the gesture */
+.you{padding:12px}
+.tutor{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;min-height:0}
+.tut{display:flex;flex-direction:column;gap:8px;min-height:0}
+.tutor.many{display:flex;flex-direction:column}
+.tutor.many .tut{flex:1;flex-direction:row;align-items:center;gap:12px}
+.tutor.many .tut svg{flex:none;width:auto;height:100%;max-width:46%;aspect-ratio:5/3}
+.tut svg{flex:1;min-height:0;width:100%;border-radius:12px;background:#f3ecdd;border:1px solid var(--rule)}
+.tut b{font:600 17px var(--sans);color:var(--ink);display:block;letter-spacing:-.01em}
+.tut p{margin:1px 0 0;font-size:13.5px;line-height:1.35;color:var(--muted)}
+/* Ready: the taxi's red, soft inner light, a flat solid shadow like the map; vivid green once ready */
+.pad-ui #ready,#ready{width:min(100%,260px);height:76px;border-radius:16px;border:1px solid #a8352a;color:#fff;
+  font:700 26px Mulish,system-ui,-apple-system,"Helvetica Neue",sans-serif;letter-spacing:-.01em;
+  background:radial-gradient(#ec5a3f 0%,#dd4630 70%,#c8402f 100%);
+  box-shadow:inset 0 2px 8px #ffffff66,0 5px 0 #a8352a;transition:transform .08s,box-shadow .08s,filter .15s}
+#ready:active{transform:translateY(4px);box-shadow:inset 0 2px 8px #ffffff66,0 1px 0 #a8352a}
+.pad-ui #ready.on,#ready.on{border-color:#1f7a45;background:radial-gradient(#4cc27a 0%,#33a862 70%,#2a9455 100%);
+  box-shadow:inset 0 2px 8px #ffffff66,0 5px 0 #1f7a45}
+.pad-ui #ready.on:active,#ready.on:active{box-shadow:inset 0 2px 8px #ffffff66,0 1px 0 #1f7a45}
+#lobbyMsg{font:500 13px var(--sans);font-style:normal;letter-spacing:.02em}
+/* lobby, right: every seat; yours is filled in */
+.mates{padding:8px;gap:6px}
+.mates button{padding:9px 10px;border-radius:12px;background:#fffcf3;transition:background .15s}
+.mates button:not(.mine):active{background:#f3ecdd}
+.mates button span{color:var(--muted)}
+.mates button.mine{background:var(--ink);border-color:var(--ink);box-shadow:0 3px 10px #263c3533}
+.mates button.mine b{color:#fffcf3}
+.mates button.mine span{background:#fffcf3;color:var(--ink);font-weight:700;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+.tut svg *{transform-box:view-box}
+.t-wheel{transform-origin:100px 62px;animation:t-wheel 3s ease-in-out infinite}
+@keyframes t-wheel{0%,100%{rotate:0deg}30%{rotate:-50deg}70%{rotate:50deg}}
+.t-gas{transform-origin:125px 100px;animation:t-gas 2.4s ease-in-out infinite}
+@keyframes t-gas{0%,15%,85%,100%{scale:1 1}30%,70%{scale:1 .92}}
+.t-press{animation:t-press 2.4s ease-in-out infinite}
+@keyframes t-press{0%,15%,85%,100%{opacity:.35}30%,70%{opacity:1}}
+.t-door{transform-origin:100px 60px;animation:t-door 2.4s ease-in-out infinite}
+@keyframes t-door{0%,25%,45%,100%{scale:1}32%{scale:.96}}
+.t-ring{transform-origin:112px 70px;animation:t-ring 2.4s ease-out infinite}
+@keyframes t-ring{0%,28%{scale:1;opacity:0}30%{opacity:.6}60%,100%{scale:2.6;opacity:0}}
+.t-aim{animation:t-aim 3s ease-in-out infinite}
+@keyframes t-aim{0%,10%{translate:60px 84px}50%,100%{translate:146px 40px}}
+.t-stk{transform-origin:146px 40px;animation:t-stk 3s ease-in-out infinite}
+@keyframes t-stk{0%,55%{scale:1;opacity:1}68%,88%{scale:1.5;opacity:0}100%{scale:1;opacity:1}}
+.t-rub{stroke-dasharray:100 100;animation:t-rub 3.6s linear infinite}
+@keyframes t-rub{0%{stroke-dashoffset:100}70%,90%{stroke-dashoffset:0}100%{stroke-dashoffset:100}}
+.t-zig{animation:t-zig 3.6s linear infinite}
+@keyframes t-zig{0%{translate:40px 34px;opacity:1}23.3%{translate:160px 46px}46.6%{translate:40px 70px}70%{translate:160px 88px;opacity:1}90%{translate:160px 88px;opacity:0}100%{translate:40px 34px;opacity:0}}
+.t-sweep{animation:t-sweep 2.8s ease-in-out infinite}
+@keyframes t-sweep{0%{translate:30px 60px;opacity:0}8%{opacity:1}60%{translate:172px 60px;opacity:1}70%,100%{translate:172px 60px;opacity:0}}
+.t-s1,.t-s2,.t-s3{animation:t-s1 2.8s ease-in-out infinite}.t-s2{animation-name:t-s2}.t-s3{animation-name:t-s3}
+@keyframes t-s1{0%,14%{opacity:1}22%,92%{opacity:0}100%{opacity:1}}
+@keyframes t-s2{0%,30%{opacity:1}38%,92%{opacity:0}100%{opacity:1}}
+@keyframes t-s3{0%,46%{opacity:1}54%,92%{opacity:0}100%{opacity:1}}
+.t-pin{transform-origin:128px 46px;animation:t-pin 2.4s ease-out infinite}
+@keyframes t-pin{0%,30%{scale:0;opacity:0}40%{scale:1.15;opacity:1}48%,85%{scale:1;opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.tut svg *{animation:none!important}}
 .res{padding:10px 14px;text-align:center}
 .res b.t{font:600 18px var(--serif)}
 .res .row{display:flex;justify-content:center;gap:18px;margin-top:4px}
@@ -222,12 +278,12 @@ section{position:absolute;inset:0;padding:max(10px,env(safe-area-inset-top)) max
 
 <section id="lobby" hidden>
   <div class="card you">
-    <header><i class="seatdot"></i><div><small id="youRoom">Room</small><h1 id="youName">Player</h1></div></header>
+    <header hidden><i class="seatdot"></i><div><small id="youRoom">Room</small><h1 id="youName">Player</h1></div></header>
     <div id="result"></div>
-    <ul class="roles" id="roleList"></ul>
+    <div class="tutor" id="roleList"></div>
   </div>
   <div class="side">
-    <div class="card readybox"><button id="ready" aria-pressed="false">Ready</button><p id="lobbyMsg">Tap when you’re ready to drive.</p></div>
+    <div class="card readybox"><button id="ready" aria-pressed="false">Ready</button><p id="lobbyMsg"></p></div>
     <div class="card mates" id="mates"></div>
   </div>
 </section>
@@ -325,6 +381,44 @@ const ROLE_INFO = {
   fog: ['Fog', 'Rub the fog off the glass so the driver can see.', '<path d="M4 12h15a4 4 0 1 0-4-4"/><path d="M4 17h20a3 3 0 1 1-3 3"/><path d="M4 22h9"/>'],
   ops: ['Doors', 'Open the door at the lantern.', '<path d="M7 26V6l12-3v23Z"/><path d="M19 3h6v23h-6M15 15v3"/>'],
 };
+// lobby how-to: for each role, a 200×120 phone screen with a touch dot doing the gesture, and one line
+const DOT = '<circle r="10" fill="#fffcf3" fill-opacity=".55" stroke="#263c35" stroke-opacity=".7" stroke-width="1.8"/><circle r="3" fill="#263c35" fill-opacity=".7"/>';
+const TUTOR = {
+  steer: ['Drag around the rim to steer. Let go and it straightens.', `
+    <g class="t-wheel"><circle cx="100" cy="62" r="38" fill="none" stroke="#263c35" stroke-width="9"/>
+      <path d="M62 64h28M110 64h28M100 70v30" stroke="#263c35" stroke-width="7" stroke-linecap="round"/><circle cx="100" cy="62" r="10" fill="#263c35"/>
+      <g transform="translate(100 24)">${DOT}</g></g>`],
+  pedals: ['Hold gas to go, brake to stop. Flip D/R to reverse.', `
+    <rect x="58" y="44" width="34" height="56" rx="8" fill="#fffcf3" stroke="#263c35" stroke-width="2.5"/><path d="M66 60h18M66 70h18M66 80h18" stroke="#263c35" stroke-width="2.5" stroke-linecap="round"/>
+    <g class="t-gas"><rect x="108" y="26" width="34" height="74" rx="8" fill="#c8513a"/><path d="M116 44h18M116 54h18M116 64h18M116 74h18M116 84h18" stroke="#fffcf3" stroke-width="2.5" stroke-linecap="round"/></g>
+    <text x="75" y="113" text-anchor="middle" font-size="9" font-weight="700" letter-spacing="1" fill="#626c60" font-family="Helvetica Neue,Arial,sans-serif">BRAKE</text>
+    <text x="125" y="113" text-anchor="middle" font-size="9" font-weight="700" letter-spacing="1" fill="#626c60" font-family="Helvetica Neue,Arial,sans-serif">GAS</text>
+    <g class="t-press" transform="translate(125 60)">${DOT}</g>`],
+  ops: ['When the taxi stops at a lantern, tap to open the door.', `
+    <g class="t-door"><rect x="56" y="34" width="88" height="52" rx="14" fill="#c8513a"/>
+      <path d="M70 74V46l14-4v32Z M84 42h8v32h-8" fill="none" stroke="#fffcf3" stroke-width="2.5" stroke-linejoin="round"/>
+      <text x="119" y="64" text-anchor="middle" font-size="11" font-weight="700" fill="#fffcf3" font-family="Helvetica Neue,Arial,sans-serif">Open</text></g>
+    <circle class="t-ring" cx="112" cy="70" r="10" fill="none" stroke="#263c35" stroke-width="2"/>
+    <g class="t-press" transform="translate(112 70)">${DOT}</g>`],
+  shoot: ['Tilt the phone to aim on the laptop, tap to shoot the stickers.', `
+    <g class="t-stk"><circle cx="146" cy="40" r="13" fill="#f2c94c"/><circle cx="141" cy="37" r="2" fill="#263c35"/><circle cx="151" cy="37" r="2" fill="#263c35"/><path d="M141 45q5 4 10 0" stroke="#263c35" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+    <g class="t-aim"><circle r="16" fill="none" stroke="#c8513a" stroke-width="2.5"/><path d="M0-24v10M0 14v10M-24 0h10M14 0h10" stroke="#c8513a" stroke-width="2.5" stroke-linecap="round"/></g>`],
+  fog: ['Rub the glass with your finger to clear the fog.', `
+    <defs><mask id="t-fogm"><rect width="200" height="120" fill="#fff"/><path class="t-rub" d="M40 34 160 46 40 70 160 88" fill="none" stroke="#000" stroke-width="26" stroke-linecap="round" stroke-linejoin="round" pathLength="100"/></mask>
+    <clipPath id="t-glass"><rect x="14" y="12" width="172" height="96" rx="10"/></clipPath></defs>
+    <g clip-path="url(#t-glass)"><rect x="14" y="12" width="172" height="96" fill="#bfe0e6"/><path d="M14 74h172v34H14Z" fill="#9cc3a8"/><path d="M70 108 96 66h8l26 42Z" fill="#6f7d76"/><path d="M100 76v6M100 90v8" stroke="#fffcf3" stroke-width="2"/></g>
+    <rect x="14" y="12" width="172" height="96" rx="10" fill="#f6f4ef" opacity=".94" mask="url(#t-fogm)"/>
+    <g class="t-zig">${DOT}</g>`],
+  wipe: ['Swipe across the glass to sweep the stickers off.', `
+    <rect x="14" y="12" width="172" height="96" rx="10" fill="#bfe0e6"/>
+    <circle class="t-s1" cx="56" cy="48" r="12" fill="#d9738f"/><circle class="t-s2" cx="104" cy="74" r="12" fill="#f2c94c"/><circle class="t-s3" cx="148" cy="44" r="12" fill="#2f7f78"/>
+    <g class="t-sweep">${DOT}</g>`],
+  nav: ['Tap the map to mark a spot on the laptop, and call the turns.', `
+    <rect x="14" y="12" width="172" height="96" rx="10" fill="#efe4cf"/><path d="M14 52h172M14 86h172M60 12v96M128 12v96" stroke="#fffcf3" stroke-width="7"/>
+    <g class="t-pin"><path d="M128 52c0-10-16-10-16 0 0 7 8 14 8 14s8-7 8-14Z" transform="translate(8 -20)" fill="#c8513a"/></g>
+    <g class="t-press" transform="translate(136 50)">${DOT}</g>`],
+};
+const tutorHTML = r => `<div class="tut"><svg viewBox="0 0 200 120" preserveAspectRatio="xMidYMid meet" aria-hidden="true">${TUTOR[r][1]}</svg><div><b>${ROLE_INFO[r][0]}</b><p>${TUTOR[r][0]}</p></div></div>`;
 const CALL_TEXT = { left: 'Turn left', right: 'Turn right', straight: 'Straight on', uturn: 'Turn around', stop: 'Stop here' };
 const params = new URLSearchParams(location.search);
 let room = (params.get('r') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
@@ -424,11 +518,12 @@ function onLobby(m) {
   ready = !!(me && me.ready);
   $('youRoom').textContent = 'Room ' + m.room + (m.game === 'bowling' ? ' · ' + BOWL : ' · Taxi shift'); $('youName').textContent = me ? me.name : 'Waiting for a seat';
   $('barName').textContent = me ? me.name : ''; $('barRoles').textContent = roles.map(r => ROLE_INFO[r][0]).join(' · ');
-  $('roleList').innerHTML = roles.map(r => `<li><svg viewBox="0 0 30 30" fill="none" stroke="#263c35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ROLE_INFO[r][2]}</svg><div><b>${ROLE_INFO[r][0]}</b><span>${ROLE_INFO[r][1]}</span></div></li>`).join('');
+  const tk = roles.join();   // only redraw the demos when the roles change, so their loops don't restart
+  if ($('roleList').dataset.k !== tk) { $('roleList').dataset.k = tk; const tr = roles.filter(r => TUTOR[r]); $('roleList').classList.toggle('many', tr.length > 1); $('roleList').innerHTML = tr.map(tutorHTML).join('') }
   $('ready').classList.toggle('on', ready); $('ready').setAttribute('aria-pressed', ready); $('ready').textContent = ready ? 'Ready ✓' : 'Ready';
   const waiting = m.seats.filter(s => !s.ready || !s.on).length;
-  $('lobbyMsg').textContent = !me ? 'Finding you a seat…' : !ready ? '' : waiting ? `Waiting for ${waiting} more…` : 'Starting soon…';
-  $('mates').innerHTML = (m.seats.length > 1 ? '<small>Roles · tap one to take it</small>' : '') + m.seats.map((s, i) => `<button data-seat="${i}" class="${s.pid === pid ? 'mine' : ''}">${window.GionCrew ? GionCrew.icon(s.color, 26) : `<i style="background:${s.color}"></i>`}<b>${s.roles.map(r => ROLE_INFO[r][0]).join(' + ')}</b><span>${s.pid === pid ? 'You' : s.name}${s.on && s.ready ? ' ✓' : ''}</span></button>`).join('');
+  $('lobbyMsg').textContent = !me ? 'Finding you a seat…' : !ready ? 'Room ' + m.room + ' · ' + (m.game === 'bowling' ? BOWL : 'Taxi shift') : waiting ? `Waiting for ${waiting} more…` : 'Starting soon…';
+  $('mates').innerHTML = m.seats.map((s, i) => `<button data-seat="${i}" class="${s.pid === pid ? 'mine' : ''}">${window.GionCrew ? GionCrew.icon(s.color, 26) : `<i style="background:${s.color}"></i>`}<b>${s.roles.map(r => ROLE_INFO[r][0]).join(' + ')}</b><span>${s.pid === pid ? 'You' : s.name}${s.on && s.ready ? ' ✓' : ''}</span></button>`).join('');
   $('result').innerHTML = '';   // results are on the laptop
   if (phase === 'driving' || phase === 'count') { if (screen !== 'drive') show('drive') }
   else if (screen !== 'lobby') { show('lobby'); release() }

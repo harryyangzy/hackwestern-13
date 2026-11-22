@@ -23,10 +23,10 @@ addEventListener('pageshow', e => { if (e.persisted) $('gt-veil')?.classList.add
 $('gt-menu').hidden = true; $('gt-open').hidden = true; GT.lockMenu = true;
 const back = `${HOME}#${play}`;
 const cities = $('gt-menu').querySelector('.gt-cities');
-if (cities) { cities.innerHTML = `<a href="${back}">← Choose another city</a>`; cities.querySelector('a').onclick = e => { e.preventDefault(); leave(back) } }
+if (cities) { cities.innerHTML = '<button type="button" class="gt-backbtn">Choose another city</button>'; cities.querySelector('button').onclick = () => leave(back) }
 // the crew lobby's close button goes back to city selection (mp.js closes the room first)
 const lclose = $('gt-lclose');
-if (lclose) { lclose.textContent = '← Cities'; lclose.setAttribute('aria-label', 'Close the room and choose another city'); lclose.dataset.home = back }
+if (lclose) { lclose.textContent = 'Cities'; lclose.className = 'gt-backbtn'; lclose.setAttribute('aria-label', 'Close the room and choose another city'); lclose.dataset.home = back }
 
 /* ---------- the briefing: objective, each player's job, then a 3-2-1 ---------- */
 $('stage').insertAdjacentHTML('beforeend', `<div id="gt-brief" class="gt-card" hidden>

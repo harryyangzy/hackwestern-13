@@ -47,7 +47,7 @@ body.gt-focus .stage>.mark,body.gt-driving .stage>.mark{opacity:0}
 .stage>.mark{transition:opacity .4s}
 /* tandem opening flow (flow.js): the old card only shows a shift's result; the briefing before each shift */
 body.gt-flow #gt-menu>p:not(#gt-result):not(.gt-cities):not(.gt-bowlnote),body.gt-flow #gt-menu .gt-instructions,body.gt-flow #gt-close,body.gt-flow #gt-mp,body.gt-flow .gt-mpnote{display:none!important}
-body.gt-flow #gt-lclose{right:auto;left:16px;width:auto;font-size:14px;font-weight:600;color:var(--rust)}
+body.gt-flow #gt-lclose{position:static;display:inline-flex;width:max-content;height:auto;margin:0 0 12px;place-items:initial}
 #gt-brief{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 28px));padding:22px 28px;z-index:7;text-align:center}
 #gt-brief[hidden]{display:none}
 #gt-brief small{font:11px var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.08em}

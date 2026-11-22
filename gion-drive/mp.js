@@ -49,7 +49,7 @@ $('stage').insertAdjacentHTML('beforeend', `
 <div id="gt-lobby" class="gt-card" hidden>
   <button id="gt-lclose" class="gt-x" aria-label="Close the room">×</button>
   <div id="gt-lresult"></div>
-  <div class="gt-modes" role="group" aria-label="Game"><button data-game="taxi" aria-pressed="true">Taxi shift</button><button data-game="bowling" aria-pressed="false">${GT.city.bowl}</button></div>
+  <div class="gt-modes" role="group" aria-label="Game"><span class="gt-clay" aria-hidden="true"></span><button data-game="taxi" aria-pressed="true">Taxi shift</button><button data-game="bowling" aria-pressed="false">${GT.city.bowl}</button></div>
   <div class="gt-lgrid">
     <figure class="gt-qr">
       <div id="gt-qr" aria-live="polite"></div>
@@ -96,23 +96,56 @@ function renderLobby() {
   for (const b of document.querySelectorAll('.gt-modes button')) b.setAttribute('aria-pressed', b.dataset.game === game);
   $('gt-lnote').textContent = wsOk ? '' : 'Can’t reach the crew server. Is node gion-drive/server.js still running?';
   $('gt-lnote').hidden = wsOk;
-  $('gt-lresult').innerHTML = result ? resultHTML(result) : '';
+  // only redraw the results card for a new result, or its route animation would restart every time someone gets ready
+  if ($('gt-lresult')._r !== result) { $('gt-lresult')._r = result; $('gt-lresult').innerHTML = result ? resultHTML(result) : '' }
   $('gt-lobby').classList.toggle('has-result', !!result);
   renderCrewStrip();
 }
 function rating(r) { return r.mode === 'bowling' ? (r.score >= 4000 ? 3 : r.score >= 2000 ? 2 : r.score >= 600 ? 1 : 0) : r.yen >= 15000 ? 3 : r.yen >= 8000 ? 2 : r.yen >= 3000 ? 1 : 0 }
+// the results card: the shift's route drawn on the city map, then the "lights go off" and the route and stats glow
+// like glow-in-the-dark ink before settling to a softer glow
+function routeMap(r) {
+  const t = r.trail || [];
+  if (!GT.mapBase || t.length < 2) return '';
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const [x, y] of t) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y) }
+  const A = 2.5, pad = 14;   // a wide frame around the route, never tighter than 70 m across
+  let w = Math.max(x1 - x0 + 2 * pad, 70), h = Math.max(y1 - y0 + 2 * pad, 28);
+  if (w / h < A) w = h * A; else h = w / A;
+  const H = GT.half;   // stay inside the city plot, so the frame never shows the blank beyond its edge
+  if (w > 2 * H) { w = 2 * H; h = w / A }
+  const clamp = (v, half) => Math.min(H - half, Math.max(-H + half, v));
+  const cx = clamp((x0 + x1) / 2, w / 2), cy = clamp((y0 + y1) / 2, h / 2), sw = (w / 600).toFixed(2);
+  const d = 'M' + t.map(p => p[0] + ' ' + p[1]).join('L');
+  const dots = (r.marks || []).map(([x, y, k], i) => `<circle class="gt-rm gt-rm-${k}" cx="${x}" cy="${y}" r="${(k === 'p' || k === 'd' ? 5.5 : 3.6) * sw}" style="animation-delay:${(.3 + 1.6 * i / Math.max(1, r.marks.length)).toFixed(2)}s"/>`).join('');
+  const [sx, sy] = t[0], [ex, ey] = t[t.length - 1];
+  return `<svg class="gt-rmap" viewBox="${(cx - w / 2).toFixed(1)} ${(-cy - h / 2).toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs><filter id="gt-rblur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${(sw * 3).toFixed(2)}"/></filter></defs>
+    <g transform="scale(1,-1)">${GT.mapBase()}
+      <rect class="gt-rdusk" x="${-GT.half}" y="${-GT.half}" width="${2 * GT.half}" height="${2 * GT.half}"/>
+      <path class="gt-rglow" d="${d}" pathLength="1" style="stroke-width:${(sw * 9).toFixed(2)}"/>
+      <path class="gt-rline" d="${d}" pathLength="1" style="stroke-width:${(sw * 3.2).toFixed(2)}"/>
+      ${dots}
+      <circle class="gt-rstart" cx="${sx}" cy="${sy}" r="${sw * 4}" style="stroke-width:${sw * 2}"/>
+      <circle class="gt-rend" cx="${ex}" cy="${ey}" r="${sw * 6}" style="stroke-width:${sw * 2.4}"/></g></svg>`;
+}
 function resultHTML(r) {
-  if (r.mode === 'bowling') {
-    const n = rating(r);
-    return `<div class="gt-res"><b>Time!</b><span class="gt-stars" aria-label="${n} of 3">${'★'.repeat(n)}${'☆'.repeat(3 - n)}</span>
-      <div class="gt-resrow"><div><small>Hits</small><b>${r.pins}</b></div><div><small>Score</small><b>${r.score.toLocaleString()}</b></div><div><small>Car bumps</small><b>${r.bumps}</b></div></div>
-      <p>Best ${GT.city.bowl} score ${r.best.toLocaleString()}.</p></div>`;
-  }
-  const stars = '★'.repeat(rating(r)) + '☆'.repeat(3 - rating(r));
-  return `<div class="gt-res"><b>Shift over</b><span class="gt-stars" aria-label="${rating(r)} of 3">${stars}</span>
-    <div class="gt-resrow"><div><small>Fares</small><b>${r.fares}</b></div><div><small>${GT.moneyLabel}</small><b>${GT.money(r.yen)}</b></div>
-    <div><small>Bumps</small><b>${r.bumps}</b></div><div><small>Penalties</small><b>${GT.money(-r.penaltyYen)}</b></div></div>
-    <p>${r.fares ? `Average ride ${r.avgFare.toFixed(0)} s, fastest ${r.fastest.toFixed(0)} s. ` : 'No fares this time. '}${r.bumps ? `Bumps cost ${Math.round(r.penaltyTime)} s on the clock. ` : 'Not a scratch on the taxi. '}Best ever ${GT.money(r.best)}.</p>${r.shots != null ? `<p>Shooter ${r.hits} popped of ${r.shots} shot${r.shots === 1 ? '' : 's'}${r.bestCombo > 1 ? `, best streak ${r.bestCombo}` : ''}. ${r.stuckOn ? `${r.stuckOn} reached the glass.` : 'Nothing reached the glass.'}</p>` : ''}</div>`;
+  const n = rating(r), stars = `<span class="gt-stars" aria-label="${n} of 3">${'★'.repeat(n)}<i>${'☆'.repeat(3 - n)}</i></span>`;
+  const km = r.dist >= 1000 ? (r.dist / 1000).toFixed(1) + '<u>km</u>' : Math.round(r.dist || 0) + '<u>m</u>';
+  const stat = (v, l) => `<div><b>${v}</b><small>${l}</small></div>`;
+  const bowl = r.mode === 'bowling';
+  const big = bowl ? r.score.toLocaleString() : GT.money(r.yen);
+  const stats = bowl ? [stat(r.pins, 'Hits'), stat(km, 'Driven'), stat(r.bumps, 'Car bumps'), stat(r.best.toLocaleString(), 'Best')]
+    : [stat(r.fares, r.fares === 1 ? 'Fare' : 'Fares'), stat(km, 'Driven'), stat(r.fares ? r.fastest.toFixed(0) + '<u>s</u>' : '–', 'Fastest ride'),
+       stat(r.bumps, r.bumps === 1 ? 'Bump' : 'Bumps'), ...(r.shots != null ? [stat(`${r.hits}<u>/${r.shots}</u>`, 'Popped')] : [])];
+  const map = routeMap(r);
+  return `<div class="gt-res gt-glow${map ? '' : ' nomap'}">
+    ${map}
+    <div class="gt-rhead"><b>${bowl ? 'Time!' : 'Shift over'}</b>${stars}</div>
+    <div class="gt-rstats">
+      <div class="gt-rbig"><small>${bowl ? 'Score' : GT.moneyLabel}</small><b>${big}</b>${!bowl && r.penaltyYen ? `<em>${GT.money(-r.penaltyYen)} in bumps</em>` : `<em>Best ${bowl ? r.best.toLocaleString() : GT.money(r.best)}</em>`}</div>
+      <div class="gt-rrow">${stats.join('')}</div>
+    </div></div>`;
 }
 function renderCrewStrip() {
   const el = $('gt-crew'), on = phase === 'driving' && crew.length;
