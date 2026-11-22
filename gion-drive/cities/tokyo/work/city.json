@@ -1,0 +1,290 @@
+{
+ "name": "Tokyo",
+ "title": "Shibuya Crossing, Tokyo",
+ "region": "Tokyo",
+ "place": "Shibuya Crossing",
+ "timezone": "Asia/Tokyo",
+ "level": 3.6,
+ "styles": {
+  "default": {
+   "facade": "office",
+   "wall": [
+    "#e2ddd3",
+    "#d3cec4",
+    "#e8e4dc",
+    "#cfd3d4"
+   ],
+   "trim": "#eeebe4",
+   "glass": [
+    "#8fa6b3",
+    "#9db2bd"
+   ],
+   "roof": "flat",
+   "flatRoof": "#9a9a96",
+   "levels": 8,
+   "floor": 3.6,
+   "shop": "poi",
+   "parapet": 0.6
+  },
+  "rules": []
+ },
+ "buildings": {},
+ "palette": {
+  "ground": "#e4dfd4",
+  "road": "#9f9fa3",
+  "pavement": "#d9d5cc",
+  "walk": "#d4cfc4",
+  "grass": "#9ccb6c",
+  "slab": "#d0c9bb",
+  "marking": "#f3efe6",
+  "kerb": "#d2cdc3",
+  "paving": "#bcb6ab",
+  "water": "#87b6c4"
+ },
+ "paving": {
+  "style": "tiles",
+  "size": 1.2
+ },
+ "lamp": {
+  "colour": "#3a3f44",
+  "height": 6.5,
+  "head": "#f1ead6"
+ },
+ "trees": {
+  "default": {
+   "style": 1,
+   "colours": [
+    "#7fb35c",
+    "#91be64"
+   ],
+   "height": 10,
+   "autumn": "#e9b730"
+  },
+  "rules": [
+   {
+    "match": "Ginkgo|イチョウ",
+    "style": 4,
+    "autumn": "#efc23a"
+   },
+   {
+    "match": "Zelkova|ケヤキ",
+    "style": 1,
+    "autumn": "#c9733a"
+   },
+   {
+    "match": "Gleditsia|honey",
+    "style": 4,
+    "autumn": "#ecc94b"
+   },
+   {
+    "match": "Acer|maple",
+    "style": 3,
+    "autumn": "#d9583a"
+   }
+  ]
+ },
+ "people": {
+  "clothes": [
+   "#3d4a5e",
+   "#e7e2d6",
+   "#6b7f94",
+   "#a64a3c",
+   "#4f6b4f",
+   "#d8b56a",
+   "#5c4b78",
+   "#2f3238"
+  ],
+  "umbrellas": [
+   "#2f3238",
+   "#3d4a5e",
+   "#a64a3c",
+   "#e7e2d6"
+  ]
+ },
+ "vehicles": {
+  "kinds": [
+   "sedan",
+   "hatch",
+   "mpv",
+   "sedan",
+   "van"
+  ],
+  "colours": [
+   "#f2f2ee",
+   "#f2f2ee",
+   "#2e3139",
+   "#99a3ae",
+   "#c9c6bd",
+   "#3d4f6b"
+  ],
+  "plate": "#f2f2ee",
+  "taxi": {
+   "share": 0.2,
+   "colours": [
+    "#2b3350",
+    "#2b3350",
+    "#f0efe8"
+   ],
+   "kind": "mpv",
+   "sign": "#f6e7a6"
+  }
+ },
+ "seasonLabel": "Season",
+ "seasons": [
+  {
+   "id": "spring",
+   "label": "Spring",
+   "leaves": "spring",
+   "crowd": 1.1,
+   "note": {
+    "text": "Tokyo’s cherry blossoms usually open in late March; the Japan Meteorological Agency announces the season from a sample tree at Yasukuni Shrine.",
+    "source": "Wikipedia: Cherry blossom",
+    "url": "https://en.wikipedia.org/wiki/Cherry_blossom"
+   }
+  },
+  {
+   "id": "summer",
+   "label": "Summer",
+   "leaves": "summer",
+   "crowd": 1.4,
+   "note": {
+    "text": "Summers are hot and humid, with the rainy season (tsuyu) from about early June to mid-July.",
+    "source": "Wikipedia: Climate of Tokyo",
+    "url": "https://en.wikipedia.org/wiki/Climate_of_Tokyo"
+   }
+  },
+  {
+   "id": "autumn",
+   "label": "Autumn",
+   "leaves": "autumn",
+   "crowd": 1.0,
+   "note": {
+    "text": "The ginkgo is Tokyo’s tree; along the city’s avenues its leaves turn gold in late autumn.",
+    "source": "Wikipedia: Tokyo",
+    "url": "https://en.wikipedia.org/wiki/Tokyo"
+   }
+  },
+  {
+   "id": "winter",
+   "label": "Winter",
+   "leaves": "bare",
+   "coats": true,
+   "crowd": 1.1,
+   "note": {
+    "text": "Winters are mostly dry and sunny; snow falls on only a few days a year.",
+    "source": "Wikipedia: Climate of Tokyo",
+    "url": "https://en.wikipedia.org/wiki/Climate_of_Tokyo"
+   }
+  },
+  {
+   "id": "snow",
+   "label": "Snow",
+   "sub": "winter",
+   "leaves": "bare",
+   "snow": true,
+   "wx": "snow",
+   "coats": true,
+   "crowd": 0.8,
+   "note": {
+    "text": "Snow is rare in central Tokyo, so a snowy day at the crossing is an occasion.",
+    "source": "Wikipedia: Climate of Tokyo",
+    "url": "https://en.wikipedia.org/wiki/Climate_of_Tokyo"
+   }
+  }
+ ],
+ "occasionLabel": "Special scenes",
+ "occasions": [
+  {
+   "id": "night",
+   "label": "Night at the crossing",
+   "leaves": "autumn",
+   "night": 0.9,
+   "litShare": 0.85,
+   "crowd": 1.8,
+   "note": {
+    "text": "After dark the crossing is lit by the giant video screens on the buildings around it.",
+    "source": "Wikipedia: Shibuya Crossing",
+    "url": "https://en.wikipedia.org/wiki/Shibuya_Crossing"
+   }
+  }
+ ],
+ "months": [
+  "winter",
+  "winter",
+  "spring",
+  "spring",
+  "spring",
+  "summer",
+  "summer",
+  "summer",
+  "autumn",
+  "autumn",
+  "autumn",
+  "winter"
+ ],
+ "views": [
+  {
+   "id": "scramble",
+   "label": "The scramble",
+   "camera": {
+    "yaw": -110,
+    "pitch": 34,
+    "zoom": 2.2,
+    "x": 9,
+    "y": 0,
+    "z": 2
+   }
+  },
+  {
+   "id": "skyline",
+   "label": "Shibuya skyline",
+   "camera": {
+    "yaw": -120,
+    "pitch": 24,
+    "zoom": 1.5,
+    "x": 0,
+    "y": 0,
+    "z": 20
+   }
+  }
+ ],
+ "legend": [
+  {
+   "name": "Shibuya Crossing",
+   "source": "OpenStreetMap",
+   "count": "",
+   "icon": "landmark",
+   "camera": {
+    "yaw": -110,
+    "pitch": 34,
+    "zoom": 2.2,
+    "x": 9,
+    "y": 0,
+    "z": 2
+   }
+  }
+ ],
+ "notes": [
+  {
+   "title": "Shibuya Crossing",
+   "text": "One of the busiest pedestrian crossings in the world: the traffic lights stop every vehicle at once and people cross from all sides, diagonals included.",
+   "links": [
+    {
+     "label": "Wikipedia",
+     "url": "https://en.wikipedia.org/wiki/Shibuya_Crossing"
+    }
+   ]
+  },
+  {
+   "title": "What is illustrative",
+   "text": "Measured from OpenStreetMap: streets, crossings, footprints and the heights that are mapped. Drawn by eye: façades, signs, trees, people and traffic. The Shibuya River, which only clips a corner of the plot, is left out.",
+   "links": [
+    {
+     "label": "OpenStreetMap",
+     "url": "https://www.openstreetmap.org/#map=18/35.6595/139.7004"
+    }
+   ]
+  }
+ ],
+ "vivid": true
+}

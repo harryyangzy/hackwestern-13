@@ -1,33 +1,19 @@
 # tandem
 
-Four cities, one game: `gion-taxi.html` (Gion Shirakawa, Kyoto), `taxi-london.html` (Western University's main campus
+Four cities, one game: `taxi-tokyo.html` (Shibuya Crossing, Tokyo), `taxi-london.html` (Western University's main campus
 in London, Ontario, from University College to Middlesex College across UC Hill: the campus paths are drivable), `taxi-toronto.html` (Nathan Phillips
-Square and City Hall) and `taxi-amsterdam.html` (where the Reguliersgracht crosses the Keizersgracht). Switch cities
-from the menu; with the server running they're also at `/gion`, `/london`, `/toronto`, `/amsterdam`, and a crew keeps
-its room when the host switches city.
+Square and City Hall) and `taxi-amsterdam.html` (where the Reguliersgracht crosses the Keizersgracht). You pick one on a
+globe: drag to turn it, scroll or pinch to zoom, tap a city, or use **Available shifts**. With the server running they're
+also at `/tokyo`, `/london`, `/toronto`, `/amsterdam`, and a crew keeps its room when the host switches city.
+(`gion-taxi.html`, Gion in Kyoto, still builds but isn't offered on the globe.)
 
-Drive a taxi through the lanes of Gion Shirakawa, Kyoto. Pick up at the orange lantern, drop off at the gold one,
+Drive a taxi through a real neighbourhood. Pick up at the orange lantern, drop off at the gold one,
 and do as many fares as you can before the 120-second shift ends. Play solo on the keyboard, or as a crew of 2–4
 phones sharing one taxi.
 
-## Solo
-
-Open `index.html` in a browser (it works offline, no server needed), press **Play Solo** and pick a city.
-Arrows/WASD drive (hold ↓ to brake, then reverse), `C` cycles the camera (kart → chase → overhead), `Esc` ends the shift.
-The red and cream kerbs mark the road; dark and cream ones mark the edge of the map.
-
-**Joyride** (bonus mode, from the menu or the crew lobby): 60 seconds to knock over as many pedestrians as you can.
-Each person counts once; hits in quick succession multiply (up to ×5); cars still cost time.
-
-## Crew: phones as controllers
-
-```bash
-node gion-drive/server.js
-```
-
 Node 18 or newer, no `npm install`. Then:
 
-1. On the laptop, open **http://localhost:8090**: the title screen. Press **Play with Friends** and choose a city; the lobby opens with a QR code.
+1. On the laptop, open **http://localhost:8090**: the title screen. Press **Play with Friends**, pick a city on the globe and press **Continue**; the lobby opens with a QR code.
 2. Each phone scans the QR code (or opens the address under it and types the room code).
 3. Turn the phones sideways. Phones can tap a role to take it. Everyone taps **Ready**, then the laptop presses **Start shift**: a short briefing and a 3-2-1, then the shift.
 
