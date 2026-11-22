@@ -144,28 +144,29 @@ function renderReveal(f) {
   const sub = f.aborted ? 'Every stake went back to its owner.'
     : `${f.result ? `${yen(f.result.yen)} of ${yen(f.goal)}` : ''}${imp ? ` · ${esc(imp.name)} was the imposter, ${imp.votesAgainst} vote${imp.votesAgainst === 1 ? '' : 's'} against` : ''}`;
   const order = [...f.players].sort((a, b) => a.imposter - b.imposter);   // the imposter turns over last
+  const face = (c, n) => C.icon ? `<span class="wt-mask">${C.icon(c, n)}</span>` : '<i></i>';
   const cards = order.map((p, i) => {
     const net = p.payout - f.stake, wagered = p.wager != null;
     return `<div class="wt-card ${p.imposter ? 'imp' : ''}" style="--c:${p.color};--d:${.6 + i * .7 + (p.imposter ? .5 : 0)}s">
-      <div class="wt-face wt-front"><i></i><b>${esc(p.name)}</b><span>?</span></div>
-      <div class="wt-face wt-back"><i></i><b>${esc(p.name)}</b>
+      <div class="wt-face wt-front">${face(p.color, 52)}<b>${esc(p.name)}</b><span>?</span></div>
+      <div class="wt-face wt-back">${face(p.color, 52)}<b>${esc(p.name)}</b>
         <span class="wt-role">${f.aborted ? 'Refunded' : p.imposter ? 'Imposter' : 'Crew'}</span>
-        <small>${f.aborted ? (p.payout ? `${sol(p.payout)} SOL back` : 'never staked') : wagered ? `wagered ${sol(p.wager)} SOL` : 'no reveal: stake forfeited'}</small>
-        ${f.aborted ? '' : `<em class="${net >= 0 ? 'up' : 'down'}">${net >= 0 ? '+' : '−'}${sol(Math.abs(net))} SOL</em>`}
-        ${f.aborted ? '' : `<span class="wt-votes">${'●'.repeat(p.votesAgainst)}<small>${p.votesAgainst ? '' : 'no votes'}</small></span>`}
+        ${f.aborted ? `<small>${p.payout ? `${sol(p.payout)} SOL back` : 'never staked'}</small>`
+          : `<em class="${net >= 0 ? 'up' : 'down'}${sol(Math.abs(net)).length > 5 ? ' long' : ''}">${net >= 0 ? '+' : '−'}${sol(Math.abs(net))}<u>SOL</u></em>
+             <small>${wagered ? `bet ${sol(p.wager)}` : 'no reveal'}${p.votesAgainst ? ` · ${p.votesAgainst} vote${p.votesAgainst === 1 ? '' : 's'}` : ''}</small>`}
       </div></div>`;
   }).join('');
-  const links = Object.entries({ create: 'Escrow opened', lock: 'Roles sealed', report: 'Result', settle: 'Payout', refund: 'Refund' })
-    .filter(([k]) => f.tx[k]).map(([k, label]) => `<a href="${f.tx[k]}" target="_blank" rel="noopener">${label} ↗</a>`).join('');
+  // the bottom row: back to the lobby, and beside it each Solana transaction as a small chip
+  const links = Object.entries({ create: 'Escrow', lock: 'Roles', report: 'Result', settle: 'Payout', refund: 'Refund' })
+    .filter(([k]) => f.tx[k]).map(([k, label]) => `<a href="${f.tx[k]}" target="_blank" rel="noopener">${label}<span aria-hidden="true">↗</span></a>`).join('');
   const last = .6 + order.length * .7 + .5;
   revealEl.hidden = false;
   revealEl.innerHTML = `<div class="wt-sheet gt-card">
-    <small class="wt-cap">Trip report · settled on Solana devnet</small>
     <div class="wt-cards">${cards}</div>
     <h2 class="wt-head ${f.crewWins || f.aborted ? 'crew' : 'imp'}" style="--d:${last + .3}s">${head}</h2>
     <p class="wt-subhead" style="--d:${last + .5}s">${sub}</p>
-    <p class="wt-links" style="--d:${last + .7}s">${links}</p>
-    <button class="gt-ghost" id="wt-done" style="--d:${last + .7}s">Back to the lobby</button></div>`;
+    <div class="wt-foot" style="--d:${last + .8}s"><button class="wt-key" id="wt-done">Back to the lobby</button>
+      ${links ? `<div class="wt-links"><span>Solana devnet</span>${links}</div>` : ''}</div></div>`;
   $('wt-done').onclick = () => { revealEl.hidden = true; phase = 'off' };
 }
 

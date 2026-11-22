@@ -271,9 +271,6 @@ body { background: var(--paper); }
 #wt-cancel:active { transform: translateY(2px);
   box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #efe6d3, 0 1px 0 #d3c5a8; }
 #wt-vote { background: linear-gradient(140deg, #fff, #f7f0e0); }
-.wt-face { background: #fffcf3; border-color: var(--rule); }
-.wt-card.imp .wt-back { background: var(--rose); border-color: #dcafbc; color: var(--ink); }
-.wt-card.imp .wt-back :is(.wt-role, small, em, .wt-votes) { color: var(--ink); }
 
 .pad-ui { background: radial-gradient(ellipse at 35% 0%, #fff, #edf3f6); }
 .dialog-head h2, .pad-ui h1, .pad-ui h2 { font-family: var(--display); font-weight: 500; }
@@ -438,3 +435,6 @@ dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
 .gt-backbtn:hover { background: var(--color-button-ghost-hover); }
 .gt-backbtn:active { background: var(--color-button-ghost-active); transform: translateY(1px); }
 .gt-backbtn:focus-visible { outline: 2px solid var(--color-border-focus-ring); outline-offset: 2px; }
+
+/* the trip report sheet: flat paper with a solid edge instead of a soft drop shadow */
+.wt-sheet { background: #fffcf3; border: 1.5px solid #e3d6bc; box-shadow: 0 6px 0 #e3d6bc; }

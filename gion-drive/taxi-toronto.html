@@ -2823,37 +2823,50 @@ body.gt-flow #gt-lclose{position:static;display:inline-flex;width:max-content;he
 /* the reveal */
 #wt-reveal{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:#263c3540;backdrop-filter:blur(2px);animation:wt-in .4s ease-out}
 @keyframes wt-in{from{opacity:0}}
-.wt-sheet{padding:20px 28px 18px;text-align:center;width:min(760px,calc(100% - 28px))}
-.wt-cards{display:flex;justify-content:center;gap:14px;margin:16px 0 18px;perspective:900px}
-.wt-card{width:150px;height:196px;position:relative;transform-style:preserve-3d;animation:wt-flip .8s cubic-bezier(.3,.7,.2,1) var(--d) both}
+/* the reveal: flat cards with solid bottom edges, each with its crew mascot; the imposter's card is solid rose */
+.wt-sheet{padding:28px 28px 30px;text-align:center;width:max-content;max-width:calc(100% - 28px)}
+.wt-cards{display:flex;justify-content:center;gap:14px;margin:0 0 20px;perspective:900px}
+.wt-card{width:148px;height:204px;position:relative;transform-style:preserve-3d;animation:wt-flip .8s cubic-bezier(.3,.7,.2,1) var(--d) both}
 .wt-card.imp{animation:wt-flip .8s cubic-bezier(.3,.7,.2,1) var(--d) both,wt-thud .45s ease-out calc(var(--d) + .8s)}
 @keyframes wt-flip{from{transform:rotateY(0)}to{transform:rotateY(180deg)}}
 @keyframes wt-thud{40%{transform:rotateY(180deg) scale(1.07)}100%{transform:rotateY(180deg) scale(1)}}
-.wt-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:12px;border:1px solid var(--rule);background:#fffcf3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px}
-.wt-face>i{width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px #fffcf3,0 0 0 3.5px var(--c)}
-.wt-face>b{font:600 18px var(--serif)}
-.wt-front span{font:600 44px var(--serif);color:var(--rule)}
+.wt-face{position:absolute;inset:0 0 4px;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;border:1.5px solid #e3d6bc;background:#fffcf3;box-shadow:0 4px 0 #e3d6bc;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px}
+.wt-face>i{width:14px;height:14px;border-radius:50%;background:var(--c)}
+.wt-mask{display:grid;place-items:center;width:60px;height:60px;border-radius:50%;background:#f4ecdc;margin-bottom:2px}
+.wt-mask svg{width:52px;height:52px}
+.wt-front .wt-mask{filter:grayscale(1);opacity:.45}
+.wt-face>b{font:500 18px/1.1 var(--display);color:var(--ink)}
+.wt-front span{font:500 30px/1 var(--display);color:#d9ccb0}
 .wt-back{transform:rotateY(180deg)}
-.wt-card.imp .wt-back{background:var(--rust);border-color:var(--rust);color:#fff}
-.wt-card.imp .wt-back>i{box-shadow:0 0 0 2px var(--rust),0 0 0 3.5px #fff}
-.wt-role{font:italic 16px var(--serif);color:var(--muted)}
-.wt-card.imp .wt-role{color:#fff;font:600 19px var(--serif);letter-spacing:.04em}
-.wt-back small{font-size:12px;color:var(--muted)}
-.wt-card.imp .wt-back small{color:#fffd}
-.wt-back em{font:600 17px var(--mono);font-style:normal;font-variant-numeric:tabular-nums}
-.wt-back em.up{color:var(--green)}.wt-back em.down{color:var(--rust)}
-.wt-card.imp .wt-back em{color:#fff}
-.wt-votes{color:var(--rust);letter-spacing:.15em;font-size:12px;min-height:16px}
-.wt-card.imp .wt-votes{color:#fff}
-.wt-votes small{letter-spacing:0;font:italic 12px var(--serif);color:var(--muted)}
-.wt-head,.wt-subhead,.wt-links,#wt-done{animation:wt-rise .5s ease-out var(--d) both}
+.wt-role{font:700 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--green);background:#e1eee4;border-radius:999px;padding:4px 10px;margin:2px 0 4px}
+.wt-back em{font:500 22px/1 var(--display);font-style:normal;font-variant-numeric:tabular-nums}
+.wt-back em u{text-decoration:none;font:600 11px var(--sans);margin-left:3px;opacity:.7}
+.wt-back em.long{font-size:17px}
+.wt-back em.up{color:var(--green)}.wt-back em.down{color:#9b3c50}
+.wt-back small{font:500 12px var(--sans);color:var(--muted)}
+.wt-card.imp .wt-back{background:#f6dfe5;border-color:#dfb3c0;box-shadow:0 4px 0 #dfb3c0}
+.wt-card.imp .wt-mask{background:#fff3f5}
+.wt-card.imp .wt-role{color:#fff;background:#9b3c50}
+.wt-head,.wt-subhead,.wt-foot{animation:wt-rise .5s ease-out var(--d) both}
 @keyframes wt-rise{from{opacity:0;transform:translateY(6px)}}
-.wt-head{font:600 30px var(--serif);margin:0 0 4px}
-.wt-head.imp{color:var(--rust)}.wt-head.crew{color:var(--green)}
-.wt-subhead{margin:0 0 10px;color:var(--muted);font:italic 16px var(--serif)}
-.wt-links{display:flex;justify-content:center;gap:16px;margin:0 0 8px;font-size:13px}
-.wt-links a{color:var(--ink)}
-@media (prefers-reduced-motion:reduce){.wt-card,.wt-card.imp{animation:wt-flip .01s var(--d) both}.wt-head,.wt-subhead,.wt-links,#wt-done{animation:none}}
+.wt-head{font:500 32px/1.1 var(--display);margin:0 0 6px}
+.wt-head.imp{color:#9b3c50}.wt-head.crew{color:var(--green)}
+.wt-subhead{margin:0 0 18px;color:var(--muted);font:500 15px var(--sans)}
+/* the bottom row: the lobby key, then the Solana transaction chips beside it */
+.wt-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 18px;margin-top:4px}
+.wt-links{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;margin:0;font-size:12px}
+.wt-links>span{font:700 10.5px var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.wt-links a{display:inline-flex;gap:4px;align-items:center;padding:5px 10px;border-radius:999px;background:#263c35;color:#fff6e2;font:600 12px var(--sans);text-decoration:none;box-shadow:0 2px 0 #142420}
+.wt-links a:hover{background:#2f4a42}
+.wt-links a span{opacity:.6}
+/* the raised cream key: Back to the lobby here, Cancel and refund on the wager screen */
+.wt-key{padding:11px 26px;border:1px solid #d3c5a8;border-radius:999px;background:#fffcf3;color:var(--ink);font:600 15px/1 var(--sans);cursor:pointer;
+  box-shadow:inset 0 1px 0 #fff,inset 0 -2px 0 #efe6d3,0 3px 0 #d3c5a8;transition:transform .08s ease,box-shadow .08s ease,background .15s}
+.wt-key:hover{background:#fffaf0}
+.wt-key:active{transform:translateY(2px);box-shadow:inset 0 1px 0 #fff,inset 0 -1px 0 #efe6d3,0 1px 0 #d3c5a8}
+@media (prefers-reduced-motion:reduce){.wt-card,.wt-card.imp{animation:wt-flip .01s var(--d) both}.wt-head,.wt-subhead,.wt-foot{animation:none}}
+@media (max-width:620px){.wt-cards{flex-wrap:wrap}.wt-card{width:130px}}
 /* Shared desktop and controller UI. City artwork keeps its own palette. */
 @font-face {
   font-family: Inter;
@@ -3127,9 +3140,6 @@ body { background: var(--paper); }
 #wt-cancel:active { transform: translateY(2px);
   box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #efe6d3, 0 1px 0 #d3c5a8; }
 #wt-vote { background: linear-gradient(140deg, #fff, #f7f0e0); }
-.wt-face { background: #fffcf3; border-color: var(--rule); }
-.wt-card.imp .wt-back { background: var(--rose); border-color: #dcafbc; color: var(--ink); }
-.wt-card.imp .wt-back :is(.wt-role, small, em, .wt-votes) { color: var(--ink); }
 
 .pad-ui { background: radial-gradient(ellipse at 35% 0%, #fff, #edf3f6); }
 .dialog-head h2, .pad-ui h1, .pad-ui h2 { font-family: var(--display); font-weight: 500; }
@@ -3294,6 +3304,9 @@ dialog { border-radius: var(--card-radius); box-shadow: var(--dialog); }
 .gt-backbtn:hover { background: var(--color-button-ghost-hover); }
 .gt-backbtn:active { background: var(--color-button-ghost-active); transform: translateY(1px); }
 .gt-backbtn:focus-visible { outline: 2px solid var(--color-border-focus-ring); outline-offset: 2px; }
+
+/* the trip report sheet: flat paper with a solid edge instead of a soft drop shadow */
+.wt-sheet { background: #fffcf3; border: 1.5px solid #e3d6bc; box-shadow: 0 6px 0 #e3d6bc; }
 </style>
 <script>window.GT_CITY = {"name": "Toronto", "brand": "tandem", "bowl": "Joyride", "blurb": "Drive a taxi around Nathan Phillips Square and Toronto City Hall.", "drivePaths": false, "open": false, "money": {"sym": "$", "rate": 0.01, "dec": 2, "label": "Dollars"}, "id": "toronto", "cities": [{"id": "tokyo", "name": "Tokyo", "href": "taxi-tokyo.html"}, {"id": "gion", "name": "Kyoto", "href": "gion-taxi.html"}, {"id": "london", "name": "London", "href": "taxi-london.html"}, {"id": "toronto", "name": "Toronto", "href": "taxi-toronto.html"}, {"id": "amsterdam", "name": "Amsterdam", "href": "taxi-amsterdam.html"}]};</script>
 <script>
@@ -5204,28 +5217,29 @@ function renderReveal(f) {
   const sub = f.aborted ? 'Every stake went back to its owner.'
     : `${f.result ? `${yen(f.result.yen)} of ${yen(f.goal)}` : ''}${imp ? ` · ${esc(imp.name)} was the imposter, ${imp.votesAgainst} vote${imp.votesAgainst === 1 ? '' : 's'} against` : ''}`;
   const order = [...f.players].sort((a, b) => a.imposter - b.imposter);   // the imposter turns over last
+  const face = (c, n) => C.icon ? `<span class="wt-mask">${C.icon(c, n)}</span>` : '<i></i>';
   const cards = order.map((p, i) => {
     const net = p.payout - f.stake, wagered = p.wager != null;
     return `<div class="wt-card ${p.imposter ? 'imp' : ''}" style="--c:${p.color};--d:${.6 + i * .7 + (p.imposter ? .5 : 0)}s">
-      <div class="wt-face wt-front"><i></i><b>${esc(p.name)}</b><span>?</span></div>
-      <div class="wt-face wt-back"><i></i><b>${esc(p.name)}</b>
+      <div class="wt-face wt-front">${face(p.color, 52)}<b>${esc(p.name)}</b><span>?</span></div>
+      <div class="wt-face wt-back">${face(p.color, 52)}<b>${esc(p.name)}</b>
         <span class="wt-role">${f.aborted ? 'Refunded' : p.imposter ? 'Imposter' : 'Crew'}</span>
-        <small>${f.aborted ? (p.payout ? `${sol(p.payout)} SOL back` : 'never staked') : wagered ? `wagered ${sol(p.wager)} SOL` : 'no reveal: stake forfeited'}</small>
-        ${f.aborted ? '' : `<em class="${net >= 0 ? 'up' : 'down'}">${net >= 0 ? '+' : '−'}${sol(Math.abs(net))} SOL</em>`}
-        ${f.aborted ? '' : `<span class="wt-votes">${'●'.repeat(p.votesAgainst)}<small>${p.votesAgainst ? '' : 'no votes'}</small></span>`}
+        ${f.aborted ? `<small>${p.payout ? `${sol(p.payout)} SOL back` : 'never staked'}</small>`
+          : `<em class="${net >= 0 ? 'up' : 'down'}${sol(Math.abs(net)).length > 5 ? ' long' : ''}">${net >= 0 ? '+' : '−'}${sol(Math.abs(net))}<u>SOL</u></em>
+             <small>${wagered ? `bet ${sol(p.wager)}` : 'no reveal'}${p.votesAgainst ? ` · ${p.votesAgainst} vote${p.votesAgainst === 1 ? '' : 's'}` : ''}</small>`}
       </div></div>`;
   }).join('');
-  const links = Object.entries({ create: 'Escrow opened', lock: 'Roles sealed', report: 'Result', settle: 'Payout', refund: 'Refund' })
-    .filter(([k]) => f.tx[k]).map(([k, label]) => `<a href="${f.tx[k]}" target="_blank" rel="noopener">${label} ↗</a>`).join('');
+  // the bottom row: back to the lobby, and beside it each Solana transaction as a small chip
+  const links = Object.entries({ create: 'Escrow', lock: 'Roles', report: 'Result', settle: 'Payout', refund: 'Refund' })
+    .filter(([k]) => f.tx[k]).map(([k, label]) => `<a href="${f.tx[k]}" target="_blank" rel="noopener">${label}<span aria-hidden="true">↗</span></a>`).join('');
   const last = .6 + order.length * .7 + .5;
   revealEl.hidden = false;
   revealEl.innerHTML = `<div class="wt-sheet gt-card">
-    <small class="wt-cap">Trip report · settled on Solana devnet</small>
     <div class="wt-cards">${cards}</div>
     <h2 class="wt-head ${f.crewWins || f.aborted ? 'crew' : 'imp'}" style="--d:${last + .3}s">${head}</h2>
     <p class="wt-subhead" style="--d:${last + .5}s">${sub}</p>
-    <p class="wt-links" style="--d:${last + .7}s">${links}</p>
-    <button class="gt-ghost" id="wt-done" style="--d:${last + .7}s">Back to the lobby</button></div>`;
+    <div class="wt-foot" style="--d:${last + .8}s"><button class="wt-key" id="wt-done">Back to the lobby</button>
+      ${links ? `<div class="wt-links"><span>Solana devnet</span>${links}</div>` : ''}</div></div>`;
   $('wt-done').onclick = () => { revealEl.hidden = true; phase = 'off' };
 }
 
