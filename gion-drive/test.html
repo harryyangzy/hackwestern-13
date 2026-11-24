@@ -54,11 +54,8 @@ main{display:flex;min-height:0}
 <body>
 <header>
   <h1>tandem <span>· Test lab</span></h1>
-  <div class="grp"><small>City</small><select id="city">
-    <option value="gion-taxi.html">Kyoto</option><option value="taxi-london.html">London</option>
-    <option value="taxi-toronto.html">Toronto</option><option value="taxi-amsterdam.html">Amsterdam</option></select></div>
   <div class="grp"><small>Mode</small><div class="seg" id="mode">
-    <button data-v="solo">Solo</button><button data-v="taxi" aria-pressed="true" title="Wrong Turn (imposter mode) is always on; bots fill seats below 3 phones">Taxi shift · Wrong Turn</button>
+    <button data-v="taxi" aria-pressed="true" title="Wrong Turn (imposter mode) is always on; bots fill seats below 3 phones">Taxi shift · Wrong Turn</button>
     <button data-v="bowling">Joyride</button></div></div>
   <div class="grp"><small>Phones</small><div class="seg" id="count">
     <button data-v="1">1</button><button data-v="2" aria-pressed="true">2</button><button data-v="3">3</button><button data-v="4">4</button></div></div>
@@ -72,7 +69,7 @@ main{display:flex;min-height:0}
 </header>
 <main>
   <div id="gameBox"><iframe id="game" title="The laptop screen" hidden></iframe>
-    <div id="empty"><div><b>Pick a city, a mode and a crew size, then Launch.</b>Phones appear on the right, already joined. Click a phone to use its controls, or pick a player under View (⤢) to see their phone full size. The keyboard still drives the taxi.</div></div></div>
+    <div id="empty"><div><b>Pick a mode and a crew size, then Launch.</b>The game opens on its title page. Press Play with friends and pick a city; the phones appear on the right, already joined, once the lobby opens. (Drive solo works too, without phones.) Click a phone to use its controls, or pick a player under View (⤢) to see their phone full size. The keyboard still drives the taxi.</div></div></div>
   <aside id="phones"></aside>
 </main>
 <script src="crew.js"></script>
@@ -84,24 +81,19 @@ const ROLE = { steer: 'Wheel', pedals: 'Pedals', ops: 'Doors', shoot: 'Shooter',
 let mode = 'taxi', count = 2, run = 0, phones = [];   // phones: [{ pid, el, frame }]
 
 // the settings survive a reload of the lab
-try { const s = JSON.parse(localStorage.getItem('tandemLab') || '{}'); if (s.city) $('city').value = s.city; if (s.mode) mode = s.mode === 'wt' ? 'taxi' : s.mode; if (s.count) count = s.count } catch {}
-const save = () => { try { localStorage.setItem('tandemLab', JSON.stringify({ city: $('city').value, mode, count })) } catch {} };
+try { const s = JSON.parse(localStorage.getItem('tandemLab') || '{}'); if (s.mode) mode = s.mode === 'bowling' ? 'bowling' : 'taxi'; if (s.count) count = s.count } catch {}
+const save = () => { try { localStorage.setItem('tandemLab', JSON.stringify({ mode, count })) } catch {} };
 function seg(el, get, set) {
   const paint = () => { for (const b of el.children) b.setAttribute('aria-pressed', b.dataset.v === String(get())) };
   el.onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; set(b.dataset.v); paint(); save() };
   paint(); return paint;
 }
-const paintMode = seg($('mode'), () => mode, v => { mode = v; syncCount() });
+const paintMode = seg($('mode'), () => mode, v => { mode = v });
 const paintCount = seg($('count'), () => count, v => { count = +v; if (live()) resizeCrew() });
-function syncCount() {
-  for (const b of $('count').children) b.disabled = mode === 'solo';
-  $('count').style.opacity = mode === 'solo' ? .4 : 1;
-}
-syncCount();
 
 const gw = () => { try { return game.contentWindow } catch { return null } };
 const gq = sel => { try { return game.contentDocument.querySelector(sel) } catch { return null } };
-const live = () => !game.hidden && mode !== 'solo' && gw()?.GionCrew?.room;
+const live = () => !game.hidden && phonesRoom && gw()?.GionCrew?.room === phonesRoom;
 const status = t => { $('status').textContent = t };
 const wait = (test, ms = 20000) => new Promise((ok, no) => { const t0 = Date.now(); const f = () => { const v = test(); if (v) return ok(v); if (Date.now() - t0 > ms) return no(new Error('timeout')); setTimeout(f, 150) }; f() });
 
@@ -139,7 +131,6 @@ function resizeCrew() {
 
 // mode switches inside the game's lobby (the same buttons a player would press)
 function applyMode() {
-  if (mode === 'solo') return;
   gq(`.gt-modes [data-game="${mode === 'bowling' ? 'bowling' : 'taxi'}"]`)?.click();   // Wrong Turn is always on in a taxi shift (wt.js)
 }
 
@@ -173,21 +164,24 @@ $('view').onclick = e => { const b = e.target.closest('button'); if (b) setView(
 addEventListener('resize', () => setView(view));
 addEventListener('keydown', e => { if (e.key === 'Escape' && view !== 'laptop') setView('laptop') });
 
-async function launch() {
-  const my = ++run;
+// launch: the laptop starts on the title page, like a player would see it. The phones are added only when the crew
+// lobby is on screen (Play with friends, then a city), and again if the game opens a different room later.
+let armed = 0, phonesRoom = null;   // armed: the run whose title page has loaded (so an old page's room is never taken)
+function launch() {
+  const my = ++run; armed = 0; phonesRoom = null;
   while (phones.length) { const p = phones.pop(); p.frame.src = 'about:blank'; p.el.remove() }
   setView('laptop');
   try { sessionStorage.removeItem('gtRoom') } catch {}   // a fresh room each launch: mp.js would otherwise take back the last one, old phones and all
   $('empty').hidden = true; game.hidden = false;
-  game.src = `${$('city').value}?play=${mode === 'solo' ? 'solo' : 'crew'}&lab=${my}`;   // lab= tells the new page from the old one while it loads
+  game.onload = () => { if (my === run && !armed) armed = my };
+  game.src = '/';
   $('readyAll').disabled = $('start').disabled = true;
-  if (mode === 'solo') { status('Solo: the keyboard drives. Click the game first so it gets the keys.'); return }
-  status('Opening a room…');
-  let room;
-  try { room = await wait(() => my === run && gw()?.location.search.includes('lab=' + my) && gw().GionCrew?.room) } catch { if (my === run) status('No room: is the crew server running?'); return }
-  if (my !== run) return;
+  status('Press Play with friends and pick a city: the phones join in the lobby');
+}
+function attachPhones(room) {
+  while (phones.length) { const p = phones.pop(); p.frame.src = 'about:blank'; p.el.remove() }
+  phonesRoom = room;
   for (let i = 0; i < count; i++) addPhone(room, i);
-  await wait(() => gq('.gt-modes'), 5000).catch(() => {});
   applyMode();
   $('readyAll').disabled = $('start').disabled = false;
   status(`Room ${room}`);
@@ -207,6 +201,8 @@ setInterval(() => {
   $('end').disabled = $('pause').disabled = !T0?.driving;
   $('pause').textContent = T0?.paused ? 'Resume' : 'Pause'; $('pause').setAttribute('aria-pressed', !!T0?.paused);
   const g = gw(), crew = g?.GionCrew?.crew; if (!crew) return;
+  const lobby = gq('#gt-lobby'), room = g.GionCrew.room;
+  if (armed === run && room && room !== phonesRoom && lobby && !lobby.hidden) attachPhones(room);
   for (const p of phones) {
     const c = crew.find(x => x.pid === p.pid), h = p.el.querySelector('header');
     const face = h.querySelector('.face');

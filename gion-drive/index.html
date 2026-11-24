@@ -659,5 +659,5 @@ window.GionMap = { get view() { const [lon, lat] = unproj(view.cx, view.cy); ret
 addEventListener('hashchange', render); render();
 })();
 </script>
-<script>if (/^https?:$/.test(location.protocol)) document.getElementById('labLink').hidden = false</script>
+<script>if (/^https?:$/.test(location.protocol) && window.parent === window) document.getElementById('labLink').hidden = false</script>
 </body></html>
